@@ -1,9 +1,9 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { AppController } from './app.controller.js';
-import { AppService } from './app.service.js';
-import { PrismaModule } from './prisma/prisma.module.js';
-import { UserModule } from './user/user.module.js';
+import { PrismaModule } from './providers/prisma/prisma.module.js';
+import { RedisModule } from './providers/redis/redis.module.js';
+import { UserModule } from './modules/user/user.module.js';
+import { AuthModule } from './modules/auth/auth.module.js';
 
 @Module({
   imports: [
@@ -12,9 +12,9 @@ import { UserModule } from './user/user.module.js';
       envFilePath: '.env',
     }),
     PrismaModule,
+    RedisModule,
     UserModule,
+    AuthModule,
   ],
-  controllers: [AppController],
-  providers: [AppService],
 })
 export class AppModule {}

@@ -1,8 +1,8 @@
 import { Injectable, ConflictException } from '@nestjs/common';
 import * as bcrypt from 'bcryptjs';
-import { PrismaService } from '../prisma/prisma.service.js';
+import { PrismaService } from '../../providers/prisma/prisma.service.js';
 import { CreateUserDto } from './dto/create-user.dto.js';
-import { Prisma } from '../../generated/prisma/client.js';
+import { Prisma } from '../../../generated/prisma/client.js';
 
 @Injectable()
 export class UserService {
@@ -10,10 +10,8 @@ export class UserService {
 
   async createUser(createUserDto: CreateUserDto) {
     try {
-      // Hash the password
       const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
 
-      // Create user in database
       const user = await this.prisma.user.create({
         data: {
           email: createUserDto.email,
@@ -30,7 +28,6 @@ export class UserService {
 
       return user;
     } catch (error) {
-      // Handle unique constraint violation for email
       if (
         error instanceof Prisma.PrismaClientKnownRequestError &&
         error.code === 'P2002'
