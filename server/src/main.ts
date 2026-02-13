@@ -24,6 +24,7 @@ async function bootstrap() {
   );
 
   const redisService = app.get(RedisService);
+  await redisService.onModuleInit();
 
   const redisStore = new RedisStore({
     client: redisService.getClient(),

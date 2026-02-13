@@ -7,6 +7,10 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
   private redisClient: RedisClientType;
 
   async onModuleInit() {
+    if (this.redisClient) {
+      return;
+    }
+
     this.redisClient = createClient({
       socket: {
         host: config.redisHost,
@@ -47,7 +51,11 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     await this.redisClient.set(key, value);
   }
 
-  async setWithExpiry(key: string, value: string, expiry: number): Promise<void> {
+  async setWithExpiry(
+    key: string,
+    value: string,
+    expiry: number,
+  ): Promise<void> {
     await this.redisClient.set(key, value, { EX: expiry });
   }
 
