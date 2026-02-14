@@ -45,6 +45,10 @@ services:
       - REDIS_HOST=${REDIS_HOST}
       - REDIS_PORT=${REDIS_PORT}
       - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - SEAWEEDFS_MASTER=${SEAWEEDFS_MASTER}
+      - SEAWEEDFS_FILER=${SEAWEEDFS_FILER}
+      - SEAWEEDFS_VOLUME=${SEAWEEDFS_VOLUME}
+      - SEAWEEDFS_PUBLIC_URL=${SEAWEEDFS_PUBLIC_URL}
       - SESSION_SECRET=${SESSION_SECRET}
       - SESSION_TIMEOUT=${SESSION_TIMEOUT}
       - DOMAIN=${DOMAIN}
@@ -54,6 +58,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      seaweedfs-filer:
+        condition: service_started
     networks:
       - ai_talk_network
 

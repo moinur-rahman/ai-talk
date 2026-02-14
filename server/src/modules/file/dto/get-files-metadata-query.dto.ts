@@ -1,0 +1,15 @@
+import { IsArray, IsNotEmpty, IsString } from 'class-validator';
+import { Transform } from 'class-transformer';
+
+export class GetFilesMetadataQueryDto {
+  @IsArray()
+  @IsString({ each: true })
+  @IsNotEmpty({ each: true })
+  @Transform(({ value }) => {
+    if (typeof value === 'string') {
+      return [value];
+    }
+    return value;
+  })
+  ids: string[];
+}
