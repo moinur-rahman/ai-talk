@@ -36,59 +36,6 @@ export class ModelService {
     });
   }
 
-  async updateDefaultModel(
-    userId: string,
-    modelId: string,
-    providerId: string,
-  ) {
-    const model = await this.prisma.model.findUnique({
-      where: { id: modelId },
-    });
-
-    if (!model) {
-      throw new NotFoundException('Model not found');
-    }
-
-    const provider = await this.prisma.provider.findUnique({
-      where: { id: providerId },
-    });
-
-    if (!provider) {
-      throw new NotFoundException('Provider not found');
-    }
-
-    await this.prisma.defaultModel.upsert({
-      where: {
-        userId,
-      },
-      update: {
-        modelId,
-        providerId,
-      },
-      create: {
-        userId,
-        modelId,
-        providerId,
-      },
-    });
-
-    return { success: true };
-  }
-
-  async getDefaultModel(userId: string) {
-    const defaultModel = await this.prisma.defaultModel.findUnique({
-      where: {
-        userId,
-      },
-      select: {
-        modelId: true,
-        providerId: true,
-      },
-    });
-
-    return defaultModel;
-  }
-
   async getModelDetails(modelId: string) {
     const model = await this.prisma.model.findUnique({
       where: {
