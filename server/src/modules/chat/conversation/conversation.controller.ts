@@ -1,4 +1,6 @@
-import { Body, Controller, Get, Param, Patch, Post, Req } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
+import { CurrentUser } from '../../../common/decorators/current-user.decorator.js';
+import type { SessionUser } from '../../../common/decorators/current-user.decorator.js';
 import { ConversationService } from './conversation.service.js';
 import { UpdateConversationTitleDto } from './dto/update-conversation-title.dto.js';
 
@@ -7,17 +9,17 @@ export class ConversationController {
   constructor(private readonly conversationService: ConversationService) {}
 
   @Post()
-  async createConversation(@Req() req: any) {
+  async createConversation(@CurrentUser() user: SessionUser) {
     const conversationId = await this.conversationService.createConversation(
-      req.user.id,
+      user.id,
     );
     return { data: { conversationId }, message: 'Conversation created successfully' };
   }
 
   @Get()
-  async getConversations(@Req() req: any) {
+  async getConversations(@CurrentUser() user: SessionUser) {
     const conversations = await this.conversationService.getConversations(
-      req.user.id,
+      user.id,
     );
     return { data: conversations, message: 'Conversations fetched successfully' };
   }

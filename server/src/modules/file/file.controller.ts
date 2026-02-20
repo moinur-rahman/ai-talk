@@ -8,10 +8,11 @@ import {
   UploadedFile,
   Res,
   BadRequestException,
-  Req,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import type { Response } from 'express';
+import { CurrentUser } from '../../common/decorators/current-user.decorator.js';
+import type { SessionUser } from '../../common/decorators/current-user.decorator.js';
 import { FileService } from './file.service.js';
 import { GetFilesMetadataQueryDto } from './dto/get-files-metadata-query.dto.js';
 
@@ -23,13 +24,13 @@ export class FileController {
   @UseInterceptors(FileInterceptor('file'))
   async uploadFile(
     @UploadedFile() file: Express.Multer.File,
-    @Req() req: any,
+    @CurrentUser() user: SessionUser,
   ) {
     if (!file) {
       throw new BadRequestException('No file provided');
     }
 
-    const userId = req.user.id;
+    const userId = user.id;
 
     const fileMetadata = await this.fileService.uploadFile(file, userId);
 
