@@ -17,6 +17,8 @@ interface IConfig {
   redisPassword: string;
   databaseUrl: string;
   clientUrl: string;
+  openaiApiKey: string;
+  ollamaHost: string;
 }
 
 const config: IConfig = {
@@ -30,6 +32,8 @@ const config: IConfig = {
   redisPassword: getEnvVar('REDIS_PASSWORD'),
   databaseUrl: getEnvVar('DATABASE_URL'),
   clientUrl: getEnvVar('CLIENT_URL'),
+  openaiApiKey: getEnvVar('OPENAI_API_KEY', ''),
+  ollamaHost: getEnvVar('OLLAMA_HOST', 'http://localhost:11434'),
 };
 
 export default config;

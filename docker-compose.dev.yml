@@ -53,12 +53,16 @@ services:
       - SESSION_TIMEOUT=${SESSION_TIMEOUT}
       - DOMAIN=${DOMAIN}
       - CLIENT_URL=${CLIENT_URL}
+      - OLLAMA_HOST=${OLLAMA_HOST}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
       seaweedfs-filer:
+        condition: service_started
+      ollama:
         condition: service_started
     networks:
       - ai_talk_network
@@ -67,7 +71,7 @@ services:
     image: postgres:16.4-alpine
     restart: always
     volumes:
-      - ./postgres-database:/var/lib/postgresql/data
+      - ./data/postgres:/var/lib/postgresql/data
     ports:
       - "5432:5432"
     environment:
@@ -94,7 +98,7 @@ services:
     ports:
       - "6379:6379"
     volumes:
-      - ./redis-database:/data
+      - ./data/redis:/data
     environment:
       - TZ=Asia/Dhaka
     healthcheck:
@@ -113,7 +117,7 @@ services:
       - "19333:19333"
     command: "master -ip=seaweedfs-master -ip.bind=0.0.0.0"
     volumes:
-      - seaweedfs_master_data:/data
+      - ./data/seaweedfs-master:/data
     networks:
       - ai_talk_network
 
@@ -125,7 +129,7 @@ services:
       - "18080:18080"
     command: 'volume -mserver="seaweedfs-master:9333" -ip.bind=0.0.0.0 -port=8080'
     volumes:
-      - seaweedfs_volume_data:/data
+      - ./data/seaweedfs-volume:/data
     depends_on:
       - seaweedfs-master
     networks:
@@ -139,20 +143,31 @@ services:
       - "18888:18888"
     command: 'filer -master="seaweedfs-master:9333" -ip.bind=0.0.0.0'
     volumes:
-      - seaweedfs_filer_data:/data
+      - ./data/seaweedfs-filer:/data
     depends_on:
       - seaweedfs-master
       - seaweedfs-volume
     networks:
       - ai_talk_network
 
+  ollama:
+    image: ollama/ollama
+    restart: always
+    ports:
+      - "11434:11434"
+    volumes:
+      - ./data/ollama:/root/.ollama
+    networks:
+      - ai_talk_network
+    # Uncomment for NVIDIA GPU support:
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu]
+
 networks:
   ai_talk_network:
     driver: bridge
-
-volumes:
-  postgres_data:
-  redis_data:
-  seaweedfs_master_data:
-  seaweedfs_volume_data:
-  seaweedfs_filer_data:

@@ -10,5 +10,6 @@ import { MessageService } from './message/message.service.js';
   imports: [PrismaModule, FileModule],
   controllers: [ConversationController, MessageController],
   providers: [ConversationService, MessageService],
+  exports: [ConversationService, MessageService],
 })
 export class ChatModule {}
