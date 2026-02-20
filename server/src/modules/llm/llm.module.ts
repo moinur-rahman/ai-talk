@@ -5,6 +5,6 @@ import { OpenAIService } from './openai/openai.service.js';
 
 @Module({
   providers: [LlmService, OllamaService, OpenAIService],
-  exports: [LlmService],
+  exports: [LlmService, OllamaService, OpenAIService],
 })
 export class LlmModule {}

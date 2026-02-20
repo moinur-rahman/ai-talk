@@ -1,9 +1,23 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../providers/prisma/prisma.service.js';
+import { OllamaService } from '../llm/ollama/ollama.service.js';
+import { OpenAIService } from '../llm/openai/openai.service.js';
+
+type SyncModelData = { name: string; description: string; hasReasoning: boolean };
+
+type ProviderSyncResult =
+  | { provider: string; created: number; updated: number; deprecated: number }
+  | { provider: string; error: string };
 
 @Injectable()
 export class ModelService {
-  constructor(private readonly prisma: PrismaService) {}
+  private readonly logger = new Logger(ModelService.name);
+
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly ollamaService: OllamaService,
+    private readonly openaiService: OpenAIService,
+  ) {}
 
   async getProviders() {
     return await this.prisma.provider.findMany({
@@ -58,5 +72,79 @@ export class ModelService {
     }
 
     return model;
+  }
+
+  async syncModels(): Promise<{ results: ProviderSyncResult[] }> {
+    const providers = await this.prisma.provider.findMany();
+    const results: ProviderSyncResult[] = [];
+
+    for (const provider of providers) {
+      try {
+        const fetchedModels = await this.fetchModelsForProvider(provider.name);
+        const counts = await this.synchronizeProviderModels(provider.id, fetchedModels);
+        results.push({ provider: provider.name, ...counts });
+      } catch (error) {
+        this.logger.error(`Failed to sync models for provider "${provider.name}"`, error);
+        results.push({ provider: provider.name, error: 'Failed to sync models' });
+      }
+    }
+
+    return { results };
+  }
+
+  private async fetchModelsForProvider(providerName: string): Promise<SyncModelData[]> {
+    const name = providerName.toLowerCase();
+    if (name === 'ollama') return this.ollamaService.listModels();
+    if (name === 'openai') return this.openaiService.listModels();
+    return [];
+  }
+
+  private async synchronizeProviderModels(
+    providerId: string,
+    fetchedModels: SyncModelData[],
+  ): Promise<{ created: number; updated: number; deprecated: number }> {
+    return await this.prisma.$transaction(async (tx) => {
+      const existingModels = await tx.model.findMany({ where: { providerId } });
+      const existingByName = new Map(existingModels.map((m) => [m.name, m]));
+      const fetchedNames = new Set(fetchedModels.map((m) => m.name));
+
+      let created = 0;
+      let updated = 0;
+      let deprecated = 0;
+
+      for (const model of fetchedModels) {
+        const existing = existingByName.get(model.name);
+        if (!existing) {
+          await tx.model.create({
+            data: {
+              name: model.name,
+              description: model.description,
+              hasReasoning: model.hasReasoning,
+              isDeprecated: false,
+              providerId,
+            },
+          });
+          created++;
+        } else if (existing.isDeprecated) {
+          await tx.model.update({
+            where: { id: existing.id },
+            data: { isDeprecated: false },
+          });
+          updated++;
+        }
+      }
+
+      for (const existing of existingModels) {
+        if (!fetchedNames.has(existing.name) && !existing.isDeprecated) {
+          await tx.model.update({
+            where: { id: existing.id },
+            data: { isDeprecated: true },
+          });
+          deprecated++;
+        }
+      }
+
+      return { created, updated, deprecated };
+    });
   }
 }

@@ -65,6 +65,28 @@ export class OllamaService {
     }
   }
 
+  async listModels(): Promise<{ name: string; description: string; hasReasoning: boolean }[]> {
+    try {
+      const response = await this.client.list();
+      return response.models.map((model) => {
+        const { family, parameter_size, families } = model.details;
+        const parts = [family, parameter_size].filter(Boolean);
+        const description = parts.length > 0 ? parts.join(' · ') : model.name;
+        const hasReasoning = this.isReasoningModel(model.name, family, families);
+        return { name: model.name, description, hasReasoning };
+      });
+    } catch (error) {
+      this.logger.warn('Failed to list Ollama models', error);
+      return [];
+    }
+  }
+
+  private isReasoningModel(name: string, family: string, families: string[] | null): boolean {
+    const reasoningPatterns = ['deepseek-r1', 'qwq', 'marco-o1'];
+    const matches = (s: string) => reasoningPatterns.some((p) => s.toLowerCase().includes(p));
+    return matches(name) || matches(family) || (families?.some(matches) ?? false);
+  }
+
   async generateConversationTitle(conversationText: string): Promise<string> {
     const response = await this.client.chat({
       model: 'llama3.2:1b',

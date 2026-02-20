@@ -69,6 +69,25 @@ export class OpenAIService {
     }
   }
 
+  async listModels(): Promise<{ name: string; description: string; hasReasoning: boolean }[]> {
+    try {
+      const models: { name: string; description: string; hasReasoning: boolean }[] = [];
+      for await (const model of this.client.models.list()) {
+        if (model.owned_by === 'openai' && /^(gpt-|o\d)/.test(model.id)) {
+          models.push({
+            name: model.id,
+            description: '',
+            hasReasoning: /^o\d(-|$)/.test(model.id),
+          });
+        }
+      }
+      return models;
+    } catch (error) {
+      this.logger.warn('Failed to list OpenAI models', error);
+      return [];
+    }
+  }
+
   stopStream(conversationId: string): void {
     const abortController = this.activeStreams.get(conversationId);
     if (abortController) {

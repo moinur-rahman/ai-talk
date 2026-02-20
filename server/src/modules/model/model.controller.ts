@@ -1,4 +1,4 @@
-import { Controller, Get, Param } from '@nestjs/common';
+import { Controller, Get, Param, Post } from '@nestjs/common';
 import { ModelService } from './model.service.js';
 import { ProviderParamsDto } from './dto/provider-params.dto.js';
 
@@ -30,6 +30,15 @@ export class ModelController {
     return {
       data: result,
       message: 'Model details fetched successfully',
+    };
+  }
+
+  @Post('sync')
+  async syncModels() {
+    const result = await this.modelService.syncModels();
+    return {
+      data: result,
+      message: 'Models synced successfully',
     };
   }
 }
