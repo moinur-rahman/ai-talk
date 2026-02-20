@@ -13,14 +13,20 @@ datasource db {
   provider = "postgresql"
 }
 
+enum SenderType {
+  user
+  assistant
+}
+
 model User {
-  id        String   @id @default(uuid()) @db.Uuid
-  email     String   @unique @db.VarChar(255)
-  password  String   @db.VarChar(255)
-  name      String   @db.VarChar(255)
-  files     File[]
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+  id            String         @id @default(uuid()) @db.Uuid
+  email         String         @unique @db.VarChar(255)
+  password      String         @db.VarChar(255)
+  name          String         @db.VarChar(255)
+  files         File[]
+  conversations Conversation[]
+  createdAt     DateTime       @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt     DateTime       @updatedAt @map("updated_at") @db.Timestamptz
 
   @@map("users")
 }
@@ -61,4 +67,43 @@ model File {
   createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz
 
   @@map("files")
+}
+
+model Conversation {
+  id             String    @id @default(uuid()) @db.Uuid
+  title          String?   @db.VarChar(50)
+  userId         String    @map("user_id") @db.Uuid
+  user           User      @relation(fields: [userId], references: [id])
+  lastProviderId String?   @map("last_provider_id") @db.Uuid
+  lastModelId    String?   @map("last_model_id") @db.Uuid
+  messages       Message[]
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt      DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@map("conversations")
+}
+
+model Message {
+  id               String              @id @default(uuid()) @db.Uuid
+  mainContent      String?             @map("main_content")
+  reasoningContent String?             @map("reasoning_content")
+  senderType       SenderType          @map("sender_type")
+  conversationId   String              @map("conversation_id") @db.Uuid
+  conversation     Conversation        @relation(fields: [conversationId], references: [id])
+  attachments      MessageAttachment[]
+  createdAt        DateTime            @default(now()) @map("created_at") @db.Timestamptz
+
+  @@index([conversationId], name: "idx_conversation_id")
+  @@map("messages")
+}
+
+model MessageAttachment {
+  id        String   @id @default(uuid()) @db.Uuid
+  messageId String   @map("message_id") @db.Uuid
+  message   Message  @relation(fields: [messageId], references: [id])
+  fileId    String   @map("file_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  @@index([messageId], name: "idx_message_id")
+  @@map("message_attachments")
 }
