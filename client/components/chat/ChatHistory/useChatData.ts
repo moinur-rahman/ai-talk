@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "@/redux/store";
 import { createSelector } from "@reduxjs/toolkit";
@@ -14,10 +14,6 @@ import {
 } from "@/services/modelApi";
 import { useGetChatHistoryQuery } from "@/services/chatApi";
 
-interface ProviderModelInfo {
-  lastModelId: string;
-  lastProviderId: string;
-}
 
 const selectChatHistories = createSelector(
   [
@@ -39,9 +35,6 @@ export const useChatData = (conversationId: string) => {
     (state: RootState) => state.chat.newConversationId
   );
 
-  const [lastModelAndProvider, setLastModelAndProvider] =
-    useState<ProviderModelInfo | null>(null);
-
   const { data: providers = [] } = useGetProvidersQuery();
   const { data: models = [] } = useGetModelsQuery(selectedProvider?.id ?? "", {
     skip: !selectedProvider,
@@ -53,16 +46,17 @@ export const useChatData = (conversationId: string) => {
       chatHistories.length > 0,
   });
 
+  const lastModelAndProvider = chatHistoryData?.lastModelAndProvider ?? null;
+
   useEffect(() => {
     if (chatHistoryData) {
-      const { messages, lastModelAndProvider } = chatHistoryData;
+      const { messages } = chatHistoryData;
       dispatch(
         loadChatHistory({
           conversationId: conversationId,
           messages: messages,
         })
       );
-      setLastModelAndProvider(lastModelAndProvider);
     }
   }, [chatHistoryData, dispatch, conversationId]);
 

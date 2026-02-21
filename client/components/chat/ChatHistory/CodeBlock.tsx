@@ -59,7 +59,7 @@ export const CodeBlock = ({ language, codeString }: CodeBlockProps) => {
         </button>
       </div>
       <SyntaxHighlighter
-        style={vscDarkPlus as any}
+        style={vscDarkPlus as Record<string, React.CSSProperties>}
         language={language}
         className="rounded-t-none"
       >

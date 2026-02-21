@@ -10,12 +10,9 @@ interface MarkdownRendererProps {
   content: string;
 }
 
-interface CodeProps {
-  node?: any;
+interface CodeProps extends React.ComponentPropsWithoutRef<"code"> {
+  node?: object;
   inline?: boolean;
-  className?: string;
-  children?: React.ReactNode;
-  [key: string]: any;
 }
 
 export const MarkdownRenderer = ({ content }: MarkdownRendererProps) => {

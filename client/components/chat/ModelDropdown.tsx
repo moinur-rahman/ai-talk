@@ -1,5 +1,5 @@
 "use client";
-import { FC, useEffect } from "react";
+import { FC, useEffect, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import Select, { StylesConfig } from "react-select";
 import {
@@ -10,8 +10,6 @@ import {
 import {
   useGetProvidersQuery,
   useGetModelsQuery,
-  useUpdateDefaultModelMutation,
-  useGetDefaultModelQuery,
 } from "@/services/modelApi";
 import { RootState } from "@/redux/store";
 import { useChat } from "@/contexts/ChatContext";
@@ -65,6 +63,17 @@ export const customStyles: StylesConfig<ModelOption> = {
   }),
 };
 
+const DEFAULT_MODEL_KEY = "defaultModel";
+
+function getStoredDefault(): { modelId: string; providerId: string } | null {
+  try {
+    const raw = localStorage.getItem(DEFAULT_MODEL_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
 const ModelDropdown: FC = () => {
   const { conversationId } = useChat();
 
@@ -76,8 +85,7 @@ const ModelDropdown: FC = () => {
     (state: RootState) => state.model.selectedModel
   );
 
-  const [updateDefaultModel] = useUpdateDefaultModelMutation();
-  const { data: defaultModel } = useGetDefaultModelQuery();
+  const defaultModel = useMemo(() => getStoredDefault(), []);
   const { data: providers } = useGetProvidersQuery();
 
   const { data: models = [], isLoading } = useGetModelsQuery(
@@ -139,7 +147,7 @@ const ModelDropdown: FC = () => {
     conversationId,
   ]);
 
-  const handleOptionClick = async (newValue: unknown) => {
+  const handleOptionClick = (newValue: unknown) => {
     const modelOption = newValue as ModelOption;
     const selectedModelData = models.find((m) => m.id === modelOption.value);
 
@@ -156,14 +164,10 @@ const ModelDropdown: FC = () => {
     }
 
     if (!conversationId && selectedProvider) {
-      try {
-        await updateDefaultModel({
-          modelId: modelOption.value,
-          providerId: selectedProvider.id,
-        });
-      } catch (error) {
-        console.error("Failed to set default model:", error);
-      }
+      localStorage.setItem(
+        DEFAULT_MODEL_KEY,
+        JSON.stringify({ modelId: modelOption.value, providerId: selectedProvider.id })
+      );
     }
   };
 

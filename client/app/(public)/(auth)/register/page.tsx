@@ -60,9 +60,10 @@ export default function RegisterPage() {
       const { confirmPassword, ...credentials } = data;
       await axiosInstance.post('/users/create', credentials);
       router.push(url.login);
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } }; message?: string };
       const message =
-        error.response?.data?.message || error.message || '';
+        err.response?.data?.message || err.message || '';
       if (message.includes('duplicate key') || message.includes('already exists')) {
         setServerError(
           'This email is already registered. Please use a different email or login.'

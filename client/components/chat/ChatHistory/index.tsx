@@ -6,6 +6,7 @@ import { Message } from "@/types/chat";
 
 const ChatHistory = () => {
   const { conversationId, reasoningStreaming } = useChat();
+  const { chatHistories } = useChatData(conversationId ?? "");
 
   if (!conversationId) {
     return (
@@ -18,8 +19,6 @@ const ChatHistory = () => {
       </div>
     );
   }
-
-  const { chatHistories } = useChatData(conversationId);
 
   return (
     <div className="h-full w-full overflow-y-auto px-4 flex flex-col items-center font-poppins">

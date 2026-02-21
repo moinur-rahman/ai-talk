@@ -34,9 +34,10 @@ export default function LoginPage() {
       setServerError('');
       await axiosInstance.post('/auth/login', { email, password });
       router.push(url.home);
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } };
       setServerError(
-        error.response?.data?.message || 'Invalid email or password'
+        err.response?.data?.message || 'Invalid email or password'
       );
     } finally {
       setLoading(false);
