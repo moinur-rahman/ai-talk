@@ -9,7 +9,13 @@ import { Mail, Lock, MessageSquare } from 'lucide-react';
 import InputField from '@/components/auth/InputField';
 import AuthButton from '@/components/auth/AuthButton';
 import AuthBrandPanel from '@/components/auth/AuthBrandPanel';
-import { authApi, ApiError, LoginCredentials } from '@/lib/api';
+import axiosInstance from '@/apis/axiosInstance';
+import { url } from '@/utils/url';
+
+interface LoginFormProps {
+  email: string;
+  password: string;
+}
 
 export default function LoginPage() {
   const router = useRouter();
@@ -20,20 +26,18 @@ export default function LoginPage() {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<LoginCredentials>();
+  } = useForm<LoginFormProps>();
 
-  const onSubmit = async (data: LoginCredentials) => {
+  const onSubmit = async ({ email, password }: LoginFormProps) => {
     try {
       setLoading(true);
       setServerError('');
-      await authApi.login(data);
-      router.push('/');
-    } catch (error) {
-      if (error instanceof ApiError) {
-        setServerError(error.message || 'Invalid email or password');
-      } else {
-        setServerError('An unexpected error occurred. Please try again.');
-      }
+      await axiosInstance.post('/auth/login', { email, password });
+      router.push(url.home);
+    } catch (error: any) {
+      setServerError(
+        error.response?.data?.message || 'Invalid email or password'
+      );
     } finally {
       setLoading(false);
     }
@@ -156,7 +160,7 @@ export default function LoginPage() {
 
           <p className="text-center text-sm text-slate-500 mt-6">
             Don&apos;t have an account?{' '}
-            <Link href="/register" className="text-indigo-600 hover:text-indigo-700 font-semibold transition-colors">
+            <Link href={url.registration} className="text-indigo-600 hover:text-indigo-700 font-semibold transition-colors">
               Sign up
             </Link>
           </p>

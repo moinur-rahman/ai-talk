@@ -9,9 +9,13 @@ import { Mail, Lock, User, MessageSquare } from 'lucide-react';
 import InputField from '@/components/auth/InputField';
 import AuthButton from '@/components/auth/AuthButton';
 import AuthBrandPanel from '@/components/auth/AuthBrandPanel';
-import { authApi, ApiError, RegisterCredentials } from '@/lib/api';
+import axiosInstance from '@/apis/axiosInstance';
+import { url } from '@/utils/url';
 
-interface RegisterFormData extends RegisterCredentials {
+interface RegisterFormData {
+  email: string;
+  name: string;
+  password: string;
   confirmPassword: string;
 }
 
@@ -53,20 +57,18 @@ export default function RegisterPage() {
     try {
       setLoading(true);
       setServerError('');
-
       const { confirmPassword, ...credentials } = data;
-      await authApi.register(credentials);
-
-      router.push('/login?registered=true');
-    } catch (error) {
-      if (error instanceof ApiError) {
-        if (error.message.includes('duplicate') || error.message.includes('already exists')) {
-          setServerError('This email is already registered. Please use a different email or login.');
-        } else {
-          setServerError(error.message || 'Failed to create account');
-        }
+      await axiosInstance.post('/users/create', credentials);
+      router.push(url.login);
+    } catch (error: any) {
+      const message =
+        error.response?.data?.message || error.message || '';
+      if (message.includes('duplicate key') || message.includes('already exists')) {
+        setServerError(
+          'This email is already registered. Please use a different email or login.'
+        );
       } else {
-        setServerError('An unexpected error occurred. Please try again.');
+        setServerError(message || 'Failed to create account');
       }
     } finally {
       setLoading(false);
@@ -255,7 +257,7 @@ export default function RegisterPage() {
 
           <p className="text-center text-sm text-slate-500 mt-6">
             Already have an account?{' '}
-            <Link href="/login" className="text-indigo-600 hover:text-indigo-700 font-semibold transition-colors">
+            <Link href={url.login} className="text-indigo-600 hover:text-indigo-700 font-semibold transition-colors">
               Sign in
             </Link>
           </p>
