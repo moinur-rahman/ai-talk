@@ -18,15 +18,15 @@ const AuthButton = ({
   ...props
 }: AuthButtonProps) => {
   const baseClasses =
-    'w-full py-3 px-4 rounded-lg font-semibold transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed';
+    'w-full py-3 px-4 rounded-xl font-semibold text-sm transition-all duration-200 flex items-center justify-center gap-2.5 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98]';
 
   const variantClasses = {
     primary:
-      'bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800 shadow-lg shadow-blue-500/30 hover:shadow-xl hover:shadow-blue-500/40 active:scale-[0.98]',
+      'bg-gradient-to-r from-indigo-600 to-violet-600 text-white hover:from-indigo-700 hover:to-violet-700 shadow-lg shadow-indigo-500/25 hover:shadow-xl hover:shadow-indigo-500/35',
     secondary:
-      'bg-white text-gray-700 border-2 border-gray-200 hover:bg-gray-50 hover:border-gray-300',
+      'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 hover:border-slate-300 shadow-sm',
     outline:
-      'bg-transparent text-blue-600 border-2 border-blue-600 hover:bg-blue-50',
+      'bg-transparent text-indigo-600 border-2 border-indigo-600 hover:bg-indigo-50',
   };
 
   return (
@@ -35,7 +35,7 @@ const AuthButton = ({
       disabled={disabled || loading}
       {...props}
     >
-      {loading && <Loader2 className="animate-spin" size={20} />}
+      {loading && <Loader2 className="animate-spin" size={16} />}
       {children}
     </button>
   );
