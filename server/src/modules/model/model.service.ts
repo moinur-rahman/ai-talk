@@ -1,8 +1,14 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  NotFoundException,
+  OnApplicationBootstrap,
+} from '@nestjs/common';
 import { PrismaService } from '../../providers/prisma/prisma.service.js';
 import { OllamaService } from '../llm/ollama/ollama.service.js';
 import { OpenAIService } from '../llm/openai/openai.service.js';
 import { OpenRouterService } from '../llm/openrouter/openrouter.service.js';
+import { SYSTEM_PROVIDERS } from '../../common/constants/providers.js';
 
 type SyncModelData = {
   name: string;
@@ -15,7 +21,7 @@ type ProviderSyncResult =
   | { provider: string; error: string };
 
 @Injectable()
-export class ModelService {
+export class ModelService implements OnApplicationBootstrap {
   private readonly logger = new Logger(ModelService.name);
 
   constructor(
@@ -24,6 +30,21 @@ export class ModelService {
     private readonly openaiService: OpenAIService,
     private readonly openRouterService: OpenRouterService,
   ) {}
+
+  async onApplicationBootstrap(): Promise<void> {
+    await this.seedProviders();
+  }
+
+  private async seedProviders(): Promise<void> {
+    for (const name of SYSTEM_PROVIDERS) {
+      await this.prisma.provider.upsert({
+        where: { name },
+        update: {},
+        create: { name },
+      });
+    }
+    this.logger.log('Providers seeded successfully');
+  }
 
   async getProviders() {
     return await this.prisma.provider.findMany({
