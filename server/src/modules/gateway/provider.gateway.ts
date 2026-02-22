@@ -17,6 +17,7 @@ import { LlmService } from '../llm/llm.service.js';
 import { LLMMessage, TokenType } from '../llm/types/llm.types.js';
 import { FileMetadataResponseDto } from '../file/dto/file-metadata-response.dto.js';
 import { SenderType } from '../chat/message/dto/save-message.dto.js';
+import { SessionUser } from '../../common/decorators/current-user.decorator.js';
 import config from '../../common/config/config.js';
 
 interface GetLLMResponseData {
@@ -52,7 +53,7 @@ export class ProviderGateway
   ) {}
 
   handleConnection(client: Socket) {
-    const req = client.request as any;
+    const req = client.request as { user?: SessionUser };
     if (!req.user) {
       this.logger.warn(
         `Unauthenticated connection attempt from ${client.handshake.address}`,
@@ -115,9 +116,7 @@ export class ProviderGateway
         const filesMetadata = await this.fileService.getMultipleFilesMetadata(
           data.fileIds,
         );
-        attachments = filesMetadata.filter(
-          (f) => !f.error,
-        ) as FileMetadataResponseDto[];
+        attachments = filesMetadata.filter((f) => !f.error);
       }
 
       // Build full message list for the LLM
@@ -125,7 +124,7 @@ export class ProviderGateway
         ...chatHistory.map((msg) => ({
           content: msg.mainContent || '',
           senderType: msg.senderType as 'user' | 'assistant',
-          attachments: (msg.attachments as FileMetadataResponseDto[])
+          attachments: msg.attachments
             .filter((a) => !a.error && a.fileName && a.mimeType)
             .map((a) => ({
               id: a.id,
@@ -163,9 +162,9 @@ export class ProviderGateway
       // Generate conversation title on first message
       if (chatHistory.length === 0) {
         this.generateAndEmitTitle(data.conversationId, data.prompt).catch(
-          (err) =>
+          (err: unknown) =>
             this.logger.error(
-              `Failed to generate conversation title: ${err.message}`,
+              `Failed to generate conversation title: ${err instanceof Error ? err.message : String(err)}`,
             ),
         );
       }
@@ -210,8 +209,10 @@ export class ProviderGateway
           }
         },
       );
-    } catch (error) {
-      this.logger.error(`Error in get-llm-response: ${error.message}`);
+    } catch (error: unknown) {
+      this.logger.error(
+        `Error in get-llm-response: ${error instanceof Error ? error.message : String(error)}`,
+      );
       client.emit('error', {
         message: 'Error fetching provider response',
         conversationId: data.conversationId,
