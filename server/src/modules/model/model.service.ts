@@ -8,7 +8,10 @@ import { PrismaService } from '../../providers/prisma/prisma.service.js';
 import { OllamaService } from '../llm/ollama/ollama.service.js';
 import { OpenAIService } from '../llm/openai/openai.service.js';
 import { OpenRouterService } from '../llm/openrouter/openrouter.service.js';
-import { SYSTEM_PROVIDERS } from '../../common/constants/providers.js';
+import {
+  PROVIDER,
+  SYSTEM_PROVIDERS,
+} from '../../common/constants/providers.js';
 
 type SyncModelData = {
   name: string;
@@ -131,11 +134,16 @@ export class ModelService implements OnApplicationBootstrap {
   private async fetchModelsForProvider(
     providerName: string,
   ): Promise<SyncModelData[]> {
-    const name = providerName.toLowerCase();
-    if (name === 'ollama') return this.ollamaService.listModels();
-    if (name === 'openai') return this.openaiService.listModels();
-    if (name === 'openrouter') return this.openRouterService.listModels();
-    return [];
+    switch (providerName.toLowerCase()) {
+      case PROVIDER.OLLAMA:
+        return this.ollamaService.listModels();
+      case PROVIDER.OPENAI:
+        return this.openaiService.listModels();
+      case PROVIDER.OPENROUTER:
+        return this.openRouterService.listModels();
+      default:
+        return [];
+    }
   }
 
   private async synchronizeProviderModels(

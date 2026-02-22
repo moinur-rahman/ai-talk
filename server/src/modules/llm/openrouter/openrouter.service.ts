@@ -41,9 +41,17 @@ export class OpenRouterService {
 
     try {
       const messages = await this.prepareMessages(request.messages);
+      const reasoning = request.enableReasoning
+        ? { effort: 'low' as const }
+        : null;
 
       const stream = await this.client.chat.completions.create(
-        { model: request.model, messages, stream: true },
+        {
+          model: request.model,
+          messages,
+          stream: true,
+          ...(reasoning && { reasoning }),
+        },
         { signal: abortController.signal },
       );
 

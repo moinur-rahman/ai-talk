@@ -4,6 +4,7 @@ import { OpenAIService } from './openai/openai.service.js';
 import { OpenRouterService } from './openrouter/openrouter.service.js';
 import { LLMRequest, TokenCallback } from './types/llm.types.js';
 import config from '../../common/config/config.js';
+import { PROVIDER } from '../../common/constants/providers.js';
 
 @Injectable()
 export class LlmService {
@@ -20,30 +21,36 @@ export class LlmService {
     request: LLMRequest,
     onToken: TokenCallback,
   ): Promise<void> {
-    const provider = providerName.toLowerCase();
-
-    if (provider === 'openai') {
-      await this.openAIService.streamResponse(request, onToken);
-    } else if (provider === 'ollama') {
-      await this.ollamaService.streamResponse(request, onToken);
-    } else if (provider === 'openrouter') {
-      await this.openRouterService.streamResponse(request, onToken);
-    } else {
-      throw new Error(`Unknown provider: ${providerName}`);
+    switch (providerName.toLowerCase()) {
+      case PROVIDER.OPENAI:
+        await this.openAIService.streamResponse(request, onToken);
+        break;
+      case PROVIDER.OLLAMA:
+        await this.ollamaService.streamResponse(request, onToken);
+        break;
+      case PROVIDER.OPENROUTER:
+        await this.openRouterService.streamResponse(request, onToken);
+        break;
+      default:
+        throw new Error(`Unknown provider: ${providerName}`);
     }
   }
 
   stopStream(providerName: string, conversationId: string): void {
-    const provider = providerName.toLowerCase();
-
-    if (provider === 'openai') {
-      this.openAIService.stopStream(conversationId);
-    } else if (provider === 'ollama') {
-      this.ollamaService.stopStream(conversationId);
-    } else if (provider === 'openrouter') {
-      this.openRouterService.stopStream(conversationId);
-    } else {
-      this.logger.warn(`Cannot stop stream: unknown provider ${providerName}`);
+    switch (providerName.toLowerCase()) {
+      case PROVIDER.OPENAI:
+        this.openAIService.stopStream(conversationId);
+        break;
+      case PROVIDER.OLLAMA:
+        this.ollamaService.stopStream(conversationId);
+        break;
+      case PROVIDER.OPENROUTER:
+        this.openRouterService.stopStream(conversationId);
+        break;
+      default:
+        this.logger.warn(
+          `Cannot stop stream: unknown provider ${providerName}`,
+        );
     }
   }
 
@@ -51,25 +58,37 @@ export class LlmService {
     const provider = config.titleGenerationProvider.toLowerCase();
     const model = config.titleGenerationModel;
 
-    let rawTitle: string;
-    if (provider === 'openai') {
-      rawTitle = await this.openAIService.generateTitle(
-        conversationText,
-        model,
+    try {
+      let rawTitle: string;
+      switch (provider) {
+        case PROVIDER.OPENAI:
+          rawTitle = await this.openAIService.generateTitle(
+            conversationText,
+            model,
+          );
+          break;
+        case PROVIDER.OPENROUTER:
+          rawTitle = await this.openRouterService.generateTitle(
+            conversationText,
+            model,
+          );
+          break;
+        case PROVIDER.OLLAMA:
+          rawTitle = await this.ollamaService.generateTitle(
+            conversationText,
+            model,
+          );
+          break;
+        default:
+          throw new Error(`Unknown title generation provider: ${provider}`);
+      }
+      return this.formatTitle(rawTitle);
+    } catch (error) {
+      this.logger.warn(
+        `Title generation failed: ${error instanceof Error ? error.message : String(error)}. Using first message as fallback.`,
       );
-    } else if (provider === 'openrouter') {
-      rawTitle = await this.openRouterService.generateTitle(
-        conversationText,
-        model,
-      );
-    } else {
-      rawTitle = await this.ollamaService.generateTitle(
-        conversationText,
-        model,
-      );
+      return this.formatTitle(conversationText);
     }
-
-    return this.formatTitle(rawTitle);
   }
 
   private formatTitle(title: string): string {
