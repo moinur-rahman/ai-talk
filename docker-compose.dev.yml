@@ -58,6 +58,8 @@ services:
       - OLLAMA_HOST=${OLLAMA_HOST}
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+      - TITLE_GENERATION_PROVIDER=${TITLE_GENERATION_PROVIDER}
+      - TITLE_GENERATION_MODEL=${TITLE_GENERATION_MODEL}
     depends_on:
       postgres:
         condition: service_healthy

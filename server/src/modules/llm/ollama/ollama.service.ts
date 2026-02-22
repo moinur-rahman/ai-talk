@@ -105,9 +105,9 @@ export class OllamaService {
     );
   }
 
-  async generateConversationTitle(conversationText: string): Promise<string> {
+  async generateTitle(text: string, model: string): Promise<string> {
     const response = await this.client.chat({
-      model: 'llama3.2:1b',
+      model,
       messages: [
         {
           role: 'system',
@@ -116,23 +116,12 @@ export class OllamaService {
         },
         {
           role: 'user',
-          content: `Generate a short title for the following conversation. Strictly adhere to the limit of 3–5 words. Conversation:\n\n${conversationText}`,
+          content: `Generate a short title for the following conversation. Strictly adhere to the limit of 3–5 words. Conversation:\n\n${text}`,
         },
       ],
       stream: false,
     });
 
-    let title = response.message.content?.trim() || '';
-    title = title.replace(/^["']|["']$/g, '');
-
-    const words = title.split(/\s+/);
-    if (words.length > 5) {
-      title = words.slice(0, 5).join(' ');
-    }
-    if (title.length > 50) {
-      title = title.slice(0, 47) + '...';
-    }
-
-    return title.trim();
+    return response.message.content?.trim() || '';
   }
 }

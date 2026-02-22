@@ -98,6 +98,26 @@ export class OpenRouterService {
     }
   }
 
+  async generateTitle(text: string, model: string): Promise<string> {
+    const response = await this.client.chat.completions.create({
+      model,
+      messages: [
+        {
+          role: 'system',
+          content:
+            'You must strictly limit your response to 3–5 words. Do not exceed this limit.',
+        },
+        {
+          role: 'user',
+          content: `Generate a short title for the following conversation. Strictly adhere to the limit of 3–5 words. Conversation:\n\n${text}`,
+        },
+      ],
+      stream: false,
+    });
+
+    return response.choices[0]?.message?.content?.trim() ?? '';
+  }
+
   stopStream(conversationId: string): void {
     const abortController = this.activeStreams.get(conversationId);
     if (abortController) {
