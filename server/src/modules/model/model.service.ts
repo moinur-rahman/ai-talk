@@ -2,6 +2,7 @@ import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../providers/prisma/prisma.service.js';
 import { OllamaService } from '../llm/ollama/ollama.service.js';
 import { OpenAIService } from '../llm/openai/openai.service.js';
+import { OpenRouterService } from '../llm/openrouter/openrouter.service.js';
 
 type SyncModelData = {
   name: string;
@@ -21,6 +22,7 @@ export class ModelService {
     private readonly prisma: PrismaService,
     private readonly ollamaService: OllamaService,
     private readonly openaiService: OpenAIService,
+    private readonly openRouterService: OpenRouterService,
   ) {}
 
   async getProviders() {
@@ -111,6 +113,7 @@ export class ModelService {
     const name = providerName.toLowerCase();
     if (name === 'ollama') return this.ollamaService.listModels();
     if (name === 'openai') return this.openaiService.listModels();
+    if (name === 'openrouter') return this.openRouterService.listModels();
     return [];
   }
 

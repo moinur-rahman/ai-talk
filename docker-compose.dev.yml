@@ -57,6 +57,7 @@ services:
       - CLIENT_URL=${CLIENT_URL}
       - OLLAMA_HOST=${OLLAMA_HOST}
       - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
     depends_on:
       postgres:
         condition: service_healthy

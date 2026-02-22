@@ -18,6 +18,7 @@ interface IConfig {
   databaseUrl: string;
   clientUrl: string;
   openaiApiKey: string;
+  openrouterApiKey: string;
   ollamaHost: string;
 }
 
@@ -33,6 +34,7 @@ const config: IConfig = {
   databaseUrl: getEnvVar('DATABASE_URL'),
   clientUrl: getEnvVar('CLIENT_URL'),
   openaiApiKey: getEnvVar('OPENAI_API_KEY', ''),
+  openrouterApiKey: getEnvVar('OPENROUTER_API_KEY', ''),
   ollamaHost: getEnvVar('OLLAMA_HOST', 'http://localhost:11434'),
 };
 
