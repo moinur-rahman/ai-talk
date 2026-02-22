@@ -1,9 +1,9 @@
-import { FC, ReactNode } from "react";
-import Sidebar from "@/components/common/Sidebar";
-import { ChatProvider } from "@/contexts/ChatContext";
-import Header from "@/components/chat/Header";
-import { AuthProvider } from "@/contexts/AuthContext";
-import SendMessage from "@/components/chat/SendMessage";
+import { FC, ReactNode } from 'react';
+import Sidebar from '@/components/common/Sidebar';
+import { ChatProvider } from '@/contexts/ChatContext';
+import Header from '@/components/chat/Header';
+import { AuthProvider } from '@/contexts/AuthContext';
+import SendMessage from '@/components/chat/SendMessage';
 
 const Layout: FC<{ children: ReactNode }> = ({ children }) => {
   return (

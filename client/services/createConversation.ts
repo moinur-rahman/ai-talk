@@ -1,4 +1,4 @@
-import axiosInstance from "@/apis/axiosInstance";
+import axiosInstance from '@/apis/axiosInstance';
 
 interface CreateConversationResponse {
   data: {
@@ -10,12 +10,12 @@ interface CreateConversationResponse {
 export const createConversation = async (): Promise<string> => {
   try {
     const response = await axiosInstance.post<CreateConversationResponse>(
-      "/chats/conversations"
+      '/chats/conversations',
     );
 
     return response.data.data.conversationId;
   } catch (error) {
-    console.log("Failed to create conversation:", error);
+    console.log('Failed to create conversation:', error);
     throw error;
   }
 };

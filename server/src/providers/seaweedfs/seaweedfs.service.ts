@@ -67,7 +67,9 @@ export class SeaweedFSService {
       });
 
       await this.s3Client.send(command);
-      this.logger.log(`File uploaded successfully: ${bucketName}/${objectName}`);
+      this.logger.log(
+        `File uploaded successfully: ${bucketName}/${objectName}`,
+      );
     } catch (error) {
       this.logger.error(`Failed to upload file: ${error.message}`);
       throw new Error(`Failed to upload file: ${error.message}`);
@@ -182,7 +184,10 @@ export class SeaweedFSService {
       await this.s3Client.send(command);
       return true;
     } catch (error) {
-      if (error.name === 'NotFound' || error.$metadata?.httpStatusCode === 404) {
+      if (
+        error.name === 'NotFound' ||
+        error.$metadata?.httpStatusCode === 404
+      ) {
         return false;
       }
       throw error;

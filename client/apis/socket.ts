@@ -1,4 +1,4 @@
-import { io } from "socket.io-client";
+import { io } from 'socket.io-client';
 
 export const createNamespaceConnection = (namespace: string) => {
   return io(`${process.env.NEXT_PUBLIC_SOCKET_URL}/${namespace}`, {
@@ -9,6 +9,6 @@ export const createNamespaceConnection = (namespace: string) => {
   });
 };
 
-export const authConnection = createNamespaceConnection("auth");
+export const authConnection = createNamespaceConnection('auth');
 
-export const providerConnection = createNamespaceConnection("provider");
+export const providerConnection = createNamespaceConnection('provider');

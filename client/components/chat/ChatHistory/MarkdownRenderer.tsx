@@ -1,16 +1,16 @@
-"use client";
-import Markdown from "react-markdown";
-import remarkGfm from "remark-gfm";
-import remarkMath from "remark-math";
-import rehypeKatex from "rehype-katex";
-import { CodeBlock } from "./CodeBlock";
-import "katex/dist/katex.min.css";
+'use client';
+import Markdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
+import { CodeBlock } from './CodeBlock';
+import 'katex/dist/katex.min.css';
 
 interface MarkdownRendererProps {
   content: string;
 }
 
-interface CodeProps extends React.ComponentPropsWithoutRef<"code"> {
+interface CodeProps extends React.ComponentPropsWithoutRef<'code'> {
   node?: object;
   inline?: boolean;
 }
@@ -22,8 +22,8 @@ export const MarkdownRenderer = ({ content }: MarkdownRendererProps) => {
       rehypePlugins={[rehypeKatex]}
       components={{
         code({ inline, className, children, ...props }: CodeProps) {
-          const match = /language-(\w+)/.exec(className || "");
-          const codeString = String(children).replace(/\n$/, "");
+          const match = /language-(\w+)/.exec(className || '');
+          const codeString = String(children).replace(/\n$/, '');
 
           return !inline && match ? (
             <CodeBlock language={match[1]} codeString={codeString} />

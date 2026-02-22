@@ -1,4 +1,4 @@
-import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 
 export interface Model {
   id: string;
@@ -22,14 +22,14 @@ interface FetchProvidersResponse {
 }
 
 export const modelApi = createApi({
-  reducerPath: "modelApi",
+  reducerPath: 'modelApi',
   baseQuery: fetchBaseQuery({
     baseUrl: `${process.env.NEXT_PUBLIC_BACKEND_URL}/models`,
-    credentials: "include",
+    credentials: 'include',
   }),
   endpoints: (builder) => ({
     getProviders: builder.query<Provider[], void>({
-      query: () => "/providers",
+      query: () => '/providers',
       transformResponse: (response: FetchProvidersResponse) => response.data,
     }),
     getModels: builder.query<Model[], string>({

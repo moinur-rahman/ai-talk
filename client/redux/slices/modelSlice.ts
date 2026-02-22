@@ -1,5 +1,5 @@
-import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { Model, Provider } from "@/services/modelApi";
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { Model, Provider } from '@/services/modelApi';
 
 interface ModelState {
   selectedModel: Model | null;
@@ -14,7 +14,7 @@ const initialState: ModelState = {
 };
 
 export const modelSlice = createSlice({
-  name: "model",
+  name: 'model',
   initialState,
   reducers: {
     setSelectedModel: (state, action: PayloadAction<Model | null>) => {

@@ -1,7 +1,7 @@
-"use client";
-import { useState } from "react";
-import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
-import { vscDarkPlus } from "react-syntax-highlighter/dist/cjs/styles/prism";
+'use client';
+import { useState } from 'react';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { vscDarkPlus } from 'react-syntax-highlighter/dist/cjs/styles/prism';
 
 export interface CodeBlockProps {
   language: string;
@@ -9,13 +9,13 @@ export interface CodeBlockProps {
 }
 
 export const CodeBlock = ({ language, codeString }: CodeBlockProps) => {
-  const [copyStatus, setCopyStatus] = useState<string>("");
+  const [copyStatus, setCopyStatus] = useState<string>('');
 
   const handleCopy = (code: string) => {
     navigator.clipboard.writeText(code).then(() => {
-      setCopyStatus("Copied!");
+      setCopyStatus('Copied!');
       setTimeout(() => {
-        setCopyStatus("");
+        setCopyStatus('');
       }, 2000);
     });
   };
@@ -28,7 +28,7 @@ export const CodeBlock = ({ language, codeString }: CodeBlockProps) => {
           onClick={() => handleCopy(codeString)}
           className="text-gray-400 hover:text-white text-sm flex items-center gap-2"
         >
-          {copyStatus === "Copied!" ? (
+          {copyStatus === 'Copied!' ? (
             <>
               <span>Copied!</span>
               <svg

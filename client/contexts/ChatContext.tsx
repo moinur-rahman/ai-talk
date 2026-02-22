@@ -1,4 +1,4 @@
-"use client";
+'use client';
 import {
   ReactNode,
   createContext,
@@ -6,21 +6,21 @@ import {
   useEffect,
   useState,
   useRef,
-} from "react";
-import { Socket } from "socket.io-client";
-import { providerConnection } from "@/apis/socket";
-import { useDispatch, useSelector } from "react-redux";
+} from 'react';
+import { Socket } from 'socket.io-client';
+import { providerConnection } from '@/apis/socket';
+import { useDispatch, useSelector } from 'react-redux';
 import {
   updateLastMessage,
   addMessage,
   setNewConversationId,
   removeConversation,
-} from "@/redux/slices/chatSlice";
-import { chatApi } from "@/services/chatApi";
-import { AppDispatch, RootState } from "@/redux/store";
-import { createConversation } from "@/services/createConversation";
-import { useParams } from "next/navigation";
-import { FileMetadata } from "@/types/chat";
+} from '@/redux/slices/chatSlice';
+import { chatApi } from '@/services/chatApi';
+import { AppDispatch, RootState } from '@/redux/store';
+import { createConversation } from '@/services/createConversation';
+import { useParams } from 'next/navigation';
+import { FileMetadata } from '@/types/chat';
 
 interface ISendMessageParams {
   prompt: string;
@@ -33,7 +33,7 @@ interface IChatContext {
   reasoningStreaming: Record<string, boolean>;
   error: Record<string, string | null>;
   setError: (
-    error: React.SetStateAction<Record<string, string | null>>
+    error: React.SetStateAction<Record<string, string | null>>,
   ) => void;
   sendMessage: (params: ISendMessageParams) => Promise<string | undefined>;
   stopStream: () => void;
@@ -46,7 +46,7 @@ export const useChat = () => {
   const context = useContext(ChatContext);
 
   if (!context) {
-    throw new Error("useChat must be used within a ChatProvider");
+    throw new Error('useChat must be used within a ChatProvider');
   }
 
   return context;
@@ -69,15 +69,15 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
   const dispatch = useDispatch<AppDispatch>();
 
   const newConversationId = useSelector(
-    (state: RootState) => state.chat.newConversationId
+    (state: RootState) => state.chat.newConversationId,
   );
 
   const selectedModel = useSelector(
-    (state: RootState) => state.model.selectedModel
+    (state: RootState) => state.model.selectedModel,
   );
 
   const reasoningEnabled = useSelector(
-    (state: RootState) => state.model.reasoningEnabled
+    (state: RootState) => state.model.reasoningEnabled,
   );
 
   useEffect(() => {
@@ -116,12 +116,12 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
       token: string;
       isEnd: boolean;
       conversationId: string;
-      tokenType?: "mainContent" | "reasoningContent";
+      tokenType?: 'mainContent' | 'reasoningContent';
     }) => {
       if (!conversationId) return;
 
       if (isEnd) {
-        if (tokenType === "mainContent") {
+        if (tokenType === 'mainContent') {
           setStreaming((prev) => ({ ...prev, [conversationId]: false }));
           setReasoningStreaming((prev) => ({
             ...prev,
@@ -130,8 +130,8 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
 
           dispatch(
             chatApi.util.invalidateTags([
-              { type: "ChatHistory", id: conversationId },
-            ])
+              { type: 'ChatHistory', id: conversationId },
+            ]),
           );
 
           if (
@@ -141,7 +141,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
             dispatch(removeConversation(conversationId));
             pendingCleanupRef.current.delete(conversationId);
           }
-        } else if (tokenType === "reasoningContent") {
+        } else if (tokenType === 'reasoningContent') {
           setReasoningStreaming((prev) => ({
             ...prev,
             [conversationId]: false,
@@ -162,14 +162,14 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
       if (!conversationId) return;
 
       const result = chatApi.util.updateQueryData(
-        "getConversations",
+        'getConversations',
         undefined,
         (draft) => {
           draft.unshift({
             id: conversationId,
             title,
           });
-        }
+        },
       );
       dispatch(result);
     };
@@ -197,14 +197,14 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
       }
     };
 
-    providerConnection.on("token", handleToken);
-    providerConnection.on("conversation-title", handleConversationTitle);
-    providerConnection.on("error", handleError);
+    providerConnection.on('token', handleToken);
+    providerConnection.on('conversation-title', handleConversationTitle);
+    providerConnection.on('error', handleError);
 
     return () => {
-      providerConnection.off("token", handleToken);
-      providerConnection.off("conversation-title", handleConversationTitle);
-      providerConnection.off("error", handleError);
+      providerConnection.off('token', handleToken);
+      providerConnection.off('conversation-title', handleConversationTitle);
+      providerConnection.off('error', handleError);
     };
   }, [dispatch]);
 
@@ -215,14 +215,14 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
   }, [conversationId, newConversationId, dispatch]);
 
   const sendMessage = async (
-    params: ISendMessageParams
+    params: ISendMessageParams,
   ): Promise<string | undefined> => {
     let currentId = conversationId;
 
     if (!providerConnection) {
       setError((prev) => ({
         ...prev,
-        [currentId || "global"]: "Socket connection not available",
+        [currentId || 'global']: 'Socket connection not available',
       }));
       return;
     }
@@ -230,7 +230,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
     if (!selectedModel) {
       setError((prev) => ({
         ...prev,
-        [currentId || "global"]: "Please select a model",
+        [currentId || 'global']: 'Please select a model',
       }));
       return;
     }
@@ -241,8 +241,8 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
         if (!currentId) {
           setError((prev) => ({
             ...prev,
-            [currentId || "global"]:
-              "Failed to create conversation. Please try again.",
+            [currentId || 'global']:
+              'Failed to create conversation. Please try again.',
           }));
           return undefined;
         }
@@ -252,7 +252,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
         try {
           await new Promise<void>((resolve, reject) => {
             providerConnection.emit(
-              "join-conversation",
+              'join-conversation',
               currentId,
               (response: { success: boolean; error?: string }) => {
                 if (response.success) {
@@ -260,10 +260,10 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
                   resolve();
                 } else {
                   reject(
-                    new Error(response.error || "Failed to join conversation")
+                    new Error(response.error || 'Failed to join conversation'),
                   );
                 }
-              }
+              },
             );
           });
 
@@ -273,8 +273,8 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
         } catch (_err) {
           setError((prev) => ({
             ...prev,
-            [currentId || "global"]:
-              "Failed to connect to conversation. Please try again.",
+            [currentId || 'global']:
+              'Failed to connect to conversation. Please try again.',
           }));
           return undefined;
         }
@@ -285,27 +285,27 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
           conversationId: currentId,
           message: {
             mainContent: params.prompt,
-            senderType: "user",
+            senderType: 'user',
             attachments: params.attachments,
           },
-        })
+        }),
       );
 
       dispatch(
         addMessage({
           conversationId: currentId,
           message: {
-            mainContent: "",
-            reasoningContent: "",
-            senderType: "assistant",
+            mainContent: '',
+            reasoningContent: '',
+            senderType: 'assistant',
           },
-        })
+        }),
       );
 
       setStreaming((prev) => ({ ...prev, [currentId!]: true }));
       setReasoningStreaming((prev) => ({ ...prev, [currentId!]: true }));
 
-      providerConnection.emit("get-llm-response", {
+      providerConnection.emit('get-llm-response', {
         prompt: params.prompt,
         conversationId: currentId,
         lastModelId: selectedModel.id,
@@ -317,10 +317,10 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
 
       return currentId;
     } catch (error) {
-      console.error("Error in sendMessage:", error);
+      console.error('Error in sendMessage:', error);
       setError((prev) => ({
         ...prev,
-        [currentId || "global"]: "Failed to send message. Please try again.",
+        [currentId || 'global']: 'Failed to send message. Please try again.',
       }));
       return undefined;
     }
@@ -328,7 +328,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
 
   const stopStream = () => {
     if (providerConnection && conversationId) {
-      providerConnection.emit("stop-stream", { conversationId });
+      providerConnection.emit('stop-stream', { conversationId });
       setStreaming((prev) => ({ ...prev, [conversationId]: false }));
       setReasoningStreaming((prev) => ({ ...prev, [conversationId]: false }));
     }

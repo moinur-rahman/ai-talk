@@ -19,7 +19,9 @@ const InputField = forwardRef<HTMLInputElement, InputFieldProps>(
       <div className="w-full">
         <label className="block text-xs font-semibold text-slate-500 uppercase tracking-widest mb-2">
           {label}
-          {props.required && <span className="text-red-400 ml-1 normal-case">*</span>}
+          {props.required && (
+            <span className="text-red-400 ml-1 normal-case">*</span>
+          )}
         </label>
         <div className="relative">
           {icon && (
@@ -62,7 +64,7 @@ const InputField = forwardRef<HTMLInputElement, InputFieldProps>(
         )}
       </div>
     );
-  }
+  },
 );
 
 InputField.displayName = 'InputField';

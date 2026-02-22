@@ -1,6 +1,6 @@
-"use client";
-import { FiX } from "react-icons/fi";
-import Image from "next/image";
+'use client';
+import { FiX } from 'react-icons/fi';
+import Image from 'next/image';
 
 interface ImageModalProps {
   isOpen: boolean;

@@ -8,7 +8,12 @@ import type {
   ResponseInputMessageContentList,
 } from 'openai/resources/responses/responses';
 import config from '../../../common/config/config.js';
-import { FileMetadata, LLMMessage, LLMRequest, TokenCallback } from '../types/llm.types.js';
+import {
+  FileMetadata,
+  LLMMessage,
+  LLMRequest,
+  TokenCallback,
+} from '../types/llm.types.js';
 import { systemInstructions } from './openai.instructions.js';
 
 @Injectable()
@@ -21,7 +26,10 @@ export class OpenAIService {
     this.client = new OpenAI({ apiKey: config.openaiApiKey });
   }
 
-  async streamResponse(request: LLMRequest, onToken: TokenCallback): Promise<void> {
+  async streamResponse(
+    request: LLMRequest,
+    onToken: TokenCallback,
+  ): Promise<void> {
     const abortController = new AbortController();
     this.activeStreams.set(request.conversationId, abortController);
 
@@ -69,9 +77,15 @@ export class OpenAIService {
     }
   }
 
-  async listModels(): Promise<{ name: string; description: string; hasReasoning: boolean }[]> {
+  async listModels(): Promise<
+    { name: string; description: string; hasReasoning: boolean }[]
+  > {
     try {
-      const models: { name: string; description: string; hasReasoning: boolean }[] = [];
+      const models: {
+        name: string;
+        description: string;
+        hasReasoning: boolean;
+      }[] = [];
       for await (const model of this.client.models.list()) {
         if (model.owned_by === 'openai' && /^(gpt-|o\d)/.test(model.id)) {
           models.push({
@@ -94,11 +108,15 @@ export class OpenAIService {
       abortController.abort();
       this.activeStreams.delete(conversationId);
     } else {
-      this.logger.log(`No active OpenAI stream found for conversation ${conversationId}`);
+      this.logger.log(
+        `No active OpenAI stream found for conversation ${conversationId}`,
+      );
     }
   }
 
-  private async prepareResponseInput(messages: LLMMessage[]): Promise<ResponseInput> {
+  private async prepareResponseInput(
+    messages: LLMMessage[],
+  ): Promise<ResponseInput> {
     const processedMessages = await Promise.all(
       messages.map(async (message) => {
         if (message.attachments.length > 0) {
@@ -125,7 +143,9 @@ export class OpenAIService {
     files: FileMetadata[],
   ): Promise<ResponseInputMessageContentList> {
     const contents = await Promise.all(files.map((f) => this.processFile(f)));
-    return contents.filter((item): item is ResponseInputContent => item !== undefined);
+    return contents.filter(
+      (item): item is ResponseInputContent => item !== undefined,
+    );
   }
 
   private async processFile(

@@ -1,7 +1,7 @@
-import { FC } from "react";
-import ModelDropdown from "./ModelDropdown";
-import ProviderDropdown from "./ProviderDropdown";
-import ReasoningToggle from "./ReasoningToggle";
+import { FC } from 'react';
+import ModelDropdown from './ModelDropdown';
+import ProviderDropdown from './ProviderDropdown';
+import ReasoningToggle from './ReasoningToggle';
 
 const Header: FC = () => {
   return (

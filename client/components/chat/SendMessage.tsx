@@ -1,14 +1,14 @@
-"use client";
-import { useRouter } from "next/navigation";
-import { useState, FormEvent, useEffect, useRef } from "react";
-import { FiPaperclip, FiSend } from "react-icons/fi";
-import { useChat } from "@/contexts/ChatContext";
-import { FaStop } from "react-icons/fa";
-import { useUploadFileMutation } from "@/services/fileApi";
-import { FileMetadata } from "@/types/chat";
-import Image from "next/image";
-import { FiFileText } from "react-icons/fi";
-import ImageModal from "@/components/common/ImageModal";
+'use client';
+import { useRouter } from 'next/navigation';
+import { useState, FormEvent, useEffect, useRef } from 'react';
+import { FiPaperclip, FiSend } from 'react-icons/fi';
+import { useChat } from '@/contexts/ChatContext';
+import { FaStop } from 'react-icons/fa';
+import { useUploadFileMutation } from '@/services/fileApi';
+import { FileMetadata } from '@/types/chat';
+import Image from 'next/image';
+import { FiFileText } from 'react-icons/fi';
+import ImageModal from '@/components/common/ImageModal';
 
 const SendMessage = () => {
   const router = useRouter();
@@ -22,7 +22,7 @@ const SendMessage = () => {
     conversationId,
   } = useChat();
 
-  const [prompt, setPrompt] = useState("");
+  const [prompt, setPrompt] = useState('');
   const [filePreviews, setFilePreviews] = useState<
     { id: string; preview: string; type: string; name: string }[]
   >([]);
@@ -39,14 +39,14 @@ const SendMessage = () => {
     if (!textarea) return;
 
     const adjustHeight = () => {
-      textarea.style.height = "auto";
+      textarea.style.height = 'auto';
       const maxHeight = 150;
       const scrollHeight = textarea.scrollHeight;
       textarea.style.height = `${Math.min(scrollHeight, maxHeight)}px`;
     };
 
-    textarea.addEventListener("input", adjustHeight);
-    return () => textarea.removeEventListener("input", adjustHeight);
+    textarea.addEventListener('input', adjustHeight);
+    return () => textarea.removeEventListener('input', adjustHeight);
   }, []);
 
   const handleGenerateText = async (e: FormEvent) => {
@@ -63,7 +63,7 @@ const SendMessage = () => {
           uploadedAttachments.length > 0 ? uploadedAttachments : undefined,
       });
 
-      setPrompt("");
+      setPrompt('');
       setUploadedAttachments([]);
       setFilePreviews([]);
 
@@ -71,12 +71,12 @@ const SendMessage = () => {
         router.push(`/${newConversationId}`);
       }
     } catch (error) {
-      console.error("Error generating text:", error);
+      console.error('Error generating text:', error);
     }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && !e.shiftKey) {
+    if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleGenerateText(e as unknown as FormEvent);
     }
@@ -89,7 +89,7 @@ const SendMessage = () => {
     const imageFiles: File[] = [];
 
     for (const item of items) {
-      if (item.type.startsWith("image/")) {
+      if (item.type.startsWith('image/')) {
         const file = item.getAsFile();
         if (file) {
           imageFiles.push(file);
@@ -116,7 +116,7 @@ const SendMessage = () => {
     for (const file of files) {
       const id = Math.random().toString(36).substr(2, 9);
 
-      if (file.type.startsWith("image/")) {
+      if (file.type.startsWith('image/')) {
         try {
           const preview = await new Promise<string>((resolve, reject) => {
             const reader = new FileReader();
@@ -125,29 +125,29 @@ const SendMessage = () => {
             reader.readAsDataURL(file);
           });
 
-          newPreviews.push({ id, preview, type: "image", name: file.name });
+          newPreviews.push({ id, preview, type: 'image', name: file.name });
         } catch (error) {
-          console.error("Error creating preview:", error);
+          console.error('Error creating preview:', error);
         }
       } else {
         newPreviews.push({
           id,
-          preview: "",
-          type: "document",
+          preview: '',
+          type: 'document',
           name: file.name,
         });
       }
 
       try {
         const formData = new FormData();
-        formData.append("file", file);
+        formData.append('file', file);
         const result = await uploadFile(formData).unwrap();
         newAttachments.push(result.data);
       } catch (error) {
-        console.error("Error uploading file:", error);
+        console.error('Error uploading file:', error);
         setError((prev) => ({
           ...prev,
-          global: "Failed to upload one or more files. Please try again.",
+          global: 'Failed to upload one or more files. Please try again.',
         }));
       }
     }
@@ -169,7 +169,7 @@ const SendMessage = () => {
     await processFiles(Array.from(files));
 
     if (fileInputRef.current) {
-      fileInputRef.current.value = "";
+      fileInputRef.current.value = '';
     }
   };
 
@@ -220,7 +220,7 @@ const SendMessage = () => {
           onKeyDown={handleKeyDown}
           onPaste={handlePaste}
           rows={1}
-          style={{ maxHeight: "150px" }}
+          style={{ maxHeight: '150px' }}
         />
 
         {conversationId && streaming[conversationId] ? (
@@ -280,7 +280,7 @@ const FilePreviews = ({ filePreviews, onRemove }: FilePreviewsProps) => {
           {filePreviews.map(({ id, preview, type, name }) => (
             <div key={id} className="relative w-full pb-[100%] group">
               <div className="absolute inset-0 bg-gradient-to-br from-gray-750 to-gray-800 rounded-lg overflow-hidden border border-gray-600 transition-all duration-200 hover:border-gray-500 hover:shadow-md">
-                {type === "image" ? (
+                {type === 'image' ? (
                   <div className="relative w-full h-full">
                     <button
                       onClick={() => openModal(preview, name)}

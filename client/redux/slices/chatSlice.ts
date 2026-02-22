@@ -1,5 +1,5 @@
-import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { Message } from "@/types/chat";
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { Message } from '@/types/chat';
 
 interface ChatState {
   chatHistories: Record<string, Message[]>;
@@ -12,12 +12,12 @@ const initialState: ChatState = {
 };
 
 export const chatSlice = createSlice({
-  name: "chat",
+  name: 'chat',
   initialState,
   reducers: {
     addMessage: (
       state,
-      action: PayloadAction<{ conversationId: string; message: Message }>
+      action: PayloadAction<{ conversationId: string; message: Message }>,
     ) => {
       const { conversationId, message } = action.payload;
       if (!state.chatHistories[conversationId]) {
@@ -35,18 +35,18 @@ export const chatSlice = createSlice({
       action: PayloadAction<{
         conversationId: string;
         token: string;
-        tokenType?: "mainContent" | "reasoningContent";
-      }>
+        tokenType?: 'mainContent' | 'reasoningContent';
+      }>,
     ) => {
       const { conversationId, token, tokenType } = action.payload;
       const messages = state.chatHistories[conversationId];
       if (messages && messages.length > 0) {
         const last = messages[messages.length - 1];
-        if (last.senderType === "assistant") {
-          if (tokenType === "mainContent") {
+        if (last.senderType === 'assistant') {
+          if (tokenType === 'mainContent') {
             last.mainContent += token;
           }
-          if (tokenType === "reasoningContent") {
+          if (tokenType === 'reasoningContent') {
             last.reasoningContent += token;
           }
         }
@@ -58,7 +58,7 @@ export const chatSlice = createSlice({
       action: PayloadAction<{
         conversationId: string;
         messages: Message[];
-      }>
+      }>,
     ) => {
       state.chatHistories[action.payload.conversationId] =
         action.payload.messages;

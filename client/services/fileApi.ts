@@ -1,11 +1,11 @@
-import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
-import { FileMetadata } from "@/types/chat";
+import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
+import { FileMetadata } from '@/types/chat';
 
 export const fileApi = createApi({
-  reducerPath: "fileApi",
+  reducerPath: 'fileApi',
   baseQuery: fetchBaseQuery({
     baseUrl: `${process.env.NEXT_PUBLIC_BACKEND_URL}/files`,
-    credentials: "include",
+    credentials: 'include',
   }),
   endpoints: (builder) => ({
     uploadFile: builder.mutation<
@@ -16,8 +16,8 @@ export const fileApi = createApi({
       FormData
     >({
       query: (formData) => ({
-        url: "/upload",
-        method: "POST",
+        url: '/upload',
+        method: 'POST',
         body: formData,
       }),
     }),

@@ -1,12 +1,12 @@
-"use client";
-import { useChat } from "@/contexts/ChatContext";
-import { useChatData } from "./useChatData";
-import { UserMessage, AssistantMessage } from "./MessageComponents";
-import { Message } from "@/types/chat";
+'use client';
+import { useChat } from '@/contexts/ChatContext';
+import { useChatData } from './useChatData';
+import { UserMessage, AssistantMessage } from './MessageComponents';
+import { Message } from '@/types/chat';
 
 const ChatHistory = () => {
   const { conversationId, reasoningStreaming } = useChat();
-  const { chatHistories } = useChatData(conversationId ?? "");
+  const { chatHistories } = useChatData(conversationId ?? '');
 
   if (!conversationId) {
     return (
@@ -25,7 +25,7 @@ const ChatHistory = () => {
       <div className="w-full max-w-[55rem] flex flex-col space-y-4 py-4">
         {chatHistories.map((chat: Message, index: number) => {
           switch (chat.senderType) {
-            case "user":
+            case 'user':
               return (
                 <UserMessage
                   key={`user-${index}`}
@@ -33,7 +33,7 @@ const ChatHistory = () => {
                   attachments={chat.attachments}
                 />
               );
-            case "assistant":
+            case 'assistant':
               return (
                 <AssistantMessage
                   key={`assistant-${index}`}

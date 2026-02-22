@@ -1,16 +1,16 @@
-"use client";
-import { useState } from "react";
-import { FileMetadata } from "@/types/chat";
-import { MarkdownRenderer } from "./MarkdownRenderer";
-import Image from "next/image";
-import ImageModal from "@/components/common/ImageModal";
+'use client';
+import { useState } from 'react';
+import { FileMetadata } from '@/types/chat';
+import { MarkdownRenderer } from './MarkdownRenderer';
+import Image from 'next/image';
+import ImageModal from '@/components/common/ImageModal';
 import {
   FiFileText,
   FiCopy,
   FiChevronDown,
   FiChevronUp,
   FiCpu,
-} from "react-icons/fi";
+} from 'react-icons/fi';
 
 interface MessageProps {
   mainContent?: string;
@@ -39,11 +39,11 @@ const MessageImages = ({ attachments }: { attachments: FileMetadata[] }) => {
         {attachments.map((file) => (
           <div key={`img-${file.id}`} className="relative">
             <button
-              onClick={() => openModal(file.presignedUrl ?? "", file.fileName)}
+              onClick={() => openModal(file.presignedUrl ?? '', file.fileName)}
               className="block cursor-pointer hover:opacity-90 transition-opacity duration-200"
             >
               <Image
-                src={file.presignedUrl ?? ""}
+                src={file.presignedUrl ?? ''}
                 alt={file.fileName}
                 width={300}
                 height={200}
@@ -87,7 +87,7 @@ const MessageDocuments = ({ attachments }: { attachments: FileMetadata[] }) => (
                 {(parseInt(file.fileSize) / 1024).toFixed(1)} KB
               </span>
               <span className="ml-2 opacity-70">
-                {file.mimeType.split("/")[1].toUpperCase()}
+                {file.mimeType.split('/')[1].toUpperCase()}
               </span>
             </div>
           </div>
@@ -109,7 +109,7 @@ const ReasoningSection = ({
   return (
     <div
       className={`mb-4 border border-amber-500/30 bg-gradient-to-r from-amber-900/20 to-orange-900/20 rounded-lg overflow-hidden ${
-        isProcessing && !isExpanded ? "animate-pulse" : ""
+        isProcessing && !isExpanded ? 'animate-pulse' : ''
       }`}
     >
       <button
@@ -119,7 +119,7 @@ const ReasoningSection = ({
         <div className="flex items-center gap-2">
           <div
             className={`p-1.5 bg-amber-500/20 rounded-full ${
-              isProcessing ? "animate-spin" : ""
+              isProcessing ? 'animate-spin' : ''
             }`}
           >
             <FiCpu size={16} className="text-amber-400" />
@@ -142,7 +142,7 @@ const ReasoningSection = ({
             </span>
           )}
           <span className="text-xs text-amber-400/70 hidden sm:inline">
-            {isExpanded ? "Hide" : "Show"} reasoning
+            {isExpanded ? 'Hide' : 'Show'} reasoning
           </span>
           {isExpanded ? (
             <FiChevronUp className="text-amber-400" size={16} />
@@ -156,7 +156,7 @@ const ReasoningSection = ({
         <div className="px-3 pb-3">
           <div className="border-t border-amber-500/20 pt-3">
             <div className="bg-gray-900/50 rounded-md p-3 text-amber-100/90 text-sm leading-relaxed">
-              {isProcessing && content.trim() === "" ? (
+              {isProcessing && content.trim() === '' ? (
                 <div className="flex items-center gap-2 text-amber-300">
                   <div className="animate-spin">
                     <FiCpu size={16} />
@@ -176,21 +176,21 @@ const ReasoningSection = ({
 
 export const UserMessage = ({ mainContent, attachments }: MessageProps) => {
   const imageFiles = attachments?.filter(
-    (file) => file.mimeType.startsWith("image/") && file.presignedUrl
+    (file) => file.mimeType.startsWith('image/') && file.presignedUrl,
   );
 
   const documentFiles = attachments?.filter(
-    (file) => !file.mimeType.startsWith("image/") && file.presignedUrl
+    (file) => !file.mimeType.startsWith('image/') && file.presignedUrl,
   );
 
-  const [copyStatus, setCopyStatus] = useState<string>("");
+  const [copyStatus, setCopyStatus] = useState<string>('');
 
   const handleCopy = () => {
     if (!mainContent) return;
     navigator.clipboard.writeText(mainContent).then(() => {
-      setCopyStatus("Copied!");
+      setCopyStatus('Copied!');
       setTimeout(() => {
-        setCopyStatus("");
+        setCopyStatus('');
       }, 2000);
     });
   };
@@ -208,7 +208,7 @@ export const UserMessage = ({ mainContent, attachments }: MessageProps) => {
           onClick={handleCopy}
           className="absolute top-2 right-2 w-6 h-6 flex items-center justify-center bg-gray-800/80 rounded-full text-gray-400 hover:text-blue-400 hover:bg-gray-700 opacity-0 group-hover:opacity-100 transition-all duration-200 shadow-sm"
           aria-label="Copy message"
-          title={copyStatus || "Copy message"}
+          title={copyStatus || 'Copy message'}
         >
           {copyStatus ? (
             <span className="text-xs text-blue-400">✓</span>
@@ -216,7 +216,7 @@ export const UserMessage = ({ mainContent, attachments }: MessageProps) => {
             <FiCopy size={14} />
           )}
         </button>
-        {mainContent?.split("\n").map((line, lineIndex) => (
+        {mainContent?.split('\n').map((line, lineIndex) => (
           <p
             key={`line-${line.slice(0, 10)}-${lineIndex}`}
             className="text-gray-200 break-all"
@@ -236,11 +236,11 @@ export const AssistantMessage = ({
   isProcessing = false,
 }: MessageProps) => {
   const imageFiles = attachments?.filter(
-    (file) => file.mimeType.startsWith("image/") && file.presignedUrl
+    (file) => file.mimeType.startsWith('image/') && file.presignedUrl,
   );
 
   const documentFiles = attachments?.filter(
-    (file) => !file.mimeType.startsWith("image/") && file.presignedUrl
+    (file) => !file.mimeType.startsWith('image/') && file.presignedUrl,
   );
 
   return (
@@ -259,7 +259,7 @@ export const AssistantMessage = ({
           />
         )}
         <div className="prose prose-invert max-w-none">
-          <MarkdownRenderer content={mainContent || ""} />
+          <MarkdownRenderer content={mainContent || ''} />
         </div>
       </div>
     </div>

@@ -1,9 +1,9 @@
-"use client";
-import { Socket } from "socket.io-client";
-import { createContext, useContext, useEffect, useMemo } from "react";
-import { authConnection } from "@/apis/socket";
-import { useRouter } from "next/navigation";
-import { url } from "@/utils/url";
+'use client';
+import { Socket } from 'socket.io-client';
+import { createContext, useContext, useEffect, useMemo } from 'react';
+import { authConnection } from '@/apis/socket';
+import { useRouter } from 'next/navigation';
+import { url } from '@/utils/url';
 
 interface IAuthContext {
   authConnection: Socket;
@@ -15,7 +15,7 @@ export const useAuth = () => {
   const context = useContext(AuthContext);
 
   if (!context) {
-    throw new Error("useAuth must be used within a AuthProvider");
+    throw new Error('useAuth must be used within a AuthProvider');
   }
 
   return context;
@@ -33,7 +33,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   useEffect(() => {
-    authConnection.on("user-logout", () => {
+    authConnection.on('user-logout', () => {
       router.push(url.login);
       authConnection.disconnect();
     });

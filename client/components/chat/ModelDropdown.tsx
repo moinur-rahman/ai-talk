@@ -1,18 +1,15 @@
-"use client";
-import { FC, useEffect, useMemo } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import Select, { StylesConfig } from "react-select";
+'use client';
+import { FC, useEffect, useMemo } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import Select, { StylesConfig } from 'react-select';
 import {
   setSelectedModel,
   setSelectedProvider,
   setReasoningEnabled,
-} from "@/redux/slices/modelSlice";
-import {
-  useGetProvidersQuery,
-  useGetModelsQuery,
-} from "@/services/modelApi";
-import { RootState } from "@/redux/store";
-import { useChat } from "@/contexts/ChatContext";
+} from '@/redux/slices/modelSlice';
+import { useGetProvidersQuery, useGetModelsQuery } from '@/services/modelApi';
+import { RootState } from '@/redux/store';
+import { useChat } from '@/contexts/ChatContext';
 
 interface ModelOption {
   label: string;
@@ -22,48 +19,48 @@ interface ModelOption {
 export const customStyles: StylesConfig<ModelOption> = {
   control: (styles) => ({
     ...styles,
-    backgroundColor: "transparent",
-    color: "#fff",
-    borderColor: "transparent",
-    boxShadow: "none",
-    "&:hover": {
-      backgroundColor: "#1f2937",
+    backgroundColor: 'transparent',
+    color: '#fff',
+    borderColor: 'transparent',
+    boxShadow: 'none',
+    '&:hover': {
+      backgroundColor: '#1f2937',
     },
   }),
   menu: (styles) => ({
     ...styles,
-    backgroundColor: "#1f2937",
-    color: "#fff",
+    backgroundColor: '#1f2937',
+    color: '#fff',
   }),
   option: (styles, { isFocused, isSelected }) => {
-    let backgroundColor = "#1f2937";
-    if (isFocused) backgroundColor = "#374151";
-    if (isSelected) backgroundColor = "#4b5563";
+    let backgroundColor = '#1f2937';
+    if (isFocused) backgroundColor = '#374151';
+    if (isSelected) backgroundColor = '#4b5563';
 
     return {
       ...styles,
       backgroundColor,
-      color: isSelected ? "#fff" : "#d1d5db",
-      "&:hover": {
-        backgroundColor: "#374151",
+      color: isSelected ? '#fff' : '#d1d5db',
+      '&:hover': {
+        backgroundColor: '#374151',
       },
     };
   },
   placeholder: (styles) => ({
     ...styles,
-    color: "#9ca3af",
+    color: '#9ca3af',
   }),
   singleValue: (styles) => ({
     ...styles,
-    color: "#fff",
+    color: '#fff',
   }),
   input: (styles) => ({
     ...styles,
-    color: "#fff",
+    color: '#fff',
   }),
 };
 
-const DEFAULT_MODEL_KEY = "defaultModel";
+const DEFAULT_MODEL_KEY = 'defaultModel';
 
 function getStoredDefault(): { modelId: string; providerId: string } | null {
   try {
@@ -79,20 +76,20 @@ const ModelDropdown: FC = () => {
 
   const dispatch = useDispatch();
   const selectedProvider = useSelector(
-    (state: RootState) => state.model.selectedProvider
+    (state: RootState) => state.model.selectedProvider,
   );
   const selectedModel = useSelector(
-    (state: RootState) => state.model.selectedModel
+    (state: RootState) => state.model.selectedModel,
   );
 
   const defaultModel = useMemo(() => getStoredDefault(), []);
   const { data: providers } = useGetProvidersQuery();
 
   const { data: models = [], isLoading } = useGetModelsQuery(
-    selectedProvider?.id ?? "",
+    selectedProvider?.id ?? '',
     {
       skip: !selectedProvider,
-    }
+    },
   );
 
   useEffect(() => {
@@ -156,7 +153,7 @@ const ModelDropdown: FC = () => {
         id: modelOption.value,
         name: modelOption.label,
         hasReasoning: selectedModelData?.hasReasoning || false,
-      })
+      }),
     );
 
     if (!selectedModelData?.hasReasoning) {
@@ -166,7 +163,10 @@ const ModelDropdown: FC = () => {
     if (!conversationId && selectedProvider) {
       localStorage.setItem(
         DEFAULT_MODEL_KEY,
-        JSON.stringify({ modelId: modelOption.value, providerId: selectedProvider.id })
+        JSON.stringify({
+          modelId: modelOption.value,
+          providerId: selectedProvider.id,
+        }),
       );
     }
   };

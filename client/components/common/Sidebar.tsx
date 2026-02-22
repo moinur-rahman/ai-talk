@@ -1,8 +1,8 @@
-"use client";
-import { FC } from "react";
-import { useGetConversationsQuery } from "@/services/chatApi";
-import Link from "next/link";
-import { useChat } from "@/contexts/ChatContext";
+'use client';
+import { FC } from 'react';
+import { useGetConversationsQuery } from '@/services/chatApi';
+import Link from 'next/link';
+import { useChat } from '@/contexts/ChatContext';
 
 const Sidebar: FC = () => {
   const { conversationId } = useChat();
@@ -44,8 +44,8 @@ const SidebarItem: FC<{ name: string; id: string; isSelected?: boolean }> = ({
     href={`/${id}`}
     className={`py-2 px-4 cursor-pointer rounded-md transition-colors duration-200 ${
       isSelected
-        ? "bg-gray-600 border-l-4 border-gray-400 font-medium"
-        : "hover:bg-gray-700"
+        ? 'bg-gray-600 border-l-4 border-gray-400 font-medium'
+        : 'hover:bg-gray-700'
     }`}
   >
     {name}

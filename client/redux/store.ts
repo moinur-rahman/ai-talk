@@ -1,9 +1,9 @@
-import { configureStore } from "@reduxjs/toolkit";
-import modelReducer from "./slices/modelSlice";
-import chatReducer from "./slices/chatSlice";
-import { chatApi } from "@/services/chatApi";
-import { modelApi } from "@/services/modelApi";
-import { fileApi } from "@/services/fileApi";
+import { configureStore } from '@reduxjs/toolkit';
+import modelReducer from './slices/modelSlice';
+import chatReducer from './slices/chatSlice';
+import { chatApi } from '@/services/chatApi';
+import { modelApi } from '@/services/modelApi';
+import { fileApi } from '@/services/fileApi';
 
 export const store = configureStore({
   reducer: {

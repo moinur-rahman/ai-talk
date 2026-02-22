@@ -13,7 +13,10 @@ export class ConversationController {
     const conversationId = await this.conversationService.createConversation(
       user.id,
     );
-    return { data: { conversationId }, message: 'Conversation created successfully' };
+    return {
+      data: { conversationId },
+      message: 'Conversation created successfully',
+    };
   }
 
   @Get()
@@ -21,7 +24,10 @@ export class ConversationController {
     const conversations = await this.conversationService.getConversations(
       user.id,
     );
-    return { data: conversations, message: 'Conversations fetched successfully' };
+    return {
+      data: conversations,
+      message: 'Conversations fetched successfully',
+    };
   }
 
   @Patch(':conversationId/title')

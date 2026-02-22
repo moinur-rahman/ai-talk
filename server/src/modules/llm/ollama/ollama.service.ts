@@ -13,7 +13,10 @@ export class OllamaService {
     this.client = new Ollama({ host: config.ollamaHost });
   }
 
-  async streamResponse(request: LLMRequest, onToken: TokenCallback): Promise<void> {
+  async streamResponse(
+    request: LLMRequest,
+    onToken: TokenCallback,
+  ): Promise<void> {
     const abortController = new AbortController();
     this.activeStreams.set(request.conversationId, abortController);
 
@@ -61,18 +64,26 @@ export class OllamaService {
       abortController.abort();
       this.activeStreams.delete(conversationId);
     } else {
-      this.logger.log(`No active Ollama stream found for conversation ${conversationId}`);
+      this.logger.log(
+        `No active Ollama stream found for conversation ${conversationId}`,
+      );
     }
   }
 
-  async listModels(): Promise<{ name: string; description: string; hasReasoning: boolean }[]> {
+  async listModels(): Promise<
+    { name: string; description: string; hasReasoning: boolean }[]
+  > {
     try {
       const response = await this.client.list();
       return response.models.map((model) => {
         const { family, parameter_size, families } = model.details;
         const parts = [family, parameter_size].filter(Boolean);
         const description = parts.length > 0 ? parts.join(' · ') : model.name;
-        const hasReasoning = this.isReasoningModel(model.name, family, families);
+        const hasReasoning = this.isReasoningModel(
+          model.name,
+          family,
+          families,
+        );
         return { name: model.name, description, hasReasoning };
       });
     } catch (error) {
@@ -81,10 +92,17 @@ export class OllamaService {
     }
   }
 
-  private isReasoningModel(name: string, family: string, families: string[] | null): boolean {
+  private isReasoningModel(
+    name: string,
+    family: string,
+    families: string[] | null,
+  ): boolean {
     const reasoningPatterns = ['deepseek-r1', 'qwq', 'marco-o1'];
-    const matches = (s: string) => reasoningPatterns.some((p) => s.toLowerCase().includes(p));
-    return matches(name) || matches(family) || (families?.some(matches) ?? false);
+    const matches = (s: string) =>
+      reasoningPatterns.some((p) => s.toLowerCase().includes(p));
+    return (
+      matches(name) || matches(family) || (families?.some(matches) ?? false)
+    );
   }
 
   async generateConversationTitle(conversationText: string): Promise<string> {

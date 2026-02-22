@@ -3,7 +3,11 @@ import { PrismaService } from '../../providers/prisma/prisma.service.js';
 import { OllamaService } from '../llm/ollama/ollama.service.js';
 import { OpenAIService } from '../llm/openai/openai.service.js';
 
-type SyncModelData = { name: string; description: string; hasReasoning: boolean };
+type SyncModelData = {
+  name: string;
+  description: string;
+  hasReasoning: boolean;
+};
 
 type ProviderSyncResult =
   | { provider: string; created: number; updated: number; deprecated: number }
@@ -81,18 +85,29 @@ export class ModelService {
     for (const provider of providers) {
       try {
         const fetchedModels = await this.fetchModelsForProvider(provider.name);
-        const counts = await this.synchronizeProviderModels(provider.id, fetchedModels);
+        const counts = await this.synchronizeProviderModels(
+          provider.id,
+          fetchedModels,
+        );
         results.push({ provider: provider.name, ...counts });
       } catch (error) {
-        this.logger.error(`Failed to sync models for provider "${provider.name}"`, error);
-        results.push({ provider: provider.name, error: 'Failed to sync models' });
+        this.logger.error(
+          `Failed to sync models for provider "${provider.name}"`,
+          error,
+        );
+        results.push({
+          provider: provider.name,
+          error: 'Failed to sync models',
+        });
       }
     }
 
     return { results };
   }
 
-  private async fetchModelsForProvider(providerName: string): Promise<SyncModelData[]> {
+  private async fetchModelsForProvider(
+    providerName: string,
+  ): Promise<SyncModelData[]> {
     const name = providerName.toLowerCase();
     if (name === 'ollama') return this.ollamaService.listModels();
     if (name === 'openai') return this.openaiService.listModels();

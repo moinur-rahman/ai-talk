@@ -31,7 +31,9 @@ interface GetLLMResponseData {
   namespace: '/provider',
   cors: { origin: config.clientUrl, credentials: true },
 })
-export class ProviderGateway implements OnGatewayConnection, OnGatewayDisconnect {
+export class ProviderGateway
+  implements OnGatewayConnection, OnGatewayDisconnect
+{
   @WebSocketServer()
   server: Server;
 
@@ -64,7 +66,10 @@ export class ProviderGateway implements OnGatewayConnection, OnGatewayDisconnect
   handleDisconnect(client: Socket) {
     const activeStream = this.activeStreams.get(client.id);
     if (activeStream) {
-      this.llmService.stopStream(activeStream.providerName, activeStream.conversationId);
+      this.llmService.stopStream(
+        activeStream.providerName,
+        activeStream.conversationId,
+      );
       this.activeStreams.delete(client.id);
     }
     this.logger.log(`Client disconnected: ${client.id}`);
@@ -85,9 +90,13 @@ export class ProviderGateway implements OnGatewayConnection, OnGatewayDisconnect
     @MessageBody() data: GetLLMResponseData,
   ) {
     try {
-      const modelDetails = await this.modelService.getModelDetails(data.lastModelId);
+      const modelDetails = await this.modelService.getModelDetails(
+        data.lastModelId,
+      );
       const providerName = modelDetails.provider.name.toLowerCase();
-      const enableReasoning = Boolean(data.enableReasoning && modelDetails.hasReasoning);
+      const enableReasoning = Boolean(
+        data.enableReasoning && modelDetails.hasReasoning,
+      );
 
       this.activeStreams.set(client.id, {
         providerName,
@@ -96,13 +105,19 @@ export class ProviderGateway implements OnGatewayConnection, OnGatewayDisconnect
 
       // Get existing chat history
       const { messages: chatHistory } =
-        await this.messageService.getMessagesByConversationId(data.conversationId);
+        await this.messageService.getMessagesByConversationId(
+          data.conversationId,
+        );
 
       // Get file metadata for attachments on the new user message
       let attachments: FileMetadataResponseDto[] = [];
       if (data.fileIds && data.fileIds.length > 0) {
-        const filesMetadata = await this.fileService.getMultipleFilesMetadata(data.fileIds);
-        attachments = filesMetadata.filter((f) => !f.error) as FileMetadataResponseDto[];
+        const filesMetadata = await this.fileService.getMultipleFilesMetadata(
+          data.fileIds,
+        );
+        attachments = filesMetadata.filter(
+          (f) => !f.error,
+        ) as FileMetadataResponseDto[];
       }
 
       // Build full message list for the LLM
@@ -147,8 +162,11 @@ export class ProviderGateway implements OnGatewayConnection, OnGatewayDisconnect
 
       // Generate conversation title on first message
       if (chatHistory.length === 0) {
-        this.generateAndEmitTitle(data.conversationId, data.prompt).catch((err) =>
-          this.logger.error(`Failed to generate conversation title: ${err.message}`),
+        this.generateAndEmitTitle(data.conversationId, data.prompt).catch(
+          (err) =>
+            this.logger.error(
+              `Failed to generate conversation title: ${err.message}`,
+            ),
         );
       }
 
@@ -210,7 +228,10 @@ export class ProviderGateway implements OnGatewayConnection, OnGatewayDisconnect
   ) {
     const activeStream = this.activeStreams.get(client.id);
     if (activeStream) {
-      this.llmService.stopStream(activeStream.providerName, data.conversationId);
+      this.llmService.stopStream(
+        activeStream.providerName,
+        data.conversationId,
+      );
       this.activeStreams.delete(client.id);
     }
   }
@@ -219,7 +240,8 @@ export class ProviderGateway implements OnGatewayConnection, OnGatewayDisconnect
     conversationId: string,
     conversationText: string,
   ): Promise<void> {
-    const title = await this.llmService.generateConversationTitle(conversationText);
+    const title =
+      await this.llmService.generateConversationTitle(conversationText);
     await this.conversationService.updateTitle(conversationId, title);
     this.server.to(conversationId).emit('conversation-title', {
       title,

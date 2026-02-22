@@ -9,7 +9,7 @@ export interface FileMetadata {
 export interface Message {
   mainContent?: string;
   reasoningContent?: string;
-  senderType: "user" | "assistant";
+  senderType: 'user' | 'assistant';
   attachments?: FileMetadata[];
 }
 
