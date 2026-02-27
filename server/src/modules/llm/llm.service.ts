@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { OllamaService } from './ollama/ollama.service.js';
 import { OpenAIService } from './openai/openai.service.js';
 import { OpenRouterService } from './openrouter/openrouter.service.js';
+import { ZaiService } from './zai/zai.service.js';
 import { LLMRequest, TokenCallback } from './types/llm.types.js';
 import config from '../../common/config/config.js';
 import { PROVIDER } from '../../common/constants/providers.js';
@@ -14,6 +15,7 @@ export class LlmService {
     private readonly ollamaService: OllamaService,
     private readonly openAIService: OpenAIService,
     private readonly openRouterService: OpenRouterService,
+    private readonly zaiService: ZaiService,
   ) {}
 
   async streamResponse(
@@ -31,6 +33,9 @@ export class LlmService {
       case PROVIDER.OPENROUTER:
         await this.openRouterService.streamResponse(request, onToken);
         break;
+      case PROVIDER.ZAI:
+        await this.zaiService.streamResponse(request, onToken);
+        break;
       default:
         throw new Error(`Unknown provider: ${providerName}`);
     }
@@ -46,6 +51,9 @@ export class LlmService {
         break;
       case PROVIDER.OPENROUTER:
         this.openRouterService.stopStream(conversationId);
+        break;
+      case PROVIDER.ZAI:
+        this.zaiService.stopStream(conversationId);
         break;
       default:
         this.logger.warn(
@@ -75,6 +83,12 @@ export class LlmService {
           break;
         case PROVIDER.OLLAMA:
           rawTitle = await this.ollamaService.generateTitle(
+            conversationText,
+            model,
+          );
+          break;
+        case PROVIDER.ZAI:
+          rawTitle = await this.zaiService.generateTitle(
             conversationText,
             model,
           );

@@ -8,6 +8,7 @@ import { PrismaService } from '../../providers/prisma/prisma.service.js';
 import { OllamaService } from '../llm/ollama/ollama.service.js';
 import { OpenAIService } from '../llm/openai/openai.service.js';
 import { OpenRouterService } from '../llm/openrouter/openrouter.service.js';
+import { ZaiService } from '../llm/zai/zai.service.js';
 import {
   PROVIDER,
   SYSTEM_PROVIDERS,
@@ -32,6 +33,7 @@ export class ModelService implements OnApplicationBootstrap {
     private readonly ollamaService: OllamaService,
     private readonly openaiService: OpenAIService,
     private readonly openRouterService: OpenRouterService,
+    private readonly zaiService: ZaiService,
   ) {}
 
   async onApplicationBootstrap(): Promise<void> {
@@ -141,6 +143,8 @@ export class ModelService implements OnApplicationBootstrap {
         return this.openaiService.listModels();
       case PROVIDER.OPENROUTER:
         return this.openRouterService.listModels();
+      case PROVIDER.ZAI:
+        return this.zaiService.listModels();
       default:
         return [];
     }

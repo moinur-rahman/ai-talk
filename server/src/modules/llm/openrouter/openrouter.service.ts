@@ -25,10 +25,6 @@ export class OpenRouterService {
     this.client = new OpenAI({
       apiKey: config.openrouterApiKey,
       baseURL: 'https://openrouter.ai/api/v1',
-      defaultHeaders: {
-        'HTTP-Referer': 'https://github.com/ai-talk',
-        'X-Title': 'AI Talk',
-      },
     });
   }
 
