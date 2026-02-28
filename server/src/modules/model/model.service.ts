@@ -9,6 +9,7 @@ import { OllamaService } from '../llm/ollama/ollama.service.js';
 import { OpenAIService } from '../llm/openai/openai.service.js';
 import { OpenRouterService } from '../llm/openrouter/openrouter.service.js';
 import { ZaiService } from '../llm/zai/zai.service.js';
+import { GeminiService } from '../llm/gemini/gemini.service.js';
 import {
   PROVIDER,
   SYSTEM_PROVIDERS,
@@ -34,6 +35,7 @@ export class ModelService implements OnApplicationBootstrap {
     private readonly openaiService: OpenAIService,
     private readonly openRouterService: OpenRouterService,
     private readonly zaiService: ZaiService,
+    private readonly geminiService: GeminiService,
   ) {}
 
   async onApplicationBootstrap(): Promise<void> {
@@ -145,6 +147,8 @@ export class ModelService implements OnApplicationBootstrap {
         return this.openRouterService.listModels();
       case PROVIDER.ZAI:
         return this.zaiService.listModels();
+      case PROVIDER.GEMINI:
+        return this.geminiService.listModels();
       default:
         return [];
     }

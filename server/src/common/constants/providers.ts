@@ -3,6 +3,7 @@ export const SYSTEM_PROVIDERS = [
   'OpenAI',
   'OpenRouter',
   'Zai',
+  'Gemini',
 ] as const;
 
 export type ProviderName = (typeof SYSTEM_PROVIDERS)[number];
@@ -12,4 +13,5 @@ export const PROVIDER = {
   OPENAI: 'openai',
   OPENROUTER: 'openrouter',
   ZAI: 'zai',
+  GEMINI: 'gemini',
 } as const;

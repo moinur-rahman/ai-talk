@@ -20,6 +20,7 @@ interface IConfig {
   openaiApiKey: string;
   openrouterApiKey: string;
   zaiApiKey: string;
+  geminiApiKey: string;
   ollamaHost: string;
   titleGenerationProvider: string;
   titleGenerationModel: string;
@@ -39,6 +40,7 @@ const config: IConfig = {
   openaiApiKey: getEnvVar('OPENAI_API_KEY', ''),
   openrouterApiKey: getEnvVar('OPENROUTER_API_KEY', ''),
   zaiApiKey: getEnvVar('ZAI_API_KEY', ''),
+  geminiApiKey: getEnvVar('GEMINI_API_KEY', ''),
   ollamaHost: getEnvVar('OLLAMA_HOST', 'http://localhost:11434'),
   titleGenerationProvider: getEnvVar('TITLE_GENERATION_PROVIDER', 'ollama'),
   titleGenerationModel: getEnvVar('TITLE_GENERATION_MODEL', 'llama3.2:1b'),

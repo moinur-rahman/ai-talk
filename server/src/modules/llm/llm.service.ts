@@ -3,6 +3,7 @@ import { OllamaService } from './ollama/ollama.service.js';
 import { OpenAIService } from './openai/openai.service.js';
 import { OpenRouterService } from './openrouter/openrouter.service.js';
 import { ZaiService } from './zai/zai.service.js';
+import { GeminiService } from './gemini/gemini.service.js';
 import { LLMRequest, TokenCallback } from './types/llm.types.js';
 import config from '../../common/config/config.js';
 import { PROVIDER } from '../../common/constants/providers.js';
@@ -16,6 +17,7 @@ export class LlmService {
     private readonly openAIService: OpenAIService,
     private readonly openRouterService: OpenRouterService,
     private readonly zaiService: ZaiService,
+    private readonly geminiService: GeminiService,
   ) {}
 
   async streamResponse(
@@ -36,6 +38,9 @@ export class LlmService {
       case PROVIDER.ZAI:
         await this.zaiService.streamResponse(request, onToken);
         break;
+      case PROVIDER.GEMINI:
+        await this.geminiService.streamResponse(request, onToken);
+        break;
       default:
         throw new Error(`Unknown provider: ${providerName}`);
     }
@@ -54,6 +59,9 @@ export class LlmService {
         break;
       case PROVIDER.ZAI:
         this.zaiService.stopStream(conversationId);
+        break;
+      case PROVIDER.GEMINI:
+        this.geminiService.stopStream(conversationId);
         break;
       default:
         this.logger.warn(
@@ -89,6 +97,12 @@ export class LlmService {
           break;
         case PROVIDER.ZAI:
           rawTitle = await this.zaiService.generateTitle(
+            conversationText,
+            model,
+          );
+          break;
+        case PROVIDER.GEMINI:
+          rawTitle = await this.geminiService.generateTitle(
             conversationText,
             model,
           );
