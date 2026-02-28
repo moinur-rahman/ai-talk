@@ -1,8 +1,13 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { GoogleGenAI, Content, Part } from '@google/genai';
-import axios from 'axios';
 import config from '../../../common/config/config.js';
 import { LLMMessage, LLMRequest, TokenCallback } from '../types/llm.types.js';
+import {
+  LATEX_SYSTEM_INSTRUCTION,
+  TITLE_SYSTEM_PROMPT,
+  buildTitleUserPrompt,
+} from '../llm.prompts.js';
+import { fetchBase64FromPresignedUrl } from '../llm.utils.js';
 
 const REASONING_MODEL_PATTERNS = [/thinking/i, /flash-thinking/i];
 
@@ -30,11 +35,7 @@ export class GeminiService {
         model: request.model,
         contents,
         config: {
-          systemInstruction: [
-            'When you return any LaTeX,',
-            '- Use `$$…$$` for block-level math (not `\\[…\\]`).',
-            '- Use `$…$` for inline math.',
-          ].join('\n'),
+          systemInstruction: LATEX_SYSTEM_INSTRUCTION,
           abortSignal: abortController.signal,
         },
       });
@@ -93,16 +94,11 @@ export class GeminiService {
       contents: [
         {
           role: 'user',
-          parts: [
-            {
-              text: `Generate a short title for the following conversation. Strictly adhere to the limit of 3–5 words. Conversation:\n\n${text}`,
-            },
-          ],
+          parts: [{ text: buildTitleUserPrompt(text) }],
         },
       ],
       config: {
-        systemInstruction:
-          'You must strictly limit your response to 3–5 words. Do not exceed this limit.',
+        systemInstruction: TITLE_SYSTEM_PROMPT,
       },
     });
 
@@ -141,9 +137,7 @@ export class GeminiService {
       if (!attachment.presignedUrl || !attachment.mimeType.startsWith('image/'))
         continue;
 
-      const base64 = await this.fetchBase64FromPresignedUrl(
-        attachment.presignedUrl,
-      );
+      const base64 = await fetchBase64FromPresignedUrl(attachment.presignedUrl);
       parts.push({
         inlineData: { mimeType: attachment.mimeType, data: base64 },
       });
@@ -151,10 +145,5 @@ export class GeminiService {
 
     parts.push({ text: message.content });
     return parts;
-  }
-
-  private async fetchBase64FromPresignedUrl(url: string): Promise<string> {
-    const response = await axios.get(url, { responseType: 'arraybuffer' });
-    return Buffer.from(response.data as ArrayBuffer).toString('base64');
   }
 }

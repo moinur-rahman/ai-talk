@@ -2,6 +2,11 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Ollama } from 'ollama';
 import config from '../../../common/config/config.js';
 import { LLMRequest, TokenCallback } from '../types/llm.types.js';
+import {
+  LATEX_SYSTEM_INSTRUCTION,
+  TITLE_SYSTEM_PROMPT,
+  buildTitleUserPrompt,
+} from '../llm.prompts.js';
 
 @Injectable()
 export class OllamaService {
@@ -21,10 +26,17 @@ export class OllamaService {
     this.activeStreams.set(request.conversationId, abortController);
 
     try {
-      const messages = request.messages.map((m) => ({
-        role: m.senderType,
-        content: m.content,
-      }));
+      const systemMessage = {
+        role: 'system',
+        content: LATEX_SYSTEM_INSTRUCTION,
+      };
+      const messages = [
+        systemMessage,
+        ...request.messages.map((m) => ({
+          role: m.senderType,
+          content: m.content,
+        })),
+      ];
 
       const stream = await this.client.chat({
         model: request.model,
@@ -109,15 +121,8 @@ export class OllamaService {
     const response = await this.client.chat({
       model,
       messages: [
-        {
-          role: 'system',
-          content:
-            'You must strictly limit your response to 3–5 words. Do not exceed this limit.',
-        },
-        {
-          role: 'user',
-          content: `Generate a short title for the following conversation. Strictly adhere to the limit of 3–5 words. Conversation:\n\n${text}`,
-        },
+        { role: 'system', content: TITLE_SYSTEM_PROMPT },
+        { role: 'user', content: buildTitleUserPrompt(text) },
       ],
       stream: false,
     });

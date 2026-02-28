@@ -1,6 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
 import OpenAI from 'openai';
-import axios from 'axios';
 import type { Reasoning } from 'openai/resources';
 import type {
   ResponseInput,
@@ -14,7 +13,12 @@ import {
   LLMRequest,
   TokenCallback,
 } from '../types/llm.types.js';
-import { systemInstructions } from './openai.instructions.js';
+import {
+  LATEX_SYSTEM_INSTRUCTION,
+  TITLE_SYSTEM_PROMPT,
+  buildTitleUserPrompt,
+} from '../llm.prompts.js';
+import { fetchBase64FromPresignedUrl } from '../llm.utils.js';
 
 @Injectable()
 export class OpenAIService {
@@ -106,15 +110,8 @@ export class OpenAIService {
     const response = await this.client.chat.completions.create({
       model,
       messages: [
-        {
-          role: 'system',
-          content:
-            'You must strictly limit your response to 3–5 words. Do not exceed this limit.',
-        },
-        {
-          role: 'user',
-          content: `Generate a short title for the following conversation. Strictly adhere to the limit of 3–5 words. Conversation:\n\n${text}`,
-        },
+        { role: 'system', content: TITLE_SYSTEM_PROMPT },
+        { role: 'user', content: buildTitleUserPrompt(text) },
       ],
       stream: false,
     });
@@ -137,6 +134,11 @@ export class OpenAIService {
   private async prepareResponseInput(
     messages: LLMMessage[],
   ): Promise<ResponseInput> {
+    const systemInstruction = {
+      role: 'developer',
+      content: LATEX_SYSTEM_INSTRUCTION,
+    };
+
     const processedMessages = await Promise.all(
       messages.map(async (message) => {
         if (message.attachments.length > 0) {
@@ -147,7 +149,7 @@ export class OpenAIService {
       }),
     );
 
-    return [...systemInstructions, ...processedMessages] as ResponseInput;
+    return [systemInstruction, ...processedMessages] as ResponseInput;
   }
 
   private async processMessageWithFiles(
@@ -171,7 +173,7 @@ export class OpenAIService {
   private async processFile(
     file: FileMetadata,
   ): Promise<ResponseInputContent | undefined> {
-    const base64 = await this.fetchBase64FromPresignedUrl(file.presignedUrl!);
+    const base64 = await fetchBase64FromPresignedUrl(file.presignedUrl!);
 
     if (file.mimeType.startsWith('image/')) {
       return {
@@ -188,10 +190,5 @@ export class OpenAIService {
     }
 
     return undefined;
-  }
-
-  private async fetchBase64FromPresignedUrl(url: string): Promise<string> {
-    const response = await axios.get(url, { responseType: 'arraybuffer' });
-    return Buffer.from(response.data as ArrayBuffer).toString('base64');
   }
 }

@@ -1,12 +1,17 @@
 import { Injectable, Logger } from '@nestjs/common';
 import OpenAI from 'openai';
-import axios from 'axios';
 import type {
   ChatCompletionContentPart,
   ChatCompletionMessageParam,
 } from 'openai/resources/chat/completions';
 import config from '../../../common/config/config.js';
 import { LLMMessage, LLMRequest, TokenCallback } from '../types/llm.types.js';
+import {
+  LATEX_SYSTEM_INSTRUCTION,
+  TITLE_SYSTEM_PROMPT,
+  buildTitleUserPrompt,
+} from '../llm.prompts.js';
+import { fetchBase64FromPresignedUrl } from '../llm.utils.js';
 
 const REASONING_MODEL_PATTERNS = [
   /deepseek\/deepseek-r/i,
@@ -106,15 +111,8 @@ export class OpenRouterService {
     const response = await this.client.chat.completions.create({
       model,
       messages: [
-        {
-          role: 'system',
-          content:
-            'You must strictly limit your response to 3–5 words. Do not exceed this limit.',
-        },
-        {
-          role: 'user',
-          content: `Generate a short title for the following conversation. Strictly adhere to the limit of 3–5 words. Conversation:\n\n${text}`,
-        },
+        { role: 'system', content: TITLE_SYSTEM_PROMPT },
+        { role: 'user', content: buildTitleUserPrompt(text) },
       ],
       stream: false,
     });
@@ -139,11 +137,7 @@ export class OpenRouterService {
   ): Promise<ChatCompletionMessageParam[]> {
     const systemMessage: ChatCompletionMessageParam = {
       role: 'system',
-      content: [
-        'When you return any LaTeX,',
-        '- Use `$$…$$` for block-level math (not `\\[…\\]`).',
-        '- Use `$…$` for inline math.',
-      ].join('\n'),
+      content: LATEX_SYSTEM_INSTRUCTION,
     };
 
     const processedMessages = await Promise.all(
@@ -174,9 +168,7 @@ export class OpenRouterService {
       if (!attachment.presignedUrl || !attachment.mimeType.startsWith('image/'))
         continue;
 
-      const base64 = await this.fetchBase64FromPresignedUrl(
-        attachment.presignedUrl,
-      );
+      const base64 = await fetchBase64FromPresignedUrl(attachment.presignedUrl);
       parts.push({
         type: 'image_url',
         image_url: {
@@ -188,10 +180,5 @@ export class OpenRouterService {
 
     parts.push({ type: 'text', text: message.content });
     return parts;
-  }
-
-  private async fetchBase64FromPresignedUrl(url: string): Promise<string> {
-    const response = await axios.get(url, { responseType: 'arraybuffer' });
-    return Buffer.from(response.data as ArrayBuffer).toString('base64');
   }
 }
