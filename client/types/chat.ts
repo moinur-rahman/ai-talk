@@ -18,8 +18,14 @@ export interface Conversation {
   title: string;
 }
 
-export interface GetConversationsResponse {
-  data: Conversation[];
+export interface ConversationsPage {
+  conversations: Conversation[];
+  hasNextPage: boolean;
+  nextCursor: string | null;
+}
+
+export interface GetConversationsPageResponse {
+  data: ConversationsPage;
   messageCode: string;
 }
 

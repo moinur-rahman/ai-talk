@@ -165,10 +165,9 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
         'getConversations',
         undefined,
         (draft) => {
-          draft.unshift({
-            id: conversationId,
-            title,
-          });
+          if (draft.pages.length > 0) {
+            draft.pages[0].conversations.unshift({ id: conversationId, title });
+          }
         },
       );
       dispatch(result);

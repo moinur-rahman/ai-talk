@@ -1,8 +1,9 @@
-import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator.js';
 import type { SessionUser } from '../../../common/decorators/current-user.decorator.js';
 import { ConversationService } from './conversation.service.js';
 import { UpdateConversationTitleDto } from './dto/update-conversation-title.dto.js';
+import { GetConversationsQueryDto } from './dto/get-conversations-query.dto.js';
 
 @Controller('chats/conversations')
 export class ConversationController {
@@ -20,12 +21,17 @@ export class ConversationController {
   }
 
   @Get()
-  async getConversations(@CurrentUser() user: SessionUser) {
-    const conversations = await this.conversationService.getConversations(
+  async getConversations(
+    @CurrentUser() user: SessionUser,
+    @Query() query: GetConversationsQueryDto,
+  ) {
+    const result = await this.conversationService.getConversations(
       user.id,
+      query.limit,
+      query.cursor,
     );
     return {
-      data: conversations,
+      data: result,
       message: 'Conversations fetched successfully',
     };
   }

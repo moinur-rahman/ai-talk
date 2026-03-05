@@ -1,8 +1,8 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import {
-  Conversation,
+  ConversationsPage,
   ChatHistoryResponse,
-  GetConversationsResponse,
+  GetConversationsPageResponse,
 } from '@/types/chat';
 
 export const chatApi = createApi({
@@ -13,10 +13,24 @@ export const chatApi = createApi({
   }),
   tagTypes: ['ChatHistory'],
   endpoints: (builder) => ({
-    getConversations: builder.query<Conversation[], void>({
-      query: () => '/chats/conversations',
-      transformResponse: (response: GetConversationsResponse) =>
-        response.data ?? [],
+    getConversations: builder.infiniteQuery<
+      ConversationsPage,
+      void,
+      string | null
+    >({
+      query: ({ pageParam }) => ({
+        url: '/chats/conversations',
+        params: {
+          limit: 30,
+          ...(pageParam ? { cursor: pageParam } : {}),
+        },
+      }),
+      transformResponse: (response: GetConversationsPageResponse) =>
+        response.data,
+      infiniteQueryOptions: {
+        initialPageParam: null,
+        getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+      },
     }),
     getChatHistory: builder.query<ChatHistoryResponse['data'], string>({
       query: (conversationId) => `/chats/messages/${conversationId}`,
@@ -28,4 +42,5 @@ export const chatApi = createApi({
   }),
 });
 
-export const { useGetConversationsQuery, useGetChatHistoryQuery } = chatApi;
+export const { useGetConversationsInfiniteQuery, useGetChatHistoryQuery } =
+  chatApi;

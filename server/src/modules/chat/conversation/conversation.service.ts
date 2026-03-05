@@ -12,15 +12,28 @@ export class ConversationService {
     return result.id;
   }
 
-  async getConversations(userId: string) {
-    return await this.prisma.conversation.findMany({
-      where: { userId },
-      select: {
-        id: true,
-        title: true,
+  async getConversations(userId: string, limit: number, cursor?: string) {
+    const conversations = await this.prisma.conversation.findMany({
+      where: {
+        userId,
+        ...(cursor ? { updatedAt: { lt: new Date(cursor) } } : {}),
       },
+      select: { id: true, title: true, updatedAt: true },
       orderBy: { updatedAt: 'desc' },
+      take: limit + 1,
     });
+
+    const hasNextPage = conversations.length > limit;
+    const items = hasNextPage ? conversations.slice(0, limit) : conversations;
+    const nextCursor = hasNextPage
+      ? items[items.length - 1].updatedAt.toISOString()
+      : null;
+
+    return {
+      conversations: items.map(({ id, title }) => ({ id, title })),
+      hasNextPage,
+      nextCursor,
+    };
   }
 
   async updateTitle(conversationId: string, title: string) {

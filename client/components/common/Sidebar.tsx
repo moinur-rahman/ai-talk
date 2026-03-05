@@ -1,13 +1,36 @@
 'use client';
-import { FC } from 'react';
-import { useGetConversationsQuery } from '@/services/chatApi';
+import { FC, useEffect, useRef } from 'react';
+import { useGetConversationsInfiniteQuery } from '@/services/chatApi';
 import Link from 'next/link';
 import { useChat } from '@/contexts/ChatContext';
 import { FiPlus, FiMessageSquare } from 'react-icons/fi';
 
 const Sidebar: FC = () => {
   const { conversationId } = useChat();
-  const { data: conversations = [] } = useGetConversationsQuery();
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage } =
+    useGetConversationsInfiniteQuery();
+
+  const conversations = data?.pages.flatMap((page) => page.conversations) ?? [];
+  const sentinelRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!hasNextPage) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && !isFetchingNextPage) {
+          fetchNextPage();
+        }
+      },
+      { threshold: 0.1 },
+    );
+
+    if (sentinelRef.current) {
+      observer.observe(sentinelRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   return (
     <nav className="w-60 h-screen flex flex-col bg-[#060810] border-r border-[#1A2840]">
@@ -43,6 +66,12 @@ const Sidebar: FC = () => {
             isSelected={conversation.id === conversationId}
           />
         ))}
+        <div ref={sentinelRef} className="h-1" />
+        {isFetchingNextPage && (
+          <p className="text-[#3D5570] text-[10px] text-center py-2">
+            Loading...
+          </p>
+        )}
       </div>
     </nav>
   );
