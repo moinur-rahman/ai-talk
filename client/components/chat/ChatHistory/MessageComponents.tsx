@@ -68,22 +68,22 @@ const MessageImages = ({ attachments }: { attachments: FileMetadata[] }) => {
 };
 
 const MessageDocuments = ({ attachments }: { attachments: FileMetadata[] }) => (
-  <div className="mt-3 grid grid-cols-1 gap-3">
+  <div className="mt-3 grid grid-cols-1 gap-2">
     {attachments.map((file) => (
       <div key={`doc-${file.id}`} className="relative">
         <a
           href={file.presignedUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center p-3 bg-gradient-to-r from-gray-800 to-gray-700 rounded-xl text-gray-200 hover:from-gray-700 hover:to-gray-600 transition-all duration-200 shadow-md border border-gray-600 hover:border-gray-500"
+          className="flex items-center p-3 bg-[#0E1520] border border-[#1A2840] rounded-xl text-[#D8E8F3] hover:bg-[#111E2E] hover:border-[#1D3A50] transition-all duration-200"
         >
-          <div className="bg-gray-600 p-2 rounded-lg mr-3 flex-shrink-0">
-            <FiFileText size={24} className="text-blue-300" />
+          <div className="bg-[#1A2840] p-2 rounded-lg mr-3 flex-shrink-0">
+            <FiFileText size={22} className="text-[#00C4A1]" />
           </div>
           <div className="overflow-hidden flex-grow">
-            <p className="truncate font-medium">{file.fileName}</p>
-            <div className="flex items-center mt-1 text-xs text-gray-400">
-              <span className="bg-gray-600 px-2 py-0.5 rounded-full">
+            <p className="truncate font-medium text-sm">{file.fileName}</p>
+            <div className="flex items-center mt-1 text-xs text-[#7A96AD]">
+              <span className="bg-[#1A2840] px-2 py-0.5 rounded-full">
                 {(parseInt(file.fileSize) / 1024).toFixed(1)} KB
               </span>
               <span className="ml-2 opacity-70">
@@ -108,7 +108,7 @@ const ReasoningSection = ({
 
   return (
     <div
-      className={`mb-4 border border-amber-500/30 bg-gradient-to-r from-amber-900/20 to-orange-900/20 rounded-lg overflow-hidden ${
+      className={`mb-4 border border-amber-500/20 bg-amber-900/10 rounded-lg overflow-hidden ${
         isProcessing && !isExpanded ? 'animate-pulse' : ''
       }`}
     >
@@ -118,16 +118,16 @@ const ReasoningSection = ({
       >
         <div className="flex items-center gap-2">
           <div
-            className={`p-1.5 bg-amber-500/20 rounded-full ${
+            className={`p-1.5 bg-amber-500/15 rounded-full ${
               isProcessing ? 'animate-spin' : ''
             }`}
           >
-            <FiCpu size={16} className="text-amber-400" />
+            <FiCpu size={14} className="text-amber-400" />
           </div>
-          <span className="text-amber-300 font-medium text-sm">
-            AI Reasoning Process
+          <span className="text-amber-300/90 font-medium text-xs tracking-wide uppercase">
+            Reasoning
             {isProcessing && !isExpanded && (
-              <span className="ml-2 text-amber-400 animate-pulse">
+              <span className="ml-2 text-amber-400 animate-pulse normal-case tracking-normal">
                 <span className="inline-block animate-bounce delay-0">.</span>
                 <span className="inline-block animate-bounce delay-100">.</span>
                 <span className="inline-block animate-bounce delay-200">.</span>
@@ -137,31 +137,31 @@ const ReasoningSection = ({
         </div>
         <div className="flex items-center gap-2">
           {isProcessing && !isExpanded && (
-            <span className="text-xs text-amber-400 animate-pulse">
+            <span className="text-xs text-amber-400/70 animate-pulse">
               Processing
             </span>
           )}
-          <span className="text-xs text-amber-400/70 hidden sm:inline">
-            {isExpanded ? 'Hide' : 'Show'} reasoning
+          <span className="text-xs text-amber-500/50 hidden sm:inline">
+            {isExpanded ? 'Hide' : 'Show'}
           </span>
           {isExpanded ? (
-            <FiChevronUp className="text-amber-400" size={16} />
+            <FiChevronUp className="text-amber-500/50" size={14} />
           ) : (
-            <FiChevronDown className="text-amber-400" size={16} />
+            <FiChevronDown className="text-amber-500/50" size={14} />
           )}
         </div>
       </button>
 
       {isExpanded && (
         <div className="px-3 pb-3">
-          <div className="border-t border-amber-500/20 pt-3">
-            <div className="bg-gray-900/50 rounded-md p-3 text-amber-100/90 text-sm leading-relaxed">
+          <div className="border-t border-amber-500/10 pt-3">
+            <div className="bg-[#090C12]/60 rounded-md p-3 text-amber-100/80 text-sm leading-relaxed">
               {isProcessing && content.trim() === '' ? (
                 <div className="flex items-center gap-2 text-amber-300">
                   <div className="animate-spin">
-                    <FiCpu size={16} />
+                    <FiCpu size={14} />
                   </div>
-                  <span>Thinking...</span>
+                  <span className="text-sm">Thinking...</span>
                 </div>
               ) : (
                 <MarkdownRenderer content={content} />
@@ -203,27 +203,29 @@ export const UserMessage = ({ mainContent, attachments }: MessageProps) => {
       {documentFiles && documentFiles.length > 0 && (
         <MessageDocuments attachments={documentFiles} />
       )}
-      <div className="bg-gray-700 text-white p-3 rounded-tl-2xl rounded-tr-sm rounded-bl-2xl rounded-br-2xl max-w-[80%] shadow-lg whitespace-pre-wrap mt-1 break-words overflow-hidden relative group">
+      <div className="group relative bg-[#0E1F32] border border-[#1A3550] text-[#D8E8F3] px-4 py-3 rounded-2xl rounded-tr-sm max-w-[80%] shadow-sm mt-1">
         <button
           onClick={handleCopy}
-          className="absolute top-2 right-2 w-6 h-6 flex items-center justify-center bg-gray-800/80 rounded-full text-gray-400 hover:text-blue-400 hover:bg-gray-700 opacity-0 group-hover:opacity-100 transition-all duration-200 shadow-sm"
+          className="absolute top-2 right-2 w-6 h-6 flex items-center justify-center bg-[#0A1525]/80 rounded-full text-[#4A6070] hover:text-[#00C4A1] opacity-0 group-hover:opacity-100 transition-all duration-200"
           aria-label="Copy message"
           title={copyStatus || 'Copy message'}
         >
           {copyStatus ? (
-            <span className="text-xs text-blue-400">✓</span>
+            <span className="text-xs text-[#00C4A1]">✓</span>
           ) : (
-            <FiCopy size={14} />
+            <FiCopy size={12} />
           )}
         </button>
-        {mainContent?.split('\n').map((line, lineIndex) => (
-          <p
-            key={`line-${line.slice(0, 10)}-${lineIndex}`}
-            className="text-gray-200 break-all"
-          >
-            {line}
-          </p>
-        )) || <p className="text-gray-400 italic">No content</p>}
+        <div className="text-sm leading-relaxed break-words">
+          {mainContent?.split('\n').map((line, lineIndex) => (
+            <p
+              key={`line-${line.slice(0, 10)}-${lineIndex}`}
+              className="text-[#C8D8E4] break-all"
+            >
+              {line}
+            </p>
+          )) || <p className="text-[#4A6070] italic text-sm">No content</p>}
+        </div>
       </div>
     </div>
   );
@@ -251,15 +253,21 @@ export const AssistantMessage = ({
       {documentFiles && documentFiles.length > 0 && (
         <MessageDocuments attachments={documentFiles} />
       )}
-      <div className="text-white p-3 rounded-lg w-full break-words overflow-hidden">
-        {reasoningContent && (
-          <ReasoningSection
-            content={reasoningContent}
-            isProcessing={isProcessing}
-          />
-        )}
-        <div className="prose prose-invert max-w-none">
-          <MarkdownRenderer content={mainContent || ''} />
+      <div className="flex items-start gap-3 w-full">
+        {/* Diamond indicator */}
+        <div className="flex-shrink-0 mt-1 w-6 h-6 rounded-md bg-[#0E1520] border border-[#1A2840] flex items-center justify-center">
+          <div className="w-2 h-2 rotate-45 rounded-sm bg-[#00C4A1]" />
+        </div>
+        <div className="flex-1 text-[#D8E8F3] break-words overflow-hidden min-w-0">
+          {reasoningContent && (
+            <ReasoningSection
+              content={reasoningContent}
+              isProcessing={isProcessing}
+            />
+          )}
+          <div className="prose prose-invert max-w-none">
+            <MarkdownRenderer content={mainContent || ''} />
+          </div>
         </div>
       </div>
     </div>

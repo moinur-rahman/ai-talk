@@ -9,13 +9,13 @@ const Layout: FC<{ children: ReactNode }> = ({ children }) => {
   return (
     <AuthProvider>
       <ChatProvider>
-        <div className="flex h-screen bg-gray-900">
+        <div className="flex h-screen bg-[#090C12]">
           <Sidebar />
-          <div className="flex flex-col flex-1">
+          <div className="flex flex-col flex-1 overflow-hidden">
             <Header />
-            <div className="flex-1 flex flex-col relative">
+            <div className="flex-1 flex flex-col relative overflow-hidden">
               {children}
-              <div className="w-full bg-gray-900 p-6 flex justify-center">
+              <div className="w-full bg-[#090C12] px-4 pb-4 pt-2 flex justify-center">
                 <SendMessage />
               </div>
             </div>

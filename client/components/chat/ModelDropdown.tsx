@@ -20,43 +20,67 @@ export const customStyles: StylesConfig<ModelOption> = {
   control: (styles) => ({
     ...styles,
     backgroundColor: 'transparent',
-    color: '#fff',
-    borderColor: 'transparent',
+    color: '#D8E8F3',
+    borderColor: '#1A2840',
+    borderRadius: '8px',
     boxShadow: 'none',
+    minHeight: '34px',
+    fontSize: '13px',
     '&:hover': {
-      backgroundColor: '#1f2937',
+      borderColor: '#00C4A1',
+      backgroundColor: 'rgba(0, 196, 161, 0.04)',
     },
   }),
   menu: (styles) => ({
     ...styles,
-    backgroundColor: '#1f2937',
-    color: '#fff',
+    backgroundColor: '#0E1520',
+    border: '1px solid #1A2840',
+    borderRadius: '10px',
+    boxShadow: '0 8px 32px rgba(0, 0, 0, 0.5)',
+    overflow: 'hidden',
   }),
-  option: (styles, { isFocused, isSelected }) => {
-    let backgroundColor = '#1f2937';
-    if (isFocused) backgroundColor = '#374151';
-    if (isSelected) backgroundColor = '#4b5563';
-
-    return {
-      ...styles,
-      backgroundColor,
-      color: isSelected ? '#fff' : '#d1d5db',
-      '&:hover': {
-        backgroundColor: '#374151',
-      },
-    };
-  },
+  menuList: (styles) => ({
+    ...styles,
+    padding: '4px',
+  }),
+  option: (styles, { isFocused, isSelected }) => ({
+    ...styles,
+    backgroundColor: isSelected
+      ? 'rgba(0, 196, 161, 0.1)'
+      : isFocused
+        ? '#111E2E'
+        : 'transparent',
+    color: isSelected ? '#00C4A1' : '#C8D8E4',
+    fontSize: '13px',
+    padding: '8px 12px',
+    borderRadius: '6px',
+    cursor: 'pointer',
+    '&:hover': { backgroundColor: '#111E2E' },
+  }),
   placeholder: (styles) => ({
     ...styles,
-    color: '#9ca3af',
+    color: '#3D5570',
+    fontSize: '13px',
   }),
   singleValue: (styles) => ({
     ...styles,
-    color: '#fff',
+    color: '#D8E8F3',
+    fontSize: '13px',
   }),
   input: (styles) => ({
     ...styles,
-    color: '#fff',
+    color: '#D8E8F3',
+    fontSize: '13px',
+  }),
+  dropdownIndicator: (styles) => ({
+    ...styles,
+    color: '#3D5570',
+    padding: '4px 6px',
+    '&:hover': { color: '#7A96AD' },
+  }),
+  valueContainer: (styles) => ({
+    ...styles,
+    padding: '0 8px',
   }),
 };
 
@@ -172,7 +196,7 @@ const ModelDropdown: FC = () => {
   };
 
   if (isLoading) {
-    return <p className="text-center text-gray-400">Loading models...</p>;
+    return <p className="text-xs text-[#3D5570]">Loading models...</p>;
   }
 
   const options = models.map((model) => ({
@@ -191,7 +215,7 @@ const ModelDropdown: FC = () => {
       value={selectedOption}
       isSearchable
       placeholder="Choose a model..."
-      className="text-black w-[16rem] font-semibold font-roboto"
+      className="w-[13rem]"
       styles={customStyles}
       onChange={handleOptionClick}
       components={{

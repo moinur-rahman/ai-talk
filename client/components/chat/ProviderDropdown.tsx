@@ -43,7 +43,7 @@ const ProviderDropdown: FC = () => {
   };
 
   if (isLoading) {
-    return <p className="text-center text-gray-400">Loading providers...</p>;
+    return <p className="text-xs text-[#3D5570]">Loading providers...</p>;
   }
 
   const options = providers.map((provider) => ({
@@ -65,7 +65,7 @@ const ProviderDropdown: FC = () => {
       value={selectedOption}
       isSearchable
       placeholder="Choose a provider..."
-      className="text-black w-[16rem] font-semibold font-roboto"
+      className="w-[13rem]"
       styles={customStyles}
       onChange={handleOptionClick}
       components={{

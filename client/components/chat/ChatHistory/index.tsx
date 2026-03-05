@@ -10,9 +10,9 @@ const ChatHistory = () => {
 
   if (!conversationId) {
     return (
-      <div className="h-full w-full overflow-y-auto px-4 flex flex-col items-center font-poppins">
-        <div className="w-full max-w-[55rem] flex flex-col space-y-4 py-4">
-          <div className="text-center text-gray-400">
+      <div className="h-full w-full overflow-y-auto px-4 flex flex-col items-center">
+        <div className="w-full max-w-[52rem] flex flex-col space-y-6 py-6">
+          <div className="text-center text-[#3D5570] text-sm">
             No conversation selected
           </div>
         </div>
@@ -21,8 +21,8 @@ const ChatHistory = () => {
   }
 
   return (
-    <div className="h-full w-full overflow-y-auto px-4 flex flex-col items-center font-poppins">
-      <div className="w-full max-w-[55rem] flex flex-col space-y-4 py-4">
+    <div className="h-full w-full overflow-y-auto px-4 flex flex-col items-center">
+      <div className="w-full max-w-[52rem] flex flex-col space-y-6 py-6">
         {chatHistories.map((chat: Message, index: number) => {
           switch (chat.senderType) {
             case 'user':

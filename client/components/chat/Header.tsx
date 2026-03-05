@@ -5,10 +5,13 @@ import ReasoningToggle from './ReasoningToggle';
 
 const Header: FC = () => {
   return (
-    <div className="p-4 flex items-center gap-3 sticky top-0 bg-gray-900 z-[100]">
+    <div className="px-5 py-4 flex items-center gap-2 sticky top-0 bg-[#090C12] border-b border-[#1A2840] z-[100]">
       <ProviderDropdown />
+      <div className="w-px h-4 bg-[#1A2840] flex-shrink-0" />
       <ModelDropdown />
-      <ReasoningToggle />
+      <div className="ml-auto flex-shrink-0">
+        <ReasoningToggle />
+      </div>
     </div>
   );
 };
