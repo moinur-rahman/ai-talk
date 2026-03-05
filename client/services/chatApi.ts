@@ -3,6 +3,8 @@ import {
   ConversationsPage,
   ChatHistoryResponse,
   GetConversationsPageResponse,
+  ConversationSearchResult,
+  SearchConversationsResponse,
 } from '@/types/chat';
 
 export const chatApi = createApi({
@@ -32,6 +34,13 @@ export const chatApi = createApi({
         getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
       },
     }),
+    searchConversations: builder.query<ConversationSearchResult[], string>({
+      query: (q) => ({
+        url: '/chats/conversations/search',
+        params: { q },
+      }),
+      transformResponse: (response: SearchConversationsResponse) => response.data,
+    }),
     getChatHistory: builder.query<ChatHistoryResponse['data'], string>({
       query: (conversationId) => `/chats/messages/${conversationId}`,
       transformResponse: (response: ChatHistoryResponse) => response.data,
@@ -42,5 +51,8 @@ export const chatApi = createApi({
   }),
 });
 
-export const { useGetConversationsInfiniteQuery, useGetChatHistoryQuery } =
-  chatApi;
+export const {
+  useGetConversationsInfiniteQuery,
+  useSearchConversationsQuery,
+  useGetChatHistoryQuery,
+} = chatApi;

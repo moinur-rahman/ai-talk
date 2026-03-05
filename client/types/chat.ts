@@ -29,6 +29,16 @@ export interface GetConversationsPageResponse {
   messageCode: string;
 }
 
+export interface ConversationSearchResult {
+  id: string;
+  title: string | null;
+  snippet: string | null;
+}
+
+export interface SearchConversationsResponse {
+  data: ConversationSearchResult[];
+}
+
 export interface ChatHistoryResponse {
   data: {
     messages: Message[];

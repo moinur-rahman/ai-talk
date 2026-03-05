@@ -4,6 +4,7 @@ import type { SessionUser } from '../../../common/decorators/current-user.decora
 import { ConversationService } from './conversation.service.js';
 import { UpdateConversationTitleDto } from './dto/update-conversation-title.dto.js';
 import { GetConversationsQueryDto } from './dto/get-conversations-query.dto.js';
+import { SearchConversationsQueryDto } from './dto/search-conversations-query.dto.js';
 
 @Controller('chats/conversations')
 export class ConversationController {
@@ -34,6 +35,18 @@ export class ConversationController {
       data: result,
       message: 'Conversations fetched successfully',
     };
+  }
+
+  @Get('search')
+  async searchConversations(
+    @CurrentUser() user: SessionUser,
+    @Query() query: SearchConversationsQueryDto,
+  ) {
+    const results = await this.conversationService.searchConversations(
+      user.id,
+      query.q,
+    );
+    return { data: results, message: 'Search results' };
   }
 
   @Patch(':conversationId/title')
