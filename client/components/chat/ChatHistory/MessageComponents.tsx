@@ -196,26 +196,14 @@ export const UserMessage = ({ mainContent, attachments }: MessageProps) => {
   };
 
   return (
-    <div className="flex flex-col items-end w-full">
+    <div className="flex flex-col items-end w-full group">
       {imageFiles && imageFiles.length > 0 && (
         <MessageImages attachments={imageFiles} />
       )}
       {documentFiles && documentFiles.length > 0 && (
         <MessageDocuments attachments={documentFiles} />
       )}
-      <div className="group relative bg-[#1e2f44] border border-[#2a4560] text-[#e2ecf5] px-4 py-3 rounded-2xl rounded-tr-sm max-w-[80%] shadow-sm mt-1">
-        <button
-          onClick={handleCopy}
-          className="absolute top-2 right-2 w-6 h-6 flex items-center justify-center bg-[#1a2535]/80 rounded-full text-[#627a8e] hover:text-[#00C4A1] opacity-0 group-hover:opacity-100 transition-all duration-200"
-          aria-label="Copy message"
-          title={copyStatus || 'Copy message'}
-        >
-          {copyStatus ? (
-            <span className="text-xs text-[#00C4A1]">✓</span>
-          ) : (
-            <FiCopy size={12} />
-          )}
-        </button>
+      <div className="bg-[#1e2f44] border border-[#2a4560] text-[#e2ecf5] px-4 py-3 rounded-2xl rounded-tr-sm max-w-[80%] shadow-sm mt-1">
         <div className="text-sm leading-relaxed break-words">
           {mainContent?.split('\n').map((line, lineIndex) => (
             <p
@@ -226,6 +214,20 @@ export const UserMessage = ({ mainContent, attachments }: MessageProps) => {
             </p>
           )) || <p className="text-[#627a8e] italic text-sm">No content</p>}
         </div>
+      </div>
+      <div className="flex items-center mt-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+        <button
+          onClick={handleCopy}
+          className="flex items-center gap-1.5 px-2 py-1 text-[#4e677e] hover:text-[#92adc4] transition-colors duration-150 rounded-md hover:bg-[#222b3d]"
+          aria-label="Copy message"
+          title={copyStatus || 'Copy message'}
+        >
+          {copyStatus ? (
+            <span className="text-xs text-[#00C4A1]">✓ Copied</span>
+          ) : (
+            <><FiCopy size={12} /><span className="text-xs">Copy</span></>
+          )}
+        </button>
       </div>
     </div>
   );
@@ -245,8 +247,18 @@ export const AssistantMessage = ({
     (file) => !file.mimeType.startsWith('image/') && file.presignedUrl,
   );
 
+  const [copyStatus, setCopyStatus] = useState<string>('');
+
+  const handleCopy = () => {
+    if (!mainContent) return;
+    navigator.clipboard.writeText(mainContent).then(() => {
+      setCopyStatus('Copied!');
+      setTimeout(() => setCopyStatus(''), 2000);
+    });
+  };
+
   return (
-    <div className="flex flex-col items-start w-full">
+    <div className="flex flex-col items-start w-full group">
       {imageFiles && imageFiles.length > 0 && (
         <MessageImages attachments={imageFiles} />
       )}
@@ -269,6 +281,20 @@ export const AssistantMessage = ({
             <MarkdownRenderer content={mainContent || ''} />
           </div>
         </div>
+      </div>
+      <div className="flex items-center mt-1 ml-9 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+        <button
+          onClick={handleCopy}
+          className="flex items-center gap-1.5 px-2 py-1 text-[#4e677e] hover:text-[#92adc4] transition-colors duration-150 rounded-md hover:bg-[#222b3d]"
+          aria-label="Copy message"
+          title={copyStatus || 'Copy message'}
+        >
+          {copyStatus ? (
+            <span className="text-xs text-[#00C4A1]">✓ Copied</span>
+          ) : (
+            <><FiCopy size={12} /><span className="text-xs">Copy</span></>
+          )}
+        </button>
       </div>
     </div>
   );
