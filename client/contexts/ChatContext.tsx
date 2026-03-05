@@ -166,7 +166,12 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
         undefined,
         (draft) => {
           if (draft.pages.length > 0) {
-            draft.pages[0].conversations.unshift({ id: conversationId, title });
+            const alreadyExists = draft.pages.some((page) =>
+              page.conversations.some((c) => c.id === conversationId),
+            );
+            if (!alreadyExists) {
+              draft.pages[0].conversations.unshift({ id: conversationId, title });
+            }
           }
         },
       );

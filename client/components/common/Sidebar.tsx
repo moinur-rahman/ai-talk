@@ -12,7 +12,9 @@ const Sidebar: FC = () => {
     useGetConversationsInfiniteQuery();
   const [searchOpen, setSearchOpen] = useState(false);
 
-  const conversations = data?.pages.flatMap((page) => page.conversations) ?? [];
+  const conversations = data?.pages
+    .flatMap((page) => page.conversations)
+    .filter((c, i, arr) => arr.findIndex((x) => x.id === c.id) === i) ?? [];
   const sentinelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
