@@ -20,8 +20,8 @@ export const customStyles: StylesConfig<ModelOption> = {
   control: (styles) => ({
     ...styles,
     backgroundColor: 'transparent',
-    color: '#D8E8F3',
-    borderColor: '#1A2840',
+    color: '#e2ecf5',
+    borderColor: '#2e3d52',
     borderRadius: '8px',
     boxShadow: 'none',
     minHeight: '34px',
@@ -33,10 +33,10 @@ export const customStyles: StylesConfig<ModelOption> = {
   }),
   menu: (styles) => ({
     ...styles,
-    backgroundColor: '#0E1520',
-    border: '1px solid #1A2840',
+    backgroundColor: '#222b3d',
+    border: '1px solid #2e3d52',
     borderRadius: '10px',
-    boxShadow: '0 8px 32px rgba(0, 0, 0, 0.5)',
+    boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
     overflow: 'hidden',
   }),
   menuList: (styles) => ({
@@ -48,35 +48,35 @@ export const customStyles: StylesConfig<ModelOption> = {
     backgroundColor: isSelected
       ? 'rgba(0, 196, 161, 0.1)'
       : isFocused
-        ? '#111E2E'
+        ? '#273040'
         : 'transparent',
-    color: isSelected ? '#00C4A1' : '#C8D8E4',
+    color: isSelected ? '#00C4A1' : '#d5e6f0',
     fontSize: '13px',
     padding: '8px 12px',
     borderRadius: '6px',
     cursor: 'pointer',
-    '&:hover': { backgroundColor: '#111E2E' },
+    '&:hover': { backgroundColor: '#273040' },
   }),
   placeholder: (styles) => ({
     ...styles,
-    color: '#3D5570',
+    color: '#4e677e',
     fontSize: '13px',
   }),
   singleValue: (styles) => ({
     ...styles,
-    color: '#D8E8F3',
+    color: '#e2ecf5',
     fontSize: '13px',
   }),
   input: (styles) => ({
     ...styles,
-    color: '#D8E8F3',
+    color: '#e2ecf5',
     fontSize: '13px',
   }),
   dropdownIndicator: (styles) => ({
     ...styles,
-    color: '#3D5570',
+    color: '#4e677e',
     padding: '4px 6px',
-    '&:hover': { color: '#7A96AD' },
+    '&:hover': { color: '#92adc4' },
   }),
   valueContainer: (styles) => ({
     ...styles,
@@ -196,7 +196,7 @@ const ModelDropdown: FC = () => {
   };
 
   if (isLoading) {
-    return <p className="text-xs text-[#3D5570]">Loading models...</p>;
+    return <p className="text-xs text-[#4e677e]">Loading models...</p>;
   }
 
   const options = models.map((model) => ({

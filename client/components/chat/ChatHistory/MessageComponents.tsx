@@ -75,15 +75,15 @@ const MessageDocuments = ({ attachments }: { attachments: FileMetadata[] }) => (
           href={file.presignedUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center p-3 bg-[#0E1520] border border-[#1A2840] rounded-xl text-[#D8E8F3] hover:bg-[#111E2E] hover:border-[#1D3A50] transition-all duration-200"
+          className="flex items-center p-3 bg-[#222b3d] border border-[#2e3d52] rounded-xl text-[#e2ecf5] hover:bg-[#273040] hover:border-[#3a4f68] transition-all duration-200"
         >
-          <div className="bg-[#1A2840] p-2 rounded-lg mr-3 flex-shrink-0">
+          <div className="bg-[#2e3d52] p-2 rounded-lg mr-3 flex-shrink-0">
             <FiFileText size={22} className="text-[#00C4A1]" />
           </div>
           <div className="overflow-hidden flex-grow">
             <p className="truncate font-medium text-sm">{file.fileName}</p>
-            <div className="flex items-center mt-1 text-xs text-[#7A96AD]">
-              <span className="bg-[#1A2840] px-2 py-0.5 rounded-full">
+            <div className="flex items-center mt-1 text-xs text-[#92adc4]">
+              <span className="bg-[#2e3d52] px-2 py-0.5 rounded-full">
                 {(parseInt(file.fileSize) / 1024).toFixed(1)} KB
               </span>
               <span className="ml-2 opacity-70">
@@ -155,7 +155,7 @@ const ReasoningSection = ({
       {isExpanded && (
         <div className="px-3 pb-3">
           <div className="border-t border-amber-500/10 pt-3">
-            <div className="bg-[#090C12]/60 rounded-md p-3 text-amber-100/80 text-sm leading-relaxed">
+            <div className="bg-[#1b2030]/60 rounded-md p-3 text-amber-100/80 text-sm leading-relaxed">
               {isProcessing && content.trim() === '' ? (
                 <div className="flex items-center gap-2 text-amber-300">
                   <div className="animate-spin">
@@ -203,10 +203,10 @@ export const UserMessage = ({ mainContent, attachments }: MessageProps) => {
       {documentFiles && documentFiles.length > 0 && (
         <MessageDocuments attachments={documentFiles} />
       )}
-      <div className="group relative bg-[#0E1F32] border border-[#1A3550] text-[#D8E8F3] px-4 py-3 rounded-2xl rounded-tr-sm max-w-[80%] shadow-sm mt-1">
+      <div className="group relative bg-[#1e2f44] border border-[#2a4560] text-[#e2ecf5] px-4 py-3 rounded-2xl rounded-tr-sm max-w-[80%] shadow-sm mt-1">
         <button
           onClick={handleCopy}
-          className="absolute top-2 right-2 w-6 h-6 flex items-center justify-center bg-[#0A1525]/80 rounded-full text-[#4A6070] hover:text-[#00C4A1] opacity-0 group-hover:opacity-100 transition-all duration-200"
+          className="absolute top-2 right-2 w-6 h-6 flex items-center justify-center bg-[#1a2535]/80 rounded-full text-[#627a8e] hover:text-[#00C4A1] opacity-0 group-hover:opacity-100 transition-all duration-200"
           aria-label="Copy message"
           title={copyStatus || 'Copy message'}
         >
@@ -224,7 +224,7 @@ export const UserMessage = ({ mainContent, attachments }: MessageProps) => {
             >
               {line}
             </p>
-          )) || <p className="text-[#4A6070] italic text-sm">No content</p>}
+          )) || <p className="text-[#627a8e] italic text-sm">No content</p>}
         </div>
       </div>
     </div>
@@ -255,10 +255,10 @@ export const AssistantMessage = ({
       )}
       <div className="flex items-start gap-3 w-full">
         {/* Diamond indicator */}
-        <div className="flex-shrink-0 mt-1 w-6 h-6 rounded-md bg-[#0E1520] border border-[#1A2840] flex items-center justify-center">
+        <div className="flex-shrink-0 mt-1 w-6 h-6 rounded-md bg-[#222b3d] border border-[#2e3d52] flex items-center justify-center">
           <div className="w-2 h-2 rotate-45 rounded-sm bg-[#00C4A1]" />
         </div>
-        <div className="flex-1 text-[#D8E8F3] break-words overflow-hidden min-w-0">
+        <div className="flex-1 text-[#e2ecf5] break-words overflow-hidden min-w-0">
           {reasoningContent && (
             <ReasoningSection
               content={reasoningContent}

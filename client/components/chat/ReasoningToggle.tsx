@@ -23,20 +23,20 @@ const ReasoningToggle: FC = () => {
   };
 
   return (
-    <div className="flex items-center gap-2 px-3 py-1.5 bg-[#0E1520] rounded-lg border border-[#1A2840]">
+    <div className="flex items-center gap-2 px-3 py-1.5 bg-[#222b3d] rounded-lg border border-[#2e3d52]">
       <FiCpu
         size={14}
         className={`${
-          reasoningEnabled ? 'text-amber-400' : 'text-[#3D5570]'
+          reasoningEnabled ? 'text-amber-400' : 'text-[#4e677e]'
         } transition-colors`}
       />
-      <span className="text-xs text-[#7A96AD] font-medium tracking-wide">
+      <span className="text-xs text-[#92adc4] font-medium tracking-wide">
         Reasoning
       </span>
       <button
         onClick={handleToggle}
-        className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none focus:ring-1 focus:ring-amber-500/50 focus:ring-offset-1 focus:ring-offset-[#0E1520] ${
-          reasoningEnabled ? 'bg-amber-500' : 'bg-[#1A2840]'
+        className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none focus:ring-1 focus:ring-amber-500/50 focus:ring-offset-1 focus:ring-offset-[#222b3d] ${
+          reasoningEnabled ? 'bg-amber-500' : 'bg-[#2e3d52]'
         }`}
         role="switch"
         aria-checked={reasoningEnabled}
