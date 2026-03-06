@@ -4,6 +4,7 @@ export interface FileMetadata {
   mimeType: string;
   fileSize: string;
   presignedUrl?: string;
+  storageUrl?: string;
 }
 
 export interface LLMMessage {

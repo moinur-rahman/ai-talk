@@ -70,9 +70,12 @@ export class SeaweedFSService {
       this.logger.log(
         `File uploaded successfully: ${bucketName}/${objectName}`,
       );
-    } catch (error) {
-      this.logger.error(`Failed to upload file: ${error.message}`);
-      throw new Error(`Failed to upload file: ${error.message}`);
+    } catch (error: unknown) {
+      const err = error as Error;
+      this.logger.error(`Failed to upload file: ${err.message}`);
+      throw new Error(`Failed to upload file: ${err.message}`, {
+        cause: error,
+      });
     }
   }
 
@@ -92,9 +95,12 @@ export class SeaweedFSService {
       }
 
       return Buffer.concat(chunks);
-    } catch (error) {
-      this.logger.error(`Failed to download file: ${error.message}`);
-      throw new Error(`Failed to download file: ${error.message}`);
+    } catch (error: unknown) {
+      const err = error as Error;
+      this.logger.error(`Failed to download file: ${err.message}`);
+      throw new Error(`Failed to download file: ${err.message}`, {
+        cause: error,
+      });
     }
   }
 
@@ -110,9 +116,12 @@ export class SeaweedFSService {
 
       const response = await this.s3Client.send(command);
       return response.Body as Readable;
-    } catch (error) {
-      this.logger.error(`Failed to get file stream: ${error.message}`);
-      throw new Error(`Failed to get file stream: ${error.message}`);
+    } catch (error: unknown) {
+      const err = error as Error;
+      this.logger.error(`Failed to get file stream: ${err.message}`);
+      throw new Error(`Failed to get file stream: ${err.message}`, {
+        cause: error,
+      });
     }
   }
 
@@ -132,9 +141,12 @@ export class SeaweedFSService {
         size: response.ContentLength || 0,
         contentType: response.ContentType || 'application/octet-stream',
       };
-    } catch (error) {
-      this.logger.error(`Failed to get file metadata: ${error.message}`);
-      throw new Error(`Failed to get file metadata: ${error.message}`);
+    } catch (error: unknown) {
+      const err = error as Error;
+      this.logger.error(`Failed to get file metadata: ${err.message}`);
+      throw new Error(`Failed to get file metadata: ${err.message}`, {
+        cause: error,
+      });
     }
   }
 
@@ -147,9 +159,12 @@ export class SeaweedFSService {
 
       await this.s3Client.send(command);
       this.logger.log(`File deleted successfully: ${bucketName}/${objectName}`);
-    } catch (error) {
-      this.logger.error(`Failed to delete file: ${error.message}`);
-      throw new Error(`Failed to delete file: ${error.message}`);
+    } catch (error: unknown) {
+      const err = error as Error;
+      this.logger.error(`Failed to delete file: ${err.message}`);
+      throw new Error(`Failed to delete file: ${err.message}`, {
+        cause: error,
+      });
     }
   }
 
@@ -164,14 +179,41 @@ export class SeaweedFSService {
         Key: objectName,
       });
 
-      const presignedUrl = await getSignedUrl(this.s3ClientPublic, command, {
+      return await getSignedUrl(this.s3ClientPublic, command, {
         expiresIn: expirationSeconds,
       });
+    } catch (error: unknown) {
+      const err = error as Error;
+      this.logger.error(`Failed to generate presigned URL: ${err.message}`);
+      throw new Error(`Failed to generate presigned URL: ${err.message}`, {
+        cause: error,
+      });
+    }
+  }
 
-      return presignedUrl;
-    } catch (error) {
-      this.logger.error(`Failed to generate presigned URL: ${error.message}`);
-      throw new Error(`Failed to generate presigned URL: ${error.message}`);
+  async getInternalPresignedUrl(
+    bucketName: string,
+    objectName: string,
+    expirationSeconds: number = 300,
+  ): Promise<string> {
+    try {
+      const command = new GetObjectCommand({
+        Bucket: bucketName,
+        Key: objectName,
+      });
+
+      return await getSignedUrl(this.s3Client, command, {
+        expiresIn: expirationSeconds,
+      });
+    } catch (error: unknown) {
+      const err = error as Error;
+      this.logger.error(
+        `Failed to generate internal presigned URL: ${err.message}`,
+      );
+      throw new Error(
+        `Failed to generate internal presigned URL: ${err.message}`,
+        { cause: error },
+      );
     }
   }
 
@@ -183,11 +225,12 @@ export class SeaweedFSService {
 
       await this.s3Client.send(command);
       return true;
-    } catch (error) {
-      if (
-        error.name === 'NotFound' ||
-        error.$metadata?.httpStatusCode === 404
-      ) {
+    } catch (error: unknown) {
+      const err = error as {
+        name?: string;
+        $metadata?: { httpStatusCode?: number };
+      };
+      if (err.name === 'NotFound' || err.$metadata?.httpStatusCode === 404) {
         return false;
       }
       throw error;
@@ -202,13 +245,16 @@ export class SeaweedFSService {
 
       await this.s3Client.send(command);
       this.logger.log(`Bucket created successfully: ${bucketName}`);
-    } catch (error) {
-      if (error.name === 'BucketAlreadyOwnedByYou') {
+    } catch (error: unknown) {
+      const err = error as Error & { name?: string };
+      if (err.name === 'BucketAlreadyOwnedByYou') {
         this.logger.log(`Bucket already exists: ${bucketName}`);
         return;
       }
-      this.logger.error(`Failed to create bucket: ${error.message}`);
-      throw new Error(`Failed to create bucket: ${error.message}`);
+      this.logger.error(`Failed to create bucket: ${err.message}`);
+      throw new Error(`Failed to create bucket: ${err.message}`, {
+        cause: error,
+      });
     }
   }
 }

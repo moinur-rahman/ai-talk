@@ -18,6 +18,16 @@ export class MessageController {
   ) {
     const result =
       await this.messageService.getMessagesByConversationId(conversationId);
-    return { data: result, message: 'Messages fetched successfully' };
+    const sanitized = {
+      ...result,
+      messages: result.messages.map((msg) => ({
+        ...msg,
+        attachments: msg.attachments.map(
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          ({ storageUrl: _, ...rest }) => rest,
+        ),
+      })),
+    };
+    return { data: sanitized, message: 'Messages fetched successfully' };
   }
 }

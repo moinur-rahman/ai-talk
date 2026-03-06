@@ -77,7 +77,9 @@ export class ConversationService {
     const matchIndex = content.toLowerCase().indexOf(query.toLowerCase());
 
     if (matchIndex === -1) {
-      return content.length > WINDOW ? content.slice(0, WINDOW) + '...' : content;
+      return content.length > WINDOW
+        ? content.slice(0, WINDOW) + '...'
+        : content;
     }
 
     const start = Math.max(0, matchIndex - Math.floor(WINDOW / 2));

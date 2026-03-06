@@ -165,10 +165,10 @@ export class OpenRouterService {
     const parts: ChatCompletionContentPart[] = [];
 
     for (const attachment of message.attachments) {
-      if (!attachment.presignedUrl || !attachment.mimeType.startsWith('image/'))
-        continue;
+      const attachmentUrl = attachment.storageUrl ?? attachment.presignedUrl;
+      if (!attachmentUrl || !attachment.mimeType.startsWith('image/')) continue;
 
-      const base64 = await fetchBase64FromPresignedUrl(attachment.presignedUrl);
+      const base64 = await fetchBase64FromPresignedUrl(attachmentUrl);
       parts.push({
         type: 'image_url',
         image_url: {

@@ -134,10 +134,10 @@ export class GeminiService {
     const parts: Part[] = [];
 
     for (const attachment of message.attachments) {
-      if (!attachment.presignedUrl || !attachment.mimeType.startsWith('image/'))
-        continue;
+      const attachmentUrl = attachment.storageUrl ?? attachment.presignedUrl;
+      if (!attachmentUrl || !attachment.mimeType.startsWith('image/')) continue;
 
-      const base64 = await fetchBase64FromPresignedUrl(attachment.presignedUrl);
+      const base64 = await fetchBase64FromPresignedUrl(attachmentUrl);
       parts.push({
         inlineData: { mimeType: attachment.mimeType, data: base64 },
       });

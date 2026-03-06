@@ -5,5 +5,6 @@ export class FileMetadataResponseDto {
   fileSize?: string;
   createdAt?: Date;
   presignedUrl?: string;
+  storageUrl?: string;
   error?: string;
 }

@@ -71,8 +71,9 @@ export class FileService {
         fileSize: file.size,
         presignedUrl,
       };
-    } catch (error) {
-      this.logger.error(`Failed to upload file: ${error.message}`, error.stack);
+    } catch (error: unknown) {
+      const err = error as Error;
+      this.logger.error(`Failed to upload file: ${err.message}`, err.stack);
       throw new InternalServerErrorException('Failed to upload file');
     }
   }
@@ -111,10 +112,11 @@ export class FileService {
         mimeType: metadata.contentType || fileRecord.mimeType,
         fileName: fileRecord.fileName,
       };
-    } catch (error) {
+    } catch (error: unknown) {
+      const err = error as Error;
       this.logger.error(
-        `Failed to download file ${id}: ${error.message}`,
-        error.stack,
+        `Failed to download file ${id}: ${err.message}`,
+        err.stack,
       );
       throw new InternalServerErrorException('Failed to download file');
     }
@@ -138,15 +140,23 @@ export class FileService {
           }
 
           let presignedUrl: string | undefined;
+          let storageUrl: string | undefined;
           try {
-            presignedUrl = await this.seaweedfs.getPresignedUrl(
-              fileRecord.bucketName,
-              fileRecord.objectName,
-              PRESIGNED_URL_EXPIRATION,
-            );
-          } catch (error) {
+            [presignedUrl, storageUrl] = await Promise.all([
+              this.seaweedfs.getPresignedUrl(
+                fileRecord.bucketName,
+                fileRecord.objectName,
+                PRESIGNED_URL_EXPIRATION,
+              ),
+              this.seaweedfs.getInternalPresignedUrl(
+                fileRecord.bucketName,
+                fileRecord.objectName,
+                PRESIGNED_URL_EXPIRATION,
+              ),
+            ]);
+          } catch (error: unknown) {
             this.logger.error(
-              `Failed to generate presigned URL for file ${id}: ${error.message}`,
+              `Failed to generate presigned URL for file ${id}: ${error instanceof Error ? error.message : String(error)}`,
             );
           }
 
@@ -157,6 +167,7 @@ export class FileService {
             fileSize: fileRecord.fileSize.toString(),
             createdAt: fileRecord.createdAt,
             presignedUrl,
+            storageUrl,
           };
         } catch (error) {
           return {

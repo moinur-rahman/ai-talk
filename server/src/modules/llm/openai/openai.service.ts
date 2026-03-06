@@ -155,7 +155,9 @@ export class OpenAIService {
   private async processMessageWithFiles(
     message: LLMMessage,
   ): Promise<ResponseInputMessageContentList> {
-    const filesWithUrls = message.attachments.filter((a) => !!a.presignedUrl);
+    const filesWithUrls = message.attachments.filter(
+      (a) => !!(a.storageUrl ?? a.presignedUrl),
+    );
     const fileContents = await this.processFiles(filesWithUrls);
     fileContents.push({ type: 'input_text', text: message.content });
     return fileContents;
@@ -173,7 +175,9 @@ export class OpenAIService {
   private async processFile(
     file: FileMetadata,
   ): Promise<ResponseInputContent | undefined> {
-    const base64 = await fetchBase64FromPresignedUrl(file.presignedUrl!);
+    const base64 = await fetchBase64FromPresignedUrl(
+      (file.storageUrl ?? file.presignedUrl)!,
+    );
 
     if (file.mimeType.startsWith('image/')) {
       return {

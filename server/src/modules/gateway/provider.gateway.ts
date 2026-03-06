@@ -132,6 +132,7 @@ export class ProviderGateway
               mimeType: a.mimeType!,
               fileSize: a.fileSize ?? '0',
               presignedUrl: a.presignedUrl,
+              storageUrl: a.storageUrl,
             })),
         })),
         {
@@ -145,6 +146,7 @@ export class ProviderGateway
               mimeType: a.mimeType!,
               fileSize: a.fileSize ?? '0',
               presignedUrl: a.presignedUrl,
+              storageUrl: a.storageUrl,
             })),
         },
       ];
