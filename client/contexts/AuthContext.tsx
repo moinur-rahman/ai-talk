@@ -4,6 +4,7 @@ import { createContext, useContext, useEffect, useMemo } from 'react';
 import { authConnection } from '@/apis/socket';
 import { useRouter } from 'next/navigation';
 import { url } from '@/utils/url';
+import axiosInstance from '@/apis/axiosInstance';
 
 interface IAuthContext {
   authConnection: Socket;
@@ -33,9 +34,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   useEffect(() => {
-    authConnection.on('user-logout', () => {
-      router.push(url.login);
+    authConnection.on('user-logout', async () => {
       authConnection.disconnect();
+      await axiosInstance.post('/auth/logout').catch(() => {});
+      window.location.href = url.login;
     });
   }, []);
 
