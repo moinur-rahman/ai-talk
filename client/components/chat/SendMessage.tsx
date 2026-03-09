@@ -1,7 +1,7 @@
 'use client';
 import { useRouter } from 'next/navigation';
-import { useState, FormEvent, useEffect, useRef } from 'react';
-import { FiPaperclip, FiSend } from 'react-icons/fi';
+import { useState, FormEvent, useEffect, useRef, useCallback } from 'react';
+import { FiPaperclip, FiSend, FiMic, FiMicOff } from 'react-icons/fi';
 import { useChat } from '@/contexts/ChatContext';
 import { FaStop } from 'react-icons/fa';
 import { useUploadFileMutation } from '@/services/fileApi';
@@ -30,6 +30,9 @@ const SendMessage = () => {
     FileMetadata[]
   >([]);
 
+  const [isListening, setIsListening] = useState(false);
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
+
   const [uploadFile] = useUploadFileMutation();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
@@ -48,6 +51,42 @@ const SendMessage = () => {
     textarea.addEventListener('input', adjustHeight);
     return () => textarea.removeEventListener('input', adjustHeight);
   }, []);
+
+  const toggleListening = useCallback(() => {
+    if (isListening) {
+      recognitionRef.current?.stop();
+      return;
+    }
+
+    const SpeechRecognitionAPI =
+      window.SpeechRecognition ?? window.webkitSpeechRecognition;
+
+    if (!SpeechRecognitionAPI) return;
+    const recognition = new SpeechRecognitionAPI();
+    recognition.continuous = true;
+    recognition.interimResults = false;
+    recognition.lang = 'en-US';
+
+    recognition.onresult = (event: SpeechRecognitionEvent) => {
+      const transcript = Array.from(event.results)
+        .slice(event.resultIndex)
+        .map((r: SpeechRecognitionResult) => r[0].transcript)
+        .join('');
+      setPrompt((prev) => (prev ? `${prev} ${transcript}` : transcript));
+    };
+
+    recognition.onerror = () => {
+      setIsListening(false);
+    };
+
+    recognition.onend = () => {
+      setIsListening(false);
+    };
+
+    recognitionRef.current = recognition;
+    recognition.start();
+    setIsListening(true);
+  }, [isListening]);
 
   const handleGenerateText = async (e: FormEvent) => {
     e.preventDefault();
@@ -216,12 +255,31 @@ const SendMessage = () => {
           className="flex-grow mx-2 py-2 px-1 bg-transparent text-[#e2ecf5] placeholder-[#4e677e] resize-none outline-none overflow-y-auto text-sm leading-relaxed"
           placeholder="Message..."
           value={prompt}
-          onChange={(e) => setPrompt(e.target.value)}
-          onKeyDown={handleKeyDown}
+          onChange={(e) => {
+            if (isListening) recognitionRef.current?.stop();
+            setPrompt(e.target.value);
+          }}
+          onKeyDown={(e) => {
+            if (isListening) recognitionRef.current?.stop();
+            handleKeyDown(e);
+          }}
           onPaste={handlePaste}
           rows={1}
           style={{ maxHeight: '150px' }}
         />
+
+        <button
+          type="button"
+          onClick={toggleListening}
+          aria-label={isListening ? 'Stop recording' : 'Start voice input'}
+          className={`p-2 rounded-lg transition-all duration-150 flex-shrink-0 ${
+            isListening
+              ? 'text-red-400 hover:text-red-300 hover:bg-red-400/10 animate-pulse'
+              : 'text-[#4e677e] hover:text-[#00C4A1] hover:bg-[#00C4A1]/10'
+          }`}
+        >
+          {isListening ? <FiMicOff size={18} /> : <FiMic size={18} />}
+        </button>
 
         {conversationId && streaming[conversationId] ? (
           <button
