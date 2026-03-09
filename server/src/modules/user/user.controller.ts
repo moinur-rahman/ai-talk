@@ -1,5 +1,6 @@
 import {
   Controller,
+  Get,
   Post,
   Body,
   HttpCode,
@@ -10,10 +11,19 @@ import {
 import { UserService } from './user.service.js';
 import { CreateUserDto } from './dto/create-user.dto.js';
 import { Public } from '../../common/decorators/public.decorator.js';
+import {
+  CurrentUser,
+  type SessionUser,
+} from '../../common/decorators/current-user.decorator.js';
 
 @Controller('users')
 export class UserController {
   constructor(private readonly userService: UserService) {}
+
+  @Get('me')
+  getMe(@CurrentUser() user: SessionUser): SessionUser {
+    return user;
+  }
 
   @Public()
   @Post('create')

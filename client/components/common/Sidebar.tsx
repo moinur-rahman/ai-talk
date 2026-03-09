@@ -3,14 +3,37 @@ import { FC, useEffect, useRef, useState } from 'react';
 import { useGetConversationsInfiniteQuery } from '@/services/chatApi';
 import Link from 'next/link';
 import { useChat } from '@/contexts/ChatContext';
-import { FiPlus, FiMessageSquare, FiSearch } from 'react-icons/fi';
+import { FiPlus, FiMessageSquare, FiSearch, FiLogOut, FiChevronUp } from 'react-icons/fi';
 import SearchModal from './SearchModal';
+import axiosInstance from '@/apis/axiosInstance';
+import { url } from '@/utils/url';
+import { useGetMeQuery } from '@/services/userApi';
 
 const Sidebar: FC = () => {
   const { conversationId } = useChat();
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage } =
     useGetConversationsInfiniteQuery();
+  const { data: user } = useGetMeQuery();
   const [searchOpen, setSearchOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  const handleLogout = async () => {
+    setLoggingOut(true);
+    await axiosInstance.post('/auth/logout').catch(() => {});
+    window.location.href = url.login;
+  };
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false);
+      }
+    };
+    if (menuOpen) document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [menuOpen]);
 
   const conversations = data?.pages
     .flatMap((page) => page.conversations)
@@ -97,6 +120,49 @@ const Sidebar: FC = () => {
             <p className="text-[#4e677e] text-[10px] text-center py-2">
               Loading...
             </p>
+          )}
+        </div>
+
+        {/* User menu */}
+        <div ref={menuRef} className="flex-shrink-0 px-3 py-3 border-t border-[#2e3d52] relative">
+          <button
+            onClick={() => setMenuOpen((o) => !o)}
+            className="flex items-center gap-2.5 w-full px-3 py-2 rounded-lg text-[#92adc4] hover:bg-[#1a2535] transition-all duration-200"
+          >
+            <div className="w-7 h-7 rounded-full bg-[#00C4A1]/20 border border-[#00C4A1]/30 flex items-center justify-center flex-shrink-0">
+              <span className="text-[#00C4A1] text-[11px] font-semibold">
+                {user?.name.charAt(0).toUpperCase() ?? '?'}
+              </span>
+            </div>
+            <div className="flex-1 min-w-0 text-left">
+              <p className="text-[#d5e6f0] text-xs font-medium truncate">
+                {user?.name ?? ''}
+              </p>
+              <p className="text-[#4e677e] text-[10px] truncate">{user?.email ?? ''}</p>
+            </div>
+            <FiChevronUp
+              size={14}
+              className={`flex-shrink-0 transition-transform duration-200 ${menuOpen ? 'rotate-180' : ''}`}
+            />
+          </button>
+
+          {menuOpen && (
+            <div className="absolute bottom-full left-3 right-3 mb-1 bg-[#1a2535] border border-[#2e3d52] rounded-xl shadow-xl overflow-hidden">
+              <div className="px-4 py-3 border-b border-[#2e3d52]">
+                <p className="text-[#d5e6f0] text-xs font-medium truncate">{user?.name}</p>
+                <p className="text-[#4e677e] text-[10px] truncate">{user?.email}</p>
+              </div>
+              <div className="p-1">
+                <button
+                  onClick={handleLogout}
+                  disabled={loggingOut}
+                  className="flex items-center gap-2.5 w-full px-3 py-2 rounded-lg text-[#92adc4] hover:text-red-400 hover:bg-red-400/5 transition-all duration-200 text-sm disabled:opacity-50"
+                >
+                  <FiLogOut size={14} />
+                  <span>{loggingOut ? 'Logging out...' : 'Log out'}</span>
+                </button>
+              </div>
+            </div>
           )}
         </div>
       </nav>
