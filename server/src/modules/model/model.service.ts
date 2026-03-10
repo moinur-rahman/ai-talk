@@ -83,6 +83,7 @@ export class ModelService implements OnApplicationBootstrap {
       where: {
         providerId,
         isDeprecated: false,
+        isEnabled: true,
       },
     });
   }
@@ -123,6 +124,7 @@ export class ModelService implements OnApplicationBootstrap {
             description: true,
             hasReasoning: true,
             isDeprecated: true,
+            isEnabled: true,
           },
           orderBy: { name: 'asc' },
         },
@@ -156,6 +158,7 @@ export class ModelService implements OnApplicationBootstrap {
         description: dto.description ?? '',
         hasReasoning: dto.hasReasoning ?? false,
         isDeprecated: false,
+        isEnabled: dto.isEnabled ?? false,
         providerId: dto.providerId,
       },
       select: {
@@ -164,6 +167,7 @@ export class ModelService implements OnApplicationBootstrap {
         description: true,
         hasReasoning: true,
         isDeprecated: true,
+        isEnabled: true,
       },
     });
   }
@@ -186,6 +190,7 @@ export class ModelService implements OnApplicationBootstrap {
         description: true,
         hasReasoning: true,
         isDeprecated: true,
+        isEnabled: true,
       },
     });
   }

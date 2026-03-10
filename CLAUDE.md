@@ -9,6 +9,18 @@ Whenever you add a new environment variable, you MUST update ALL of the followin
 3. `docker-compose.dev.yml` — add `- VAR_NAME=${VAR_NAME}` under the `server` service `environment` section
 4. `server/src/common/config/config.ts` — add to `IConfig` interface and `config` object
 
+## Running Commands
+
+Always use npm scripts defined in the project's `package.json` instead of invoking tools directly (e.g. never `npx prisma`, `npx eslint`, etc.). Check the relevant `package.json` for the available scripts first.
+
+Common server scripts (run from `server/`):
+
+- `npm run prisma:migrate` — run migrations
+- `npm run prisma:generate` — regenerate the Prisma client
+- `npm run prisma:studio` — open Prisma Studio
+- `npm run lint:check` — check for lint errors without fixing
+- `npm run lint` — lint and auto-fix
+
 ## Adding a New LLM Provider
 
 When adding a new LLM provider, update all of the following:

@@ -12,6 +12,7 @@ export interface AdminModel {
   description: string;
   hasReasoning: boolean;
   isDeprecated: boolean;
+  isEnabled: boolean;
 }
 
 export interface Provider {
@@ -57,6 +58,7 @@ export interface CreateModelPayload {
   name: string;
   description?: string;
   hasReasoning?: boolean;
+  isEnabled?: boolean;
   providerId: string;
 }
 
@@ -65,7 +67,7 @@ export interface UpdateModelPayload {
   name?: string;
   description?: string;
   hasReasoning?: boolean;
-  isDeprecated?: boolean;
+  isEnabled?: boolean;
 }
 
 interface AdminModelResponse {

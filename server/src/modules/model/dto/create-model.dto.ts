@@ -22,6 +22,10 @@ export class CreateModelDto {
   @IsOptional()
   hasReasoning?: boolean;
 
+  @IsBoolean()
+  @IsOptional()
+  isEnabled?: boolean;
+
   @IsUUID()
   providerId: string;
 }

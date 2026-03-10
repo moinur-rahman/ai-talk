@@ -17,5 +17,5 @@ export class UpdateModelDto {
 
   @IsBoolean()
   @IsOptional()
-  isDeprecated?: boolean;
+  isEnabled?: boolean;
 }
