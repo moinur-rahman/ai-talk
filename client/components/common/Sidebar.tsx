@@ -1,7 +1,11 @@
 'use client';
 import { FC, useEffect, useRef, useState } from 'react';
-import { useGetConversationsInfiniteQuery } from '@/services/chatApi';
+import {
+  useGetConversationsInfiniteQuery,
+  useDeleteConversationMutation,
+} from '@/services/chatApi';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useChat } from '@/contexts/ChatContext';
 import {
   FiPlus,
@@ -10,6 +14,9 @@ import {
   FiLogOut,
   FiChevronUp,
   FiShield,
+  FiTrash2,
+  FiX,
+  FiSettings,
 } from 'react-icons/fi';
 import SearchModal from './SearchModal';
 import axiosInstance from '@/apis/axiosInstance';
@@ -187,6 +194,14 @@ const Sidebar: FC = () => {
                     <span>Admin Panel</span>
                   </Link>
                 )}
+                <Link
+                  href="/settings"
+                  onClick={() => setMenuOpen(false)}
+                  className="flex items-center gap-2.5 w-full px-3 py-2 rounded-lg text-[#92adc4] hover:text-[#00C4A1] hover:bg-[#00C4A1]/5 transition-all duration-200 text-sm"
+                >
+                  <FiSettings size={14} />
+                  <span>Settings</span>
+                </Link>
                 <button
                   onClick={handleLogout}
                   disabled={loggingOut}
@@ -210,21 +225,82 @@ const SidebarItem: FC<{ name: string; id: string; isSelected?: boolean }> = ({
   name,
   id,
   isSelected = false,
-}) => (
-  <Link
-    href={`/${id}`}
-    className={`flex items-center gap-2.5 w-full px-2.5 py-2 rounded-lg transition-all duration-150 text-sm mb-0.5 border-l-2 ${
-      isSelected
-        ? 'bg-[#1a2d42] text-[#00C4A1] border-[#00C4A1]'
-        : 'text-[#92adc4] hover:bg-[#222b3d] hover:text-[#d5e6f0] border-transparent'
-    }`}
-  >
-    <FiMessageSquare
-      size={13}
-      className={`flex-shrink-0 ${isSelected ? 'text-[#00C4A1]' : 'text-[#4e677e]'}`}
-    />
-    <span className="truncate">{name}</span>
-  </Link>
-);
+}) => {
+  const router = useRouter();
+  const [deleteConversation, { isLoading }] = useDeleteConversationMutation();
+  const [showModal, setShowModal] = useState(false);
+
+  const handleDelete = async () => {
+    await deleteConversation(id).unwrap();
+    setShowModal(false);
+    if (isSelected) router.push('/');
+  };
+
+  return (
+    <>
+      <div className="relative group mb-0.5">
+        <Link
+          href={`/${id}`}
+          className={`flex items-center gap-2.5 w-full px-2.5 py-2 rounded-lg transition-all duration-150 text-sm border-l-2 pr-8 ${
+            isSelected
+              ? 'bg-[#1a2d42] text-[#00C4A1] border-[#00C4A1]'
+              : 'text-[#92adc4] hover:bg-[#222b3d] hover:text-[#d5e6f0] border-transparent'
+          }`}
+        >
+          <FiMessageSquare
+            size={13}
+            className={`flex-shrink-0 ${isSelected ? 'text-[#00C4A1]' : 'text-[#4e677e]'}`}
+          />
+          <span className="truncate">{name}</span>
+        </Link>
+
+        <button
+          onClick={(e) => { e.preventDefault(); setShowModal(true); }}
+          className="absolute right-1.5 top-1/2 -translate-y-1/2 p-1 rounded text-[#4e677e] hover:text-red-400 hover:bg-red-400/10 transition-colors opacity-0 group-hover:opacity-100"
+        >
+          <FiTrash2 size={14} />
+        </button>
+      </div>
+
+      {showModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="w-full max-w-sm bg-[#1a2535] border border-[#2e3d52] rounded-2xl shadow-2xl overflow-hidden">
+            <div className="px-5 py-4 border-b border-[#2e3d52] flex items-center justify-between">
+              <h3 className="text-[#e2ecf5] font-semibold text-sm">Delete conversation</h3>
+              <button
+                onClick={() => setShowModal(false)}
+                className="text-[#4e677e] hover:text-[#92adc4] transition-colors"
+              >
+                <FiX size={16} />
+              </button>
+            </div>
+            <div className="px-5 py-4">
+              <p className="text-[#92adc4] text-sm">
+                Are you sure you want to delete{' '}
+                <span className="text-[#d5e6f0] font-medium">&ldquo;{name}&rdquo;</span>?
+                This cannot be undone.
+              </p>
+              <div className="flex gap-2 mt-4">
+                <button
+                  onClick={() => setShowModal(false)}
+                  className="flex-1 px-4 py-2 rounded-lg border border-[#2e3d52] text-[#92adc4] hover:bg-[#222b3d] text-sm transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleDelete}
+                  disabled={isLoading}
+                  className="flex-1 px-4 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white font-medium text-sm transition-colors disabled:opacity-60"
+                >
+                  {isLoading ? 'Deleting...' : 'Delete'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+};
 
 export default Sidebar;

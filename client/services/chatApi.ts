@@ -13,7 +13,7 @@ export const chatApi = createApi({
     baseUrl: `${process.env.NEXT_PUBLIC_BACKEND_URL}`,
     credentials: 'include',
   }),
-  tagTypes: ['ChatHistory'],
+  tagTypes: ['ChatHistory', 'Conversations'],
   endpoints: (builder) => ({
     getConversations: builder.infiniteQuery<
       ConversationsPage,
@@ -33,6 +33,7 @@ export const chatApi = createApi({
         initialPageParam: null,
         getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
       },
+      providesTags: ['Conversations'],
     }),
     searchConversations: builder.query<ConversationSearchResult[], string>({
       query: (q) => ({
@@ -40,6 +41,20 @@ export const chatApi = createApi({
         params: { q },
       }),
       transformResponse: (response: SearchConversationsResponse) => response.data,
+    }),
+    deleteConversation: builder.mutation<void, string>({
+      query: (conversationId) => ({
+        url: `/chats/conversations/${conversationId}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['Conversations'],
+    }),
+    deleteAllConversations: builder.mutation<void, void>({
+      query: () => ({
+        url: '/chats/conversations',
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['Conversations'],
     }),
     getChatHistory: builder.query<ChatHistoryResponse['data'], string>({
       query: (conversationId) => `/chats/messages/${conversationId}`,
@@ -55,4 +70,6 @@ export const {
   useGetConversationsInfiniteQuery,
   useSearchConversationsQuery,
   useGetChatHistoryQuery,
+  useDeleteConversationMutation,
+  useDeleteAllConversationsMutation,
 } = chatApi;

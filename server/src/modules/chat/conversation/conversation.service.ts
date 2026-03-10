@@ -92,6 +92,16 @@ export class ConversationService {
     );
   }
 
+  async deleteConversation(userId: string, conversationId: string) {
+    await this.prisma.conversation.deleteMany({
+      where: { id: conversationId, userId },
+    });
+  }
+
+  async deleteAllConversations(userId: string) {
+    await this.prisma.conversation.deleteMany({ where: { userId } });
+  }
+
   async updateTitle(conversationId: string, title: string) {
     await this.prisma.conversation.update({
       where: { id: conversationId },

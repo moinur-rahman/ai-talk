@@ -55,7 +55,7 @@ model Model {
   isEnabled    Boolean  @default(false) @map("is_enabled")
   hasReasoning Boolean  @default(false) @map("has_reasoning")
   providerId   String   @map("provider_id") @db.Uuid
-  provider     Provider @relation(fields: [providerId], references: [id])
+  provider     Provider @relation(fields: [providerId], references: [id], onDelete: Cascade)
   createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
@@ -65,7 +65,7 @@ model Model {
 model File {
   id         String   @id @default(uuid()) @db.Uuid
   userId     String   @map("user_id") @db.Uuid
-  user       User     @relation(fields: [userId], references: [id])
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   bucketName String   @map("bucket_name") @db.VarChar(255)
   fileName   String   @map("file_name") @db.VarChar(255)
   objectName String   @map("object_name") @db.VarChar(1024)
@@ -80,7 +80,7 @@ model Conversation {
   id             String    @id @default(uuid()) @db.Uuid
   title          String?   @db.VarChar(50)
   userId         String    @map("user_id") @db.Uuid
-  user           User      @relation(fields: [userId], references: [id])
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   lastProviderId String?   @map("last_provider_id") @db.Uuid
   lastModelId    String?   @map("last_model_id") @db.Uuid
   messages       Message[]
@@ -96,7 +96,7 @@ model Message {
   reasoningContent String?             @map("reasoning_content")
   senderType       SenderType          @map("sender_type")
   conversationId   String              @map("conversation_id") @db.Uuid
-  conversation     Conversation        @relation(fields: [conversationId], references: [id])
+  conversation     Conversation        @relation(fields: [conversationId], references: [id], onDelete: Cascade)
   attachments      MessageAttachment[]
   createdAt        DateTime            @default(now()) @map("created_at") @db.Timestamptz
 
@@ -107,7 +107,7 @@ model Message {
 model MessageAttachment {
   id        String   @id @default(uuid()) @db.Uuid
   messageId String   @map("message_id") @db.Uuid
-  message   Message  @relation(fields: [messageId], references: [id])
+  message   Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
   fileId    String   @map("file_id") @db.Uuid
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
 

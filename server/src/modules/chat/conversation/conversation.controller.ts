@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Patch,
@@ -55,6 +56,21 @@ export class ConversationController {
       query.q,
     );
     return { data: results, message: 'Search results' };
+  }
+
+  @Delete()
+  async deleteAllConversations(@CurrentUser() user: SessionUser) {
+    await this.conversationService.deleteAllConversations(user.id);
+    return { message: 'All conversations deleted successfully' };
+  }
+
+  @Delete(':conversationId')
+  async deleteConversation(
+    @CurrentUser() user: SessionUser,
+    @Param('conversationId') conversationId: string,
+  ) {
+    await this.conversationService.deleteConversation(user.id, conversationId);
+    return { message: 'Conversation deleted successfully' };
   }
 
   @Patch(':conversationId/title')
