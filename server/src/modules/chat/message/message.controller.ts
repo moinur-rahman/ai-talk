@@ -22,10 +22,7 @@ export class MessageController {
       ...result,
       messages: result.messages.map((msg) => ({
         ...msg,
-        attachments: msg.attachments.map(
-          // eslint-disable-next-line @typescript-eslint/no-unused-vars
-          ({ storageUrl: _, ...rest }) => rest,
-        ),
+        attachments: msg.attachments.map(({ storageUrl: _, ...rest }) => rest),
       })),
     };
     return { data: sanitized, message: 'Messages fetched successfully' };

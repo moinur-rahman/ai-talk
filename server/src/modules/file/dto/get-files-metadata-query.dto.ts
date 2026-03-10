@@ -5,7 +5,7 @@ export class GetFilesMetadataQueryDto {
   @IsArray()
   @IsString({ each: true })
   @IsNotEmpty({ each: true })
-  @Transform(({ value }) => {
+  @Transform(({ value }: { value: unknown }) => {
     if (typeof value === 'string') {
       return [value];
     }
