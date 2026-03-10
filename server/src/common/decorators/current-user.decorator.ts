@@ -4,6 +4,7 @@ export interface SessionUser {
   id: string;
   email: string;
   name: string;
+  role: 'admin' | 'user';
 }
 
 export const CurrentUser = createParamDecorator(

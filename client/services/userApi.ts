@@ -1,9 +1,10 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 
-interface User {
+export interface User {
   id: string;
   name: string;
   email: string;
+  role: 'admin' | 'user';
 }
 
 export const userApi = createApi({

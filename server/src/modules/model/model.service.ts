@@ -1,9 +1,12 @@
 import {
+  ConflictException,
   Injectable,
   Logger,
   NotFoundException,
   OnApplicationBootstrap,
 } from '@nestjs/common';
+import { CreateModelDto } from './dto/create-model.dto.js';
+import { UpdateModelDto } from './dto/update-model.dto.js';
 import { PrismaService } from '../../providers/prisma/prisma.service.js';
 import { OllamaService } from '../llm/ollama/ollama.service.js';
 import { OpenAIService } from '../llm/openai/openai.service.js';
@@ -106,6 +109,85 @@ export class ModelService implements OnApplicationBootstrap {
     }
 
     return model;
+  }
+
+  async getAdminOverview() {
+    return await this.prisma.provider.findMany({
+      select: {
+        id: true,
+        name: true,
+        models: {
+          select: {
+            id: true,
+            name: true,
+            description: true,
+            hasReasoning: true,
+            isDeprecated: true,
+          },
+          orderBy: { name: 'asc' },
+        },
+      },
+      orderBy: { name: 'asc' },
+    });
+  }
+
+  async createModel(dto: CreateModelDto) {
+    const provider = await this.prisma.provider.findUnique({
+      where: { id: dto.providerId },
+    });
+
+    if (!provider) {
+      throw new NotFoundException('Provider not found');
+    }
+
+    const existing = await this.prisma.model.findFirst({
+      where: { name: dto.name, providerId: dto.providerId },
+    });
+
+    if (existing) {
+      throw new ConflictException(
+        'Model with this name already exists for this provider',
+      );
+    }
+
+    return await this.prisma.model.create({
+      data: {
+        name: dto.name,
+        description: dto.description ?? '',
+        hasReasoning: dto.hasReasoning ?? false,
+        isDeprecated: false,
+        providerId: dto.providerId,
+      },
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        hasReasoning: true,
+        isDeprecated: true,
+      },
+    });
+  }
+
+  async updateModel(modelId: string, dto: UpdateModelDto) {
+    const model = await this.prisma.model.findUnique({
+      where: { id: modelId },
+    });
+
+    if (!model) {
+      throw new NotFoundException('Model not found');
+    }
+
+    return await this.prisma.model.update({
+      where: { id: modelId },
+      data: dto,
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        hasReasoning: true,
+        isDeprecated: true,
+      },
+    });
   }
 
   async syncModels(): Promise<{ results: ProviderSyncResult[] }> {

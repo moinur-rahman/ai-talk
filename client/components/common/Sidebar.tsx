@@ -3,7 +3,14 @@ import { FC, useEffect, useRef, useState } from 'react';
 import { useGetConversationsInfiniteQuery } from '@/services/chatApi';
 import Link from 'next/link';
 import { useChat } from '@/contexts/ChatContext';
-import { FiPlus, FiMessageSquare, FiSearch, FiLogOut, FiChevronUp } from 'react-icons/fi';
+import {
+  FiPlus,
+  FiMessageSquare,
+  FiSearch,
+  FiLogOut,
+  FiChevronUp,
+  FiShield,
+} from 'react-icons/fi';
 import SearchModal from './SearchModal';
 import axiosInstance from '@/apis/axiosInstance';
 import { url } from '@/utils/url';
@@ -35,9 +42,10 @@ const Sidebar: FC = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [menuOpen]);
 
-  const conversations = data?.pages
-    .flatMap((page) => page.conversations)
-    .filter((c, i, arr) => arr.findIndex((x) => x.id === c.id) === i) ?? [];
+  const conversations =
+    data?.pages
+      .flatMap((page) => page.conversations)
+      .filter((c, i, arr) => arr.findIndex((x) => x.id === c.id) === i) ?? [];
   const sentinelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -124,7 +132,10 @@ const Sidebar: FC = () => {
         </div>
 
         {/* User menu */}
-        <div ref={menuRef} className="flex-shrink-0 px-3 py-3 border-t border-[#2e3d52] relative">
+        <div
+          ref={menuRef}
+          className="flex-shrink-0 px-3 py-3 border-t border-[#2e3d52] relative"
+        >
           <button
             onClick={() => setMenuOpen((o) => !o)}
             className="flex items-center gap-2.5 w-full px-3 py-2 rounded-lg text-[#92adc4] hover:bg-[#1a2535] transition-all duration-200"
@@ -135,10 +146,19 @@ const Sidebar: FC = () => {
               </span>
             </div>
             <div className="flex-1 min-w-0 text-left">
-              <p className="text-[#d5e6f0] text-xs font-medium truncate">
-                {user?.name ?? ''}
+              <div className="flex items-center gap-1.5">
+                <p className="text-[#d5e6f0] text-xs font-medium truncate">
+                  {user?.name ?? ''}
+                </p>
+                {user?.role === 'admin' && (
+                  <span className="flex-shrink-0 px-1.5 py-0.5 rounded bg-[#00C4A1]/15 border border-[#00C4A1]/25 text-[#00C4A1] text-[9px] font-semibold uppercase tracking-wide">
+                    Admin
+                  </span>
+                )}
+              </div>
+              <p className="text-[#4e677e] text-[10px] truncate">
+                {user?.email ?? ''}
               </p>
-              <p className="text-[#4e677e] text-[10px] truncate">{user?.email ?? ''}</p>
             </div>
             <FiChevronUp
               size={14}
@@ -149,10 +169,24 @@ const Sidebar: FC = () => {
           {menuOpen && (
             <div className="absolute bottom-full left-3 right-3 mb-1 bg-[#1a2535] border border-[#2e3d52] rounded-xl shadow-xl overflow-hidden">
               <div className="px-4 py-3 border-b border-[#2e3d52]">
-                <p className="text-[#d5e6f0] text-xs font-medium truncate">{user?.name}</p>
-                <p className="text-[#4e677e] text-[10px] truncate">{user?.email}</p>
+                <p className="text-[#d5e6f0] text-xs font-medium truncate">
+                  {user?.name}
+                </p>
+                <p className="text-[#4e677e] text-[10px] truncate">
+                  {user?.email}
+                </p>
               </div>
               <div className="p-1">
+                {user?.role === 'admin' && (
+                  <Link
+                    href="/admin"
+                    onClick={() => setMenuOpen(false)}
+                    className="flex items-center gap-2.5 w-full px-3 py-2 rounded-lg text-[#92adc4] hover:text-[#00C4A1] hover:bg-[#00C4A1]/5 transition-all duration-200 text-sm"
+                  >
+                    <FiShield size={14} />
+                    <span>Admin Panel</span>
+                  </Link>
+                )}
                 <button
                   onClick={handleLogout}
                   disabled={loggingOut}
