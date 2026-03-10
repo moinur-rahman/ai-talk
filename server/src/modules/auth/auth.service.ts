@@ -29,7 +29,7 @@ export class AuthService {
     return result;
   }
 
-  login(user: UserPayload): UserPayload {
+  login(user: UserPayload): Omit<UserPayload, 'role'> {
     return {
       id: user.id,
       email: user.email,

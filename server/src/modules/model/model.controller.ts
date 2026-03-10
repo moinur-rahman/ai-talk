@@ -1,6 +1,7 @@
-import { Controller, Get, Param, Post } from '@nestjs/common';
+import { Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
 import { ModelService } from './model.service.js';
 import { ProviderParamsDto } from './dto/provider-params.dto.js';
+import { AdminGuard } from '../auth/guards/admin.guard.js';
 
 @Controller('models')
 export class ModelController {
@@ -33,6 +34,7 @@ export class ModelController {
     };
   }
 
+  @UseGuards(AdminGuard)
   @Post('sync')
   async syncModels() {
     const result = await this.modelService.syncModels();
