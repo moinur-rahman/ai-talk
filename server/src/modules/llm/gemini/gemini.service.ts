@@ -3,7 +3,7 @@ import { GoogleGenAI, Content, Part } from '@google/genai';
 import config from '../../../common/config/config.js';
 import { LLMMessage, LLMRequest, TokenCallback } from '../types/llm.types.js';
 import {
-  LATEX_SYSTEM_INSTRUCTION,
+  buildSystemInstruction,
   TITLE_SYSTEM_PROMPT,
   buildTitleUserPrompt,
 } from '../llm.prompts.js';
@@ -35,7 +35,7 @@ export class GeminiService {
         model: request.model,
         contents,
         config: {
-          systemInstruction: LATEX_SYSTEM_INSTRUCTION,
+          systemInstruction: buildSystemInstruction(request.systemPrompt),
           abortSignal: abortController.signal,
         },
       });

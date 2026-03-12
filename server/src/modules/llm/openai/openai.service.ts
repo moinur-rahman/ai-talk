@@ -14,7 +14,7 @@ import {
   TokenCallback,
 } from '../types/llm.types.js';
 import {
-  LATEX_SYSTEM_INSTRUCTION,
+  buildSystemInstruction,
   TITLE_SYSTEM_PROMPT,
   buildTitleUserPrompt,
 } from '../llm.prompts.js';
@@ -38,7 +38,10 @@ export class OpenAIService {
     this.activeStreams.set(request.conversationId, abortController);
 
     try {
-      const input = await this.prepareResponseInput(request.messages);
+      const input = await this.prepareResponseInput(
+        request.messages,
+        request.systemPrompt,
+      );
 
       const reasoning =
         request.enableReasoning && /^o\d(-|$)/.test(request.model)
@@ -133,10 +136,11 @@ export class OpenAIService {
 
   private async prepareResponseInput(
     messages: LLMMessage[],
+    systemPrompt?: string,
   ): Promise<ResponseInput> {
     const systemInstruction = {
       role: 'developer',
-      content: LATEX_SYSTEM_INSTRUCTION,
+      content: buildSystemInstruction(systemPrompt),
     };
 
     const processedMessages = await Promise.all(

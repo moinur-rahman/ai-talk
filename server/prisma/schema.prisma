@@ -31,10 +31,25 @@ model User {
   role          Role           @default(user)
   files         File[]
   conversations Conversation[]
+  projects      Project[]
   createdAt     DateTime       @default(now()) @map("created_at") @db.Timestamptz
   updatedAt     DateTime       @updatedAt @map("updated_at") @db.Timestamptz
 
   @@map("users")
+}
+
+model Project {
+  id            String         @id @default(uuid()) @db.Uuid
+  name          String         @db.VarChar(100)
+  description   String?        @db.VarChar(500)
+  instructions  String?
+  userId        String         @map("user_id") @db.Uuid
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  conversations Conversation[]
+  createdAt     DateTime       @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt     DateTime       @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@map("projects")
 }
 
 model Provider {
@@ -81,6 +96,8 @@ model Conversation {
   title          String?   @db.VarChar(50)
   userId         String    @map("user_id") @db.Uuid
   user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  projectId      String?   @map("project_id") @db.Uuid
+  project        Project?  @relation(fields: [projectId], references: [id], onDelete: SetNull)
   lastProviderId String?   @map("last_provider_id") @db.Uuid
   lastModelId    String?   @map("last_model_id") @db.Uuid
   messages       Message[]

@@ -5,7 +5,7 @@ import {
   useDeleteConversationMutation,
 } from '@/services/chatApi';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { useChat } from '@/contexts/ChatContext';
 import {
   FiPlus,
@@ -17,6 +17,7 @@ import {
   FiTrash2,
   FiX,
   FiSettings,
+  FiFolder,
 } from 'react-icons/fi';
 import SearchModal from './SearchModal';
 import axiosInstance from '@/apis/axiosInstance';
@@ -25,6 +26,7 @@ import { useGetMeQuery } from '@/services/userApi';
 
 const Sidebar: FC = () => {
   const { conversationId } = useChat();
+  const pathname = usePathname();
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage } =
     useGetConversationsInfiniteQuery();
   const { data: user } = useGetMeQuery();
@@ -85,6 +87,8 @@ const Sidebar: FC = () => {
     return () => window.removeEventListener('keydown', handleKey);
   }, []);
 
+  const isOnProjects = pathname.startsWith('/projects');
+
   return (
     <>
       <nav className="w-60 h-screen flex flex-col bg-[#141826] border-r border-[#2e3d52]">
@@ -104,6 +108,17 @@ const Sidebar: FC = () => {
             >
               <FiPlus size={14} />
               <span>New conversation</span>
+            </Link>
+            <Link
+              href="/projects"
+              className={`flex items-center gap-2 w-full px-3 py-2 rounded-lg border transition-all duration-200 text-sm ${
+                isOnProjects
+                  ? 'border-[#00C4A1]/30 bg-[#00C4A1]/5 text-[#00C4A1]'
+                  : 'border-[#2e3d52] text-[#92adc4] hover:text-[#00C4A1] hover:border-[#00C4A1]/30 hover:bg-[#00C4A1]/5'
+              }`}
+            >
+              <FiFolder size={14} />
+              <span>Projects</span>
             </Link>
             <button
               onClick={() => setSearchOpen(true)}

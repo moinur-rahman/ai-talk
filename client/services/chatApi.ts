@@ -13,7 +13,7 @@ export const chatApi = createApi({
     baseUrl: `${process.env.NEXT_PUBLIC_BACKEND_URL}`,
     credentials: 'include',
   }),
-  tagTypes: ['ChatHistory', 'Conversations'],
+  tagTypes: ['ChatHistory', 'Conversations', 'ProjectConversations'],
   endpoints: (builder) => ({
     getConversations: builder.infiniteQuery<
       ConversationsPage,
@@ -64,6 +64,17 @@ export const chatApi = createApi({
         { type: 'ChatHistory', id: conversationId },
       ],
     }),
+    getProjectConversations: builder.query<ConversationsPage, string>({
+      query: (projectId) => ({
+        url: '/chats/conversations',
+        params: { projectId, limit: 50 },
+      }),
+      transformResponse: (response: GetConversationsPageResponse) =>
+        response.data,
+      providesTags: (result, error, projectId) => [
+        { type: 'ProjectConversations', id: projectId },
+      ],
+    }),
   }),
 });
 
@@ -73,4 +84,5 @@ export const {
   useGetChatHistoryQuery,
   useDeleteConversationMutation,
   useDeleteAllConversationsMutation,
+  useGetProjectConversationsQuery,
 } = chatApi;

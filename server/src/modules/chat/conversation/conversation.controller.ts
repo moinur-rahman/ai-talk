@@ -14,15 +14,20 @@ import { ConversationService } from './conversation.service.js';
 import { UpdateConversationTitleDto } from './dto/update-conversation-title.dto.js';
 import { GetConversationsQueryDto } from './dto/get-conversations-query.dto.js';
 import { SearchConversationsQueryDto } from './dto/search-conversations-query.dto.js';
+import { CreateConversationDto } from './dto/create-conversation.dto.js';
 
 @Controller('chats/conversations')
 export class ConversationController {
   constructor(private readonly conversationService: ConversationService) {}
 
   @Post()
-  async createConversation(@CurrentUser() user: SessionUser) {
+  async createConversation(
+    @CurrentUser() user: SessionUser,
+    @Body() body: CreateConversationDto,
+  ) {
     const conversationId = await this.conversationService.createConversation(
       user.id,
+      body.projectId,
     );
     return {
       data: { conversationId },
@@ -39,6 +44,7 @@ export class ConversationController {
       user.id,
       query.limit,
       query.cursor,
+      query.projectId,
     );
     return {
       data: result,

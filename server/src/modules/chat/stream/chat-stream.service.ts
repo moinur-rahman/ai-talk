@@ -4,6 +4,7 @@ import { ModelService } from '../../model/model.service.js';
 import { MessageService } from '../message/message.service.js';
 import { FileService } from '../../file/file.service.js';
 import { ConversationService } from '../conversation/conversation.service.js';
+import { ProjectService } from '../../project/project.service.js';
 import { LLMMessage, TokenType } from '../../llm/types/llm.types.js';
 import { FileMetadataResponseDto } from '../../file/dto/file-metadata-response.dto.js';
 import { SenderType } from '../message/dto/save-message.dto.js';
@@ -20,6 +21,7 @@ export class ChatStreamService {
     private readonly messageService: MessageService,
     private readonly fileService: FileService,
     private readonly conversationService: ConversationService,
+    private readonly projectService: ProjectService,
     private readonly llmService: LlmService,
   ) {}
 
@@ -42,6 +44,14 @@ export class ChatStreamService {
     );
 
     onProviderResolved(providerName);
+
+    const projectId =
+      await this.conversationService.getProjectId(conversationId);
+    const rawInstructions =
+      projectId != null
+        ? await this.projectService.getProjectInstructions(String(projectId))
+        : null;
+    const systemPrompt = rawInstructions ?? undefined;
 
     const { messages: chatHistory } =
       await this.messageService.getMessagesByConversationId(conversationId);
@@ -112,7 +122,13 @@ export class ChatStreamService {
 
     const streamPromise = this.llmService.streamResponse(
       providerName,
-      { model: modelDetails.name, conversationId, messages, enableReasoning },
+      {
+        model: modelDetails.name,
+        conversationId,
+        messages,
+        enableReasoning,
+        systemPrompt,
+      },
       async (token: string, tokenType: TokenType, isEnd: boolean) => {
         if (tokenType === 'mainContent') {
           mainContentBuffer += token;

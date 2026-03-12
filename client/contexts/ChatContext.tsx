@@ -36,6 +36,7 @@ interface IChatContext {
   sendMessage: (params: ISendMessageParams) => Promise<string | undefined>;
   stopStream: () => void;
   conversationId: string | undefined;
+  projectId: string | undefined;
 }
 
 const ChatContext = createContext<IChatContext | null>(null);
@@ -53,8 +54,10 @@ export const useChat = () => {
 export const ChatProvider = ({ children }: { children: ReactNode }) => {
   const {
     conversationId,
+    projectId,
   }: {
     conversationId: string | undefined;
+    projectId: string | undefined;
   } = useParams();
 
   const [streaming, setStreaming] = useState<Record<string, boolean>>({});
@@ -149,24 +152,32 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
     } else if (event.type === 'conversation-title') {
       if (!convId || !event.title) return;
 
-      const result = chatApi.util.updateQueryData(
-        'getConversations',
-        undefined,
-        (draft) => {
-          if (draft.pages.length > 0) {
-            const alreadyExists = draft.pages.some((page) =>
-              page.conversations.some((c) => c.id === convId),
-            );
-            if (!alreadyExists) {
-              draft.pages[0].conversations.unshift({
-                id: convId,
-                title: event.title!,
-              });
+      if (projectId) {
+        dispatch(
+          chatApi.util.invalidateTags([
+            { type: 'ProjectConversations', id: projectId },
+          ]),
+        );
+      } else {
+        const result = chatApi.util.updateQueryData(
+          'getConversations',
+          undefined,
+          (draft) => {
+            if (draft.pages.length > 0) {
+              const alreadyExists = draft.pages.some((page) =>
+                page.conversations.some((c) => c.id === convId),
+              );
+              if (!alreadyExists) {
+                draft.pages[0].conversations.unshift({
+                  id: convId,
+                  title: event.title!,
+                });
+              }
             }
-          }
-        },
-      );
-      dispatch(result);
+          },
+        );
+        dispatch(result);
+      }
     } else if (event.type === 'error') {
       const message = event.message ?? 'An error occurred';
       console.error(`Error for conversation ${convId}:`, message);
@@ -199,7 +210,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
 
     try {
       if (!currentId) {
-        currentId = await createConversation();
+        currentId = await createConversation(projectId);
         if (!currentId) {
           setError((prev) => ({
             ...prev,
@@ -327,6 +338,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
     sendMessage,
     stopStream,
     conversationId,
+    projectId,
   };
 
   return <ChatContext.Provider value={value}>{children}</ChatContext.Provider>;

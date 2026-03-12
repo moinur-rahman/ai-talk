@@ -3,7 +3,7 @@ import { Ollama } from 'ollama';
 import config from '../../../common/config/config.js';
 import { LLMRequest, TokenCallback } from '../types/llm.types.js';
 import {
-  LATEX_SYSTEM_INSTRUCTION,
+  buildSystemInstruction,
   TITLE_SYSTEM_PROMPT,
   buildTitleUserPrompt,
 } from '../llm.prompts.js';
@@ -28,7 +28,7 @@ export class OllamaService {
     try {
       const systemMessage = {
         role: 'system',
-        content: LATEX_SYSTEM_INSTRUCTION,
+        content: buildSystemInstruction(request.systemPrompt),
       };
       const messages = [
         systemMessage,

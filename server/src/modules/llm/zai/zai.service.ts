@@ -7,7 +7,7 @@ import type {
 import config from '../../../common/config/config.js';
 import { LLMMessage, LLMRequest, TokenCallback } from '../types/llm.types.js';
 import {
-  LATEX_SYSTEM_INSTRUCTION,
+  buildSystemInstruction,
   TITLE_SYSTEM_PROMPT,
   buildTitleUserPrompt,
 } from '../llm.prompts.js';
@@ -36,7 +36,10 @@ export class ZaiService {
     this.activeStreams.set(request.conversationId, abortController);
 
     try {
-      const messages = await this.prepareMessages(request.messages);
+      const messages = await this.prepareMessages(
+        request.messages,
+        request.systemPrompt,
+      );
 
       const stream = await this.client.chat.completions.create(
         {
@@ -120,10 +123,11 @@ export class ZaiService {
 
   private async prepareMessages(
     messages: LLMMessage[],
+    systemPrompt?: string,
   ): Promise<ChatCompletionMessageParam[]> {
     const systemMessage: ChatCompletionMessageParam = {
       role: 'system',
-      content: LATEX_SYSTEM_INSTRUCTION,
+      content: buildSystemInstruction(systemPrompt),
     };
 
     const processedMessages = await Promise.all(

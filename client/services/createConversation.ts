@@ -7,10 +7,13 @@ interface CreateConversationResponse {
   messageCode: string;
 }
 
-export const createConversation = async (): Promise<string> => {
+export const createConversation = async (
+  projectId?: string,
+): Promise<string> => {
   try {
     const response = await axiosInstance.post<CreateConversationResponse>(
       '/chats/conversations',
+      projectId ? { projectId } : {},
     );
 
     return response.data.data.conversationId;

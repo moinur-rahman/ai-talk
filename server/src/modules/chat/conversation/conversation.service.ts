@@ -5,17 +5,23 @@ import { PrismaService } from '../../../providers/prisma/prisma.service.js';
 export class ConversationService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async createConversation(userId: string) {
+  async createConversation(userId: string, projectId?: string) {
     const result = await this.prisma.conversation.create({
-      data: { userId },
+      data: { userId, ...(projectId ? { projectId } : {}) },
     });
     return result.id;
   }
 
-  async getConversations(userId: string, limit: number, cursor?: string) {
+  async getConversations(
+    userId: string,
+    limit: number,
+    cursor?: string,
+    projectId?: string,
+  ) {
     const conversations = await this.prisma.conversation.findMany({
       where: {
         userId,
+        projectId: projectId ?? null,
         ...(cursor ? { updatedAt: { lt: new Date(cursor) } } : {}),
       },
       select: { id: true, title: true, updatedAt: true },
@@ -107,6 +113,14 @@ export class ConversationService {
       where: { id: conversationId },
       data: { title },
     });
+  }
+
+  async getProjectId(conversationId: string): Promise<string | null> {
+    const conv = await this.prisma.conversation.findUnique({
+      where: { id: conversationId },
+      select: { projectId: true },
+    });
+    return conv?.projectId ?? null;
   }
 
   async getLastModelAndProvider(conversationId: string) {

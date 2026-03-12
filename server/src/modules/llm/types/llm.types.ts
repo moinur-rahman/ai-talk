@@ -18,6 +18,7 @@ export interface LLMRequest {
   conversationId: string;
   messages: LLMMessage[];
   enableReasoning: boolean;
+  systemPrompt?: string;
 }
 
 export type TokenType = 'mainContent' | 'reasoningContent';

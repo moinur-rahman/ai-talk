@@ -7,7 +7,7 @@ import type {
 import config from '../../../common/config/config.js';
 import { LLMMessage, LLMRequest, TokenCallback } from '../types/llm.types.js';
 import {
-  LATEX_SYSTEM_INSTRUCTION,
+  buildSystemInstruction,
   TITLE_SYSTEM_PROMPT,
   buildTitleUserPrompt,
 } from '../llm.prompts.js';
@@ -41,7 +41,10 @@ export class OpenRouterService {
     this.activeStreams.set(request.conversationId, abortController);
 
     try {
-      const messages = await this.prepareMessages(request.messages);
+      const messages = await this.prepareMessages(
+        request.messages,
+        request.systemPrompt,
+      );
       const reasoning = request.enableReasoning
         ? { effort: 'low' as const }
         : null;
@@ -134,10 +137,11 @@ export class OpenRouterService {
 
   private async prepareMessages(
     messages: LLMMessage[],
+    systemPrompt?: string,
   ): Promise<ChatCompletionMessageParam[]> {
     const systemMessage: ChatCompletionMessageParam = {
       role: 'system',
-      content: LATEX_SYSTEM_INSTRUCTION,
+      content: buildSystemInstruction(systemPrompt),
     };
 
     const processedMessages = await Promise.all(

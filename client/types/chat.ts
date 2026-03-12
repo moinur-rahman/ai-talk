@@ -49,3 +49,25 @@ export interface ChatHistoryResponse {
     messageCode: string;
   };
 }
+
+export interface Project {
+  id: string;
+  name: string;
+  description?: string | null;
+  instructions?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  _count?: { conversations: number };
+}
+
+export interface CreateProjectPayload {
+  name: string;
+  description?: string;
+  instructions?: string;
+}
+
+export interface UpdateProjectPayload {
+  name?: string;
+  description?: string;
+  instructions?: string;
+}

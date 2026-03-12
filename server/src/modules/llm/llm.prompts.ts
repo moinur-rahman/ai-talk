@@ -5,6 +5,11 @@ export const LATEX_SYSTEM_INSTRUCTION = [
   '- Use `$…$` for inline math.',
 ].join('\n');
 
+export const buildSystemInstruction = (systemPrompt?: string): string => {
+  if (!systemPrompt) return LATEX_SYSTEM_INSTRUCTION;
+  return `${LATEX_SYSTEM_INSTRUCTION}\n\n${systemPrompt}`;
+};
+
 export const TITLE_SYSTEM_PROMPT =
   'You must strictly limit your response to 3–5 words. Do not exceed this limit.';
 
