@@ -255,7 +255,10 @@ const SidebarItem: FC<{ name: string; id: string; isSelected?: boolean }> = ({
         </Link>
 
         <button
-          onClick={(e) => { e.preventDefault(); setShowModal(true); }}
+          onClick={(e) => {
+            e.preventDefault();
+            setShowModal(true);
+          }}
           className="absolute right-1.5 top-1/2 -translate-y-1/2 p-1 rounded text-[#4e677e] hover:text-red-400 hover:bg-red-400/10 transition-colors opacity-0 group-hover:opacity-100"
         >
           <FiTrash2 size={14} />
@@ -266,7 +269,9 @@ const SidebarItem: FC<{ name: string; id: string; isSelected?: boolean }> = ({
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="w-full max-w-sm bg-[#1a2535] border border-[#2e3d52] rounded-2xl shadow-2xl overflow-hidden">
             <div className="px-5 py-4 border-b border-[#2e3d52] flex items-center justify-between">
-              <h3 className="text-[#e2ecf5] font-semibold text-sm">Delete conversation</h3>
+              <h3 className="text-[#e2ecf5] font-semibold text-sm">
+                Delete conversation
+              </h3>
               <button
                 onClick={() => setShowModal(false)}
                 className="text-[#4e677e] hover:text-[#92adc4] transition-colors"
@@ -277,8 +282,10 @@ const SidebarItem: FC<{ name: string; id: string; isSelected?: boolean }> = ({
             <div className="px-5 py-4">
               <p className="text-[#92adc4] text-sm">
                 Are you sure you want to delete{' '}
-                <span className="text-[#d5e6f0] font-medium">&ldquo;{name}&rdquo;</span>?
-                This cannot be undone.
+                <span className="text-[#d5e6f0] font-medium">
+                  &ldquo;{name}&rdquo;
+                </span>
+                ? This cannot be undone.
               </p>
               <div className="flex gap-2 mt-4">
                 <button

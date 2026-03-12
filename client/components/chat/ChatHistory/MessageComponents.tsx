@@ -225,7 +225,10 @@ export const UserMessage = ({ mainContent, attachments }: MessageProps) => {
           {copyStatus ? (
             <span className="text-xs text-[#00C4A1]">✓ Copied</span>
           ) : (
-            <><FiCopy size={12} /><span className="text-xs">Copy</span></>
+            <>
+              <FiCopy size={12} />
+              <span className="text-xs">Copy</span>
+            </>
           )}
         </button>
       </div>
@@ -292,7 +295,10 @@ export const AssistantMessage = ({
           {copyStatus ? (
             <span className="text-xs text-[#00C4A1]">✓ Copied</span>
           ) : (
-            <><FiCopy size={12} /><span className="text-xs">Copy</span></>
+            <>
+              <FiCopy size={12} />
+              <span className="text-xs">Copy</span>
+            </>
           )}
         </button>
       </div>

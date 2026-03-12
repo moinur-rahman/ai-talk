@@ -40,7 +40,8 @@ export const chatApi = createApi({
         url: '/chats/conversations/search',
         params: { q },
       }),
-      transformResponse: (response: SearchConversationsResponse) => response.data,
+      transformResponse: (response: SearchConversationsResponse) =>
+        response.data,
     }),
     deleteConversation: builder.mutation<void, string>({
       query: (conversationId) => ({

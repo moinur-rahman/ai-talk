@@ -7,7 +7,6 @@ import { RedisStore } from 'connect-redis';
 import { RedisService } from './providers/redis/redis.service.js';
 import config from './common/config/config.js';
 import { SESSION_KEY_PREFIX } from './common/config/constants.js';
-import { SessionSocketIoAdapter } from './adapters/session-socket-io.adapter.js';
 
 const SESSION_TIMEOUT = config.sessionTimeout * 1000;
 
@@ -53,8 +52,6 @@ async function bootstrap() {
   app.use(sessionMiddleware);
   app.use(passport.initialize());
   app.use(passport.session());
-
-  app.useWebSocketAdapter(new SessionSocketIoAdapter(app, sessionMiddleware));
 
   app.enableCors({
     origin: config.clientUrl,

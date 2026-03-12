@@ -93,7 +93,8 @@ export const modelApi = createApi({
     }),
     getAdminOverview: builder.query<AdminProvider[], void>({
       query: () => '/admin/overview',
-      transformResponse: (response: FetchAdminOverviewResponse) => response.data,
+      transformResponse: (response: FetchAdminOverviewResponse) =>
+        response.data,
       providesTags: ['AdminOverview'],
     }),
     syncModels: builder.mutation<SyncModelsResponse, void>({

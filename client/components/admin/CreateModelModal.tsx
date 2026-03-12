@@ -31,8 +31,7 @@ const CreateModelModal = ({
       await createModel(form).unwrap();
       onClose();
     } catch (err: unknown) {
-      const message =
-        (err as { data?: { message?: string } })?.data?.message;
+      const message = (err as { data?: { message?: string } })?.data?.message;
       setError(message ?? 'Failed to create model');
     }
   };
@@ -77,9 +76,7 @@ const CreateModelModal = ({
             <input
               type="text"
               value={form.name}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, name: e.target.value }))
-              }
+              onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
               placeholder="e.g. gpt-4o"
               required
               className="w-full bg-[#141826] border border-[#2e3d52] rounded-lg px-3 py-2 text-[#d5e6f0] text-sm placeholder-[#3a5068] focus:outline-none focus:border-[#00C4A1]/50"

@@ -82,12 +82,12 @@ const AdminLayout: FC<{ children: ReactNode }> = ({ children }) => {
   );
 };
 
-const NavItem: FC<{ href: string; icon: ReactNode; label: string; active: boolean }> = ({
-  href,
-  icon,
-  label,
-  active,
-}) => (
+const NavItem: FC<{
+  href: string;
+  icon: ReactNode;
+  label: string;
+  active: boolean;
+}> = ({ href, icon, label, active }) => (
   <Link
     href={href}
     className={`flex items-center gap-2.5 w-full px-3 py-2 rounded-lg transition-all duration-150 text-sm border-l-2 ${

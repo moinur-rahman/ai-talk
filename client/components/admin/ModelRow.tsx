@@ -16,7 +16,10 @@ const ModelRow = ({ model }: { model: AdminModel }) => {
   const handleToggleEnabled = async () => {
     setToggling(true);
     try {
-      await updateModel({ modelId: model.id, isEnabled: !model.isEnabled }).unwrap();
+      await updateModel({
+        modelId: model.id,
+        isEnabled: !model.isEnabled,
+      }).unwrap();
     } finally {
       setToggling(false);
     }

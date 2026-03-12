@@ -7,8 +7,6 @@ import {
   useState,
   useRef,
 } from 'react';
-import { Socket } from 'socket.io-client';
-import { providerConnection } from '@/apis/socket';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   updateLastMessage,
@@ -21,6 +19,7 @@ import { AppDispatch, RootState } from '@/redux/store';
 import { createConversation } from '@/services/createConversation';
 import { useParams } from 'next/navigation';
 import { FileMetadata } from '@/types/chat';
+import { getCsrfTokenFromCookie } from '@/utils/getCsrfTokenFromCookie';
 
 interface ISendMessageParams {
   prompt: string;
@@ -28,7 +27,6 @@ interface ISendMessageParams {
 }
 
 interface IChatContext {
-  providerConnection: Socket | null;
   streaming: Record<string, boolean>;
   reasoningStreaming: Record<string, boolean>;
   error: Record<string, string | null>;
@@ -58,14 +56,17 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
   }: {
     conversationId: string | undefined;
   } = useParams();
+
   const [streaming, setStreaming] = useState<Record<string, boolean>>({});
   const [error, setError] = useState<Record<string, string | null>>({});
-  const [roomJoined, setRoomJoined] = useState<Record<string, boolean>>({});
-  const previousConversationIdRef = useRef<string | undefined>(undefined);
-  const pendingCleanupRef = useRef<Set<string>>(new Set());
   const [reasoningStreaming, setReasoningStreaming] = useState<
     Record<string, boolean>
   >({});
+
+  const previousConversationIdRef = useRef<string | undefined>(undefined);
+  const pendingCleanupRef = useRef<Set<string>>(new Set());
+  const activeStreamsRef = useRef<Record<string, AbortController>>({});
+
   const dispatch = useDispatch<AppDispatch>();
 
   const newConversationId = useSelector(
@@ -79,14 +80,6 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
   const reasoningEnabled = useSelector(
     (state: RootState) => state.model.reasoningEnabled,
   );
-
-  useEffect(() => {
-    providerConnection.connect();
-
-    return () => {
-      providerConnection.disconnect();
-    };
-  }, []);
 
   useEffect(() => {
     if (
@@ -107,59 +100,54 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
   }, [conversationId, streaming, dispatch]);
 
   useEffect(() => {
-    const handleToken = ({
-      token,
-      isEnd,
-      conversationId,
-      tokenType,
-    }: {
-      token: string;
-      isEnd: boolean;
-      conversationId: string;
+    if (conversationId && newConversationId !== conversationId) {
+      dispatch(setNewConversationId(null));
+    }
+  }, [conversationId, newConversationId, dispatch]);
+
+  const handleStreamEvent = (
+    event: {
+      type: string;
+      token?: string;
       tokenType?: 'mainContent' | 'reasoningContent';
-    }) => {
-      if (!conversationId) return;
+      isEnd?: boolean;
+      title?: string;
+      message?: string;
+      conversationId?: string;
+    },
+    currentConversationId: string,
+  ) => {
+    const convId = event.conversationId ?? currentConversationId;
+
+    if (event.type === 'token') {
+      const { token = '', tokenType, isEnd = false } = event;
 
       if (isEnd) {
         if (tokenType === 'mainContent') {
-          setStreaming((prev) => ({ ...prev, [conversationId]: false }));
-          setReasoningStreaming((prev) => ({
-            ...prev,
-            [conversationId]: false,
-          }));
+          setStreaming((prev) => ({ ...prev, [convId]: false }));
+          setReasoningStreaming((prev) => ({ ...prev, [convId]: false }));
 
           dispatch(
-            chatApi.util.invalidateTags([
-              { type: 'ChatHistory', id: conversationId },
-            ]),
+            chatApi.util.invalidateTags([{ type: 'ChatHistory', id: convId }]),
           );
 
           if (
-            pendingCleanupRef.current.has(conversationId) &&
-            conversationId !== previousConversationIdRef.current
+            pendingCleanupRef.current.has(convId) &&
+            convId !== previousConversationIdRef.current
           ) {
-            dispatch(removeConversation(conversationId));
-            pendingCleanupRef.current.delete(conversationId);
+            dispatch(removeConversation(convId));
+            pendingCleanupRef.current.delete(convId);
           }
         } else if (tokenType === 'reasoningContent') {
-          setReasoningStreaming((prev) => ({
-            ...prev,
-            [conversationId]: false,
-          }));
+          setReasoningStreaming((prev) => ({ ...prev, [convId]: false }));
         }
       } else {
-        dispatch(updateLastMessage({ conversationId, token, tokenType }));
+        dispatch(
+          updateLastMessage({ conversationId: convId, token, tokenType }),
+        );
       }
-    };
-
-    const handleConversationTitle = ({
-      title,
-      conversationId,
-    }: {
-      title: string;
-      conversationId: string;
-    }) => {
-      if (!conversationId) return;
+    } else if (event.type === 'conversation-title') {
+      if (!convId || !event.title) return;
 
       const result = chatApi.util.updateQueryData(
         'getConversations',
@@ -167,69 +155,39 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
         (draft) => {
           if (draft.pages.length > 0) {
             const alreadyExists = draft.pages.some((page) =>
-              page.conversations.some((c) => c.id === conversationId),
+              page.conversations.some((c) => c.id === convId),
             );
             if (!alreadyExists) {
-              draft.pages[0].conversations.unshift({ id: conversationId, title });
+              draft.pages[0].conversations.unshift({
+                id: convId,
+                title: event.title!,
+              });
             }
           }
         },
       );
       dispatch(result);
-    };
-
-    const handleError = ({
-      message,
-      conversationId,
-    }: {
-      message: string;
-      conversationId: string;
-    }) => {
-      if (!conversationId) return;
-
-      console.error(`Error for conversation ${conversationId}:`, message);
-      setError((prev) => ({ ...prev, [conversationId]: message }));
-      setStreaming((prev) => ({ ...prev, [conversationId]: false }));
-      setReasoningStreaming((prev) => ({ ...prev, [conversationId]: false }));
+    } else if (event.type === 'error') {
+      const message = event.message ?? 'An error occurred';
+      console.error(`Error for conversation ${convId}:`, message);
+      setError((prev) => ({ ...prev, [convId]: message }));
+      setStreaming((prev) => ({ ...prev, [convId]: false }));
+      setReasoningStreaming((prev) => ({ ...prev, [convId]: false }));
 
       if (
-        pendingCleanupRef.current.has(conversationId) &&
-        conversationId !== previousConversationIdRef.current
+        pendingCleanupRef.current.has(convId) &&
+        convId !== previousConversationIdRef.current
       ) {
-        dispatch(removeConversation(conversationId));
-        pendingCleanupRef.current.delete(conversationId);
+        dispatch(removeConversation(convId));
+        pendingCleanupRef.current.delete(convId);
       }
-    };
-
-    providerConnection.on('token', handleToken);
-    providerConnection.on('conversation-title', handleConversationTitle);
-    providerConnection.on('error', handleError);
-
-    return () => {
-      providerConnection.off('token', handleToken);
-      providerConnection.off('conversation-title', handleConversationTitle);
-      providerConnection.off('error', handleError);
-    };
-  }, [dispatch]);
-
-  useEffect(() => {
-    if (conversationId && newConversationId !== conversationId) {
-      dispatch(setNewConversationId(null));
     }
-  }, [conversationId, newConversationId, dispatch]);
+  };
 
   const sendMessage = async (
     params: ISendMessageParams,
   ): Promise<string | undefined> => {
     let currentId = conversationId;
-
-    if (!providerConnection) {
-      setError((prev) => ({
-        ...prev,
-        [currentId || 'global']: 'Socket connection not available',
-      }));
-      return;
-    }
 
     if (!selectedModel) {
       setError((prev) => ({
@@ -250,38 +208,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
           }));
           return undefined;
         }
-      }
-
-      if (!roomJoined[currentId]) {
-        try {
-          await new Promise<void>((resolve, reject) => {
-            providerConnection.emit(
-              'join-conversation',
-              currentId,
-              (response: { success: boolean; error?: string }) => {
-                if (response.success) {
-                  setRoomJoined((prev) => ({ ...prev, [currentId!]: true }));
-                  resolve();
-                } else {
-                  reject(
-                    new Error(response.error || 'Failed to join conversation'),
-                  );
-                }
-              },
-            );
-          });
-
-          if (!conversationId) {
-            dispatch(setNewConversationId(currentId));
-          }
-        } catch (_err) {
-          setError((prev) => ({
-            ...prev,
-            [currentId || 'global']:
-              'Failed to connect to conversation. Please try again.',
-          }));
-          return undefined;
-        }
+        dispatch(setNewConversationId(currentId));
       }
 
       dispatch(
@@ -309,37 +236,90 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
       setStreaming((prev) => ({ ...prev, [currentId!]: true }));
       setReasoningStreaming((prev) => ({ ...prev, [currentId!]: true }));
 
-      providerConnection.emit('get-llm-response', {
-        prompt: params.prompt,
-        conversationId: currentId,
-        lastModelId: selectedModel.id,
-        enableReasoning: selectedModel.hasReasoning && reasoningEnabled,
-        fileIds: params.attachments
-          ? params.attachments.map((file) => file.id)
-          : [],
-      });
+      const abortController = new AbortController();
+      activeStreamsRef.current[currentId] = abortController;
 
+      const csrfToken = getCsrfTokenFromCookie();
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/chats/${currentId}/stream`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(csrfToken ? { 'X-CSRFToken': csrfToken } : {}),
+          },
+          credentials: 'include',
+          body: JSON.stringify({
+            prompt: params.prompt,
+            lastModelId: selectedModel.id,
+            enableReasoning: selectedModel.hasReasoning && reasoningEnabled,
+            fileIds: params.attachments
+              ? params.attachments.map((f) => f.id)
+              : [],
+          }),
+          signal: abortController.signal,
+        },
+      );
+
+      if (!response.ok || !response.body) {
+        throw new Error('Stream request failed');
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() ?? '';
+
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue;
+          const jsonStr = line.slice(6).trim();
+          if (!jsonStr) continue;
+          try {
+            const event = JSON.parse(jsonStr);
+            handleStreamEvent(event, currentId!);
+          } catch {
+            // ignore malformed events
+          }
+        }
+      }
+
+      delete activeStreamsRef.current[currentId];
       return currentId;
-    } catch (error) {
-      console.error('Error in sendMessage:', error);
+    } catch (err) {
+      if (err instanceof DOMException && err.name === 'AbortError') {
+        return currentId;
+      }
+      console.error('Error in sendMessage:', err);
       setError((prev) => ({
         ...prev,
         [currentId || 'global']: 'Failed to send message. Please try again.',
       }));
+      if (currentId) {
+        setStreaming((prev) => ({ ...prev, [currentId!]: false }));
+        setReasoningStreaming((prev) => ({ ...prev, [currentId!]: false }));
+        delete activeStreamsRef.current[currentId];
+      }
       return undefined;
     }
   };
 
   const stopStream = () => {
-    if (providerConnection && conversationId) {
-      providerConnection.emit('stop-stream', { conversationId });
+    if (conversationId && activeStreamsRef.current[conversationId]) {
+      activeStreamsRef.current[conversationId].abort();
+      delete activeStreamsRef.current[conversationId];
       setStreaming((prev) => ({ ...prev, [conversationId]: false }));
       setReasoningStreaming((prev) => ({ ...prev, [conversationId]: false }));
     }
   };
 
   const value = {
-    providerConnection,
     streaming,
     reasoningStreaming,
     error,

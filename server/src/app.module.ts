@@ -9,7 +9,6 @@ import { AuthModule } from './modules/auth/auth.module.js';
 import { ModelModule } from './modules/model/model.module.js';
 import { FileModule } from './modules/file/file.module.js';
 import { ChatModule } from './modules/chat/chat.module.js';
-import { GatewayModule } from './modules/gateway/gateway.module.js';
 import { AuthenticatedGuard } from './modules/auth/guards/authenticated.guard.js';
 
 @Module({
@@ -26,7 +25,6 @@ import { AuthenticatedGuard } from './modules/auth/guards/authenticated.guard.js
     ModelModule,
     FileModule,
     ChatModule,
-    GatewayModule,
   ],
   providers: [
     {

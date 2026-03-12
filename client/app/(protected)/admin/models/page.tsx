@@ -67,7 +67,10 @@ const ModelsPage = () => {
             disabled={isSyncing}
             className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#00C4A1] hover:bg-[#00b090] text-[#141826] font-medium text-sm transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed"
           >
-            <FiRefreshCw size={14} className={isSyncing ? 'animate-spin' : ''} />
+            <FiRefreshCw
+              size={14}
+              className={isSyncing ? 'animate-spin' : ''}
+            />
             {isSyncing ? 'Syncing...' : 'Sync Models'}
           </button>
         </div>
@@ -83,7 +86,10 @@ const ModelsPage = () => {
           </div>
           <div className="divide-y divide-[#2e3d52]">
             {syncResults.map((r) => (
-              <div key={r.provider} className="px-4 py-3 flex items-center gap-4">
+              <div
+                key={r.provider}
+                className="px-4 py-3 flex items-center gap-4"
+              >
                 <span className="text-[#d5e6f0] text-sm font-medium w-32 capitalize">
                   {r.provider}
                 </span>
@@ -93,7 +99,9 @@ const ModelsPage = () => {
                   <div className="flex gap-4 text-xs">
                     <span className="text-[#00C4A1]">+{r.created} created</span>
                     <span className="text-blue-400">~{r.updated} restored</span>
-                    <span className="text-[#627a8e]">{r.deprecated} deprecated</span>
+                    <span className="text-[#627a8e]">
+                      {r.deprecated} deprecated
+                    </span>
                   </div>
                 )}
               </div>
@@ -104,7 +112,10 @@ const ModelsPage = () => {
 
       {/* Search */}
       <div className="relative mb-4">
-        <FiSearch size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#4e677e]" />
+        <FiSearch
+          size={14}
+          className="absolute left-3 top-1/2 -translate-y-1/2 text-[#4e677e]"
+        />
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
@@ -119,7 +130,9 @@ const ModelsPage = () => {
           <div className="w-5 h-5 border-2 border-[#00C4A1] border-t-transparent rounded-full animate-spin" />
         </div>
       ) : filteredProviders.length === 0 ? (
-        <p className="text-center text-[#4e677e] text-sm py-20">No models found</p>
+        <p className="text-center text-[#4e677e] text-sm py-20">
+          No models found
+        </p>
       ) : (
         <div className="space-y-3">
           {filteredProviders.map((provider) => (
