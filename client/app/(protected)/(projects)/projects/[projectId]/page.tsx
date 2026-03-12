@@ -19,6 +19,7 @@ import {
   useDeleteProjectMutation,
 } from '@/services/projectApi';
 import { useGetProjectConversationsQuery } from '@/services/chatApi';
+import SendMessage from '@/components/chat/SendMessage';
 
 function getRelativeTime(dateString: string): string {
   const diff = Date.now() - new Date(dateString).getTime();
@@ -127,17 +128,9 @@ const ProjectDetailPage: FC = () => {
           </div>
 
           {/* New conversation prompt */}
-          <Link
-            href={`/projects/${projectId}/new`}
-            className="block w-full max-w-xl mb-8 px-5 py-4 rounded-2xl bg-[#1a2535] border border-[#2e3d52] hover:border-[#3a4f68] transition-colors group"
-          >
-            <div className="flex items-center justify-between">
-              <span className="text-[#4e677e] text-sm group-hover:text-[#627a8e] transition-colors">
-                How can I help you today?
-              </span>
-              <FiPlus size={16} className="text-[#4e677e]" />
-            </div>
-          </Link>
+          <div className="mb-8">
+            <SendMessage />
+          </div>
 
           {/* Conversations */}
           {conversations.length === 0 ? (
