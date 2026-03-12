@@ -1,7 +1,7 @@
 'use client';
 
 import { ButtonHTMLAttributes } from 'react';
-import { Loader2 } from 'lucide-react';
+import { AiOutlineLoading3Quarters } from 'react-icons/ai';
 
 interface AuthButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   loading?: boolean;
@@ -35,7 +35,7 @@ const AuthButton = ({
       disabled={disabled || loading}
       {...props}
     >
-      {loading && <Loader2 className="animate-spin" size={16} />}
+      {loading && <AiOutlineLoading3Quarters className="animate-spin" size={16} />}
       {children}
     </button>
   );

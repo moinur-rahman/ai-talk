@@ -1,4 +1,4 @@
-import { MessageSquare, Sparkles, Zap, Shield } from 'lucide-react';
+import { FiMessageSquare, FiStar, FiZap, FiShield } from 'react-icons/fi';
 
 interface OrbConfig {
   pos: string;
@@ -77,12 +77,12 @@ const accentConfig: Record<'indigo' | 'violet', AccentConfig> = {
 
 const features = [
   {
-    icon: Sparkles,
+    icon: FiStar,
     label: 'Multiple AI Models',
     desc: 'GPT-4, Claude, Gemini & more',
   },
-  { icon: Zap, label: 'Real-time Streaming', desc: 'Instant, fluid responses' },
-  { icon: Shield, label: 'Private & Secure', desc: 'Your data stays yours' },
+  { icon: FiZap, label: 'Real-time Streaming', desc: 'Instant, fluid responses' },
+  { icon: FiShield, label: 'Private & Secure', desc: 'Your data stays yours' },
 ];
 
 interface AuthBrandPanelProps {
@@ -126,7 +126,7 @@ export default function AuthBrandPanel({
       <div className="relative z-10">
         <div className="flex items-center gap-3">
           <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 shadow-lg shadow-indigo-500/40">
-            <MessageSquare className="text-white" size={18} />
+            <FiMessageSquare className="text-white" size={18} />
           </div>
           <span className="text-white font-semibold text-lg tracking-tight">
             AI Talk

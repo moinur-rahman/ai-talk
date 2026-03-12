@@ -1,7 +1,7 @@
 'use client';
 
 import { forwardRef, useState, InputHTMLAttributes } from 'react';
-import { Eye, EyeOff } from 'lucide-react';
+import { FiEye, FiEyeOff } from 'react-icons/fi';
 
 interface InputFieldProps extends InputHTMLAttributes<HTMLInputElement> {
   label: string;
@@ -55,7 +55,7 @@ const InputField = forwardRef<HTMLInputElement, InputFieldProps>(
               className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
               tabIndex={-1}
             >
-              {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+              {showPassword ? <FiEyeOff size={16} /> : <FiEye size={16} />}
             </button>
           )}
         </div>

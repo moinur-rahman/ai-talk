@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import Link from 'next/link';
-import { Mail, Lock, User, MessageSquare } from 'lucide-react';
+import { FiMail, FiLock, FiUser, FiMessageSquare } from 'react-icons/fi';
 
 import InputField from '@/components/auth/InputField';
 import AuthButton from '@/components/auth/AuthButton';
@@ -128,7 +128,7 @@ export default function RegisterPage() {
           {/* Mobile logo */}
           <div className="flex items-center justify-center gap-3 mb-10 lg:hidden">
             <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 shadow-lg shadow-indigo-500/40">
-              <MessageSquare className="text-white" size={18} />
+              <FiMessageSquare className="text-white" size={18} />
             </div>
             <span className="font-semibold text-lg tracking-tight text-slate-900">
               AI Talk
@@ -158,7 +158,7 @@ export default function RegisterPage() {
               label="Full Name"
               type="text"
               placeholder="John Doe"
-              icon={<User size={16} />}
+              icon={<FiUser size={16} />}
               error={errors.name?.message}
               {...register('name', {
                 required: 'Name is required',
@@ -177,7 +177,7 @@ export default function RegisterPage() {
               label="Email"
               type="email"
               placeholder="you@example.com"
-              icon={<Mail size={16} />}
+              icon={<FiMail size={16} />}
               error={errors.email?.message}
               {...register('email', {
                 required: 'Email is required',
@@ -197,7 +197,7 @@ export default function RegisterPage() {
                 label="Password"
                 type="password"
                 placeholder="Create a strong password"
-                icon={<Lock size={16} />}
+                icon={<FiLock size={16} />}
                 error={errors.password?.message}
                 {...register('password', {
                   required: 'Password is required',
@@ -240,7 +240,7 @@ export default function RegisterPage() {
               label="Confirm Password"
               type="password"
               placeholder="Re-enter your password"
-              icon={<Lock size={16} />}
+              icon={<FiLock size={16} />}
               error={errors.confirmPassword?.message}
               {...register('confirmPassword', {
                 required: 'Please confirm your password',
