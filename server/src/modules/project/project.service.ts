@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../providers/prisma/prisma.service.js';
 import { CreateProjectDto } from './dto/create-project.dto.js';
 import { UpdateProjectDto } from './dto/update-project.dto.js';
+import { GetProjectsQueryDto } from './dto/get-projects-query.dto.js';
 
 @Injectable()
 export class ProjectService {
@@ -21,9 +22,20 @@ export class ProjectService {
     });
   }
 
-  async getProjects(userId: string) {
+  async getProjects(userId: string, query: GetProjectsQueryDto = {}) {
+    const { search, sort } = query;
     return this.prisma.project.findMany({
-      where: { userId },
+      where: {
+        userId,
+        ...(search
+          ? {
+              OR: [
+                { name: { contains: search, mode: 'insensitive' } },
+                { description: { contains: search, mode: 'insensitive' } },
+              ],
+            }
+          : {}),
+      },
       select: {
         id: true,
         name: true,
@@ -33,7 +45,7 @@ export class ProjectService {
         updatedAt: true,
         _count: { select: { conversations: true } },
       },
-      orderBy: { updatedAt: 'desc' },
+      orderBy: sort === 'created' ? { createdAt: 'desc' } : { updatedAt: 'desc' },
     });
   }
 

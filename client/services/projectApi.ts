@@ -23,8 +23,16 @@ export const projectApi = createApi({
   }),
   tagTypes: ['Projects'],
   endpoints: (builder) => ({
-    getProjects: builder.query<Project[], void>({
-      query: () => '',
+    getProjects: builder.query<
+      Project[],
+      { search?: string; sort?: 'recent' | 'edited' | 'created' } | void
+    >({
+      query: (params) => ({
+        url: '',
+        params: params
+          ? { search: params.search || undefined, sort: params.sort }
+          : undefined,
+      }),
       transformResponse: (response: ProjectsResponse) => response.data,
       providesTags: ['Projects'],
     }),

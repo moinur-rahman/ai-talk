@@ -6,10 +6,12 @@ import {
   Param,
   Patch,
   Post,
+  Query,
 } from '@nestjs/common';
 import { ProjectService } from './project.service.js';
 import { CreateProjectDto } from './dto/create-project.dto.js';
 import { UpdateProjectDto } from './dto/update-project.dto.js';
+import { GetProjectsQueryDto } from './dto/get-projects-query.dto.js';
 import { CurrentUser } from '../../common/decorators/current-user.decorator.js';
 import type { SessionUser } from '../../common/decorators/current-user.decorator.js';
 
@@ -27,8 +29,11 @@ export class ProjectController {
   }
 
   @Get()
-  async getProjects(@CurrentUser() user: SessionUser) {
-    const projects = await this.projectService.getProjects(user.id);
+  async getProjects(
+    @CurrentUser() user: SessionUser,
+    @Query() query: GetProjectsQueryDto,
+  ) {
+    const projects = await this.projectService.getProjects(user.id, query);
     return { data: projects, message: 'Projects fetched successfully' };
   }
 

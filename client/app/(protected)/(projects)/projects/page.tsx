@@ -1,13 +1,21 @@
 'use client';
 
-import { FC, useState } from 'react';
+import { FC, useRef, useState, useEffect } from 'react';
 import Link from 'next/link';
-import { FiPlus, FiX, FiFolder } from 'react-icons/fi';
+import { FiPlus, FiX, FiFolder, FiSearch, FiChevronDown, FiCheck } from 'react-icons/fi';
 import {
   useGetProjectsQuery,
   useCreateProjectMutation,
 } from '@/services/projectApi';
 import type { Project } from '@/types/chat';
+
+type SortOption = 'recent' | 'edited' | 'created';
+
+const SORT_LABELS: Record<SortOption, string> = {
+  recent: 'Recent activity',
+  edited: 'Last edited',
+  created: 'Date created',
+};
 
 function getRelativeTime(dateString: string): string {
   const diff = Date.now() - new Date(dateString).getTime();
@@ -23,14 +31,38 @@ function getRelativeTime(dateString: string): string {
 }
 
 const ProjectsPage = () => {
-  const { data: projects, isLoading } = useGetProjectsQuery();
   const [showModal, setShowModal] = useState(false);
+  const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [sort, setSort] = useState<SortOption>('recent');
+  const [showSortMenu, setShowSortMenu] = useState(false);
+  const sortRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(search.trim()), 300);
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  const { data: projects, isLoading } = useGetProjectsQuery({
+    search: debouncedSearch || undefined,
+    sort,
+  });
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (sortRef.current && !sortRef.current.contains(e.target as Node)) {
+        setShowSortMenu(false);
+      }
+    };
+    if (showSortMenu) document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showSortMenu]);
 
   return (
     <div className="min-h-screen px-8 py-8">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-semibold text-[#e2ecf5]">Projects</h1>
           <button
             onClick={() => setShowModal(true)}
@@ -41,13 +73,77 @@ const ProjectsPage = () => {
           </button>
         </div>
 
+        {/* Search */}
+        {!isLoading && (
+          <div className="relative mb-5">
+            <FiSearch
+              size={14}
+              className="absolute left-4 top-1/2 -translate-y-1/2 text-[#4e677e] pointer-events-none"
+            />
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search projects..."
+              className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#1a2535] border border-[#2e3d52] text-[#e2ecf5] placeholder-[#4e677e] text-sm outline-none focus:border-[#3a4f68] transition-colors"
+            />
+          </div>
+        )}
+
+        {/* Sort */}
+        {!isLoading && (projects?.length ?? 0) > 0 && (
+          <div className="flex justify-end mb-4">
+            <div ref={sortRef} className="relative">
+              <button
+                onClick={() => setShowSortMenu((v) => !v)}
+                className="flex items-center gap-1.5 text-[#627a8e] hover:text-[#92adc4] text-xs transition-colors"
+              >
+                Sort by
+                <span className="text-[#92adc4] font-medium">
+                  {SORT_LABELS[sort]}
+                </span>
+                <FiChevronDown
+                  size={12}
+                  className={`transition-transform ${showSortMenu ? 'rotate-180' : ''}`}
+                />
+              </button>
+              {showSortMenu && (
+                <div className="absolute right-0 top-full mt-1.5 w-44 bg-[#1a2535] border border-[#2e3d52] rounded-xl shadow-xl overflow-hidden z-20">
+                  {(Object.keys(SORT_LABELS) as SortOption[]).map((key) => (
+                    <button
+                      key={key}
+                      onClick={() => {
+                        setSort(key);
+                        setShowSortMenu(false);
+                      }}
+                      className="flex items-center justify-between w-full px-4 py-2.5 text-xs text-[#92adc4] hover:bg-[#222b3d] hover:text-[#d5e6f0] transition-colors"
+                    >
+                      {SORT_LABELS[key]}
+                      {sort === key && (
+                        <FiCheck size={12} className="text-[#00C4A1]" />
+                      )}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Grid */}
         {isLoading ? (
           <div className="flex items-center justify-center py-24">
             <p className="text-[#4e677e] text-sm">Loading projects...</p>
           </div>
         ) : !projects || projects.length === 0 ? (
-          <EmptyState onNew={() => setShowModal(true)} />
+          debouncedSearch ? (
+            <div className="flex flex-col items-center justify-center py-24 text-center">
+              <p className="text-[#4e677e] text-sm">
+                No projects match &ldquo;{debouncedSearch}&rdquo;
+              </p>
+            </div>
+          ) : (
+            <EmptyState onNew={() => setShowModal(true)} />
+          )
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {projects.map((project) => (
