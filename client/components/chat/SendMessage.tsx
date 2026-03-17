@@ -107,7 +107,7 @@ const SendMessage = () => {
       setFilePreviews([]);
 
       if (newConversationId && !conversationId) {
-        router.push(`/${newConversationId}`);
+        router.push(`/chat/${newConversationId}`);
       }
     } catch (error) {
       console.error('Error generating text:', error);

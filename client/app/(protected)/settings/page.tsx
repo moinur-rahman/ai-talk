@@ -13,7 +13,7 @@ const SettingsPage = () => {
   const handleDeleteAll = async () => {
     await deleteAllConversations().unwrap();
     setShowModal(false);
-    router.push('/');
+    router.push('/new');
   };
 
   return (

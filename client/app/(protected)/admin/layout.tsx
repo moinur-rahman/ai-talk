@@ -54,7 +54,7 @@ const AdminLayout: FC<{ children: ReactNode }> = ({ children }) => {
 
         <div className="px-3 py-3 border-t border-[#2e3d52]">
           <Link
-            href="/"
+            href="/new"
             className="flex items-center gap-2 w-full px-3 py-2 rounded-lg text-[#92adc4] hover:text-[#00C4A1] hover:bg-[#00C4A1]/5 transition-all duration-200 text-sm"
           >
             <FiChevronLeft size={14} />

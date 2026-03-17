@@ -103,7 +103,7 @@ const Sidebar: FC = () => {
           </div>
           <div className="flex flex-col gap-2">
             <Link
-              href="/"
+              href="/new"
               className="flex items-center gap-2 w-full px-3 py-2 rounded-lg border border-[#2e3d52] text-[#92adc4] hover:text-[#00C4A1] hover:border-[#00C4A1]/30 hover:bg-[#00C4A1]/5 transition-all duration-200 text-sm"
             >
               <FiPlus size={14} />
@@ -248,14 +248,14 @@ const SidebarItem: FC<{ name: string; id: string; isSelected?: boolean }> = ({
   const handleDelete = async () => {
     await deleteConversation(id).unwrap();
     setShowModal(false);
-    if (isSelected) router.push('/');
+    if (isSelected) router.push('/new');
   };
 
   return (
     <>
       <div className="relative group mb-0.5">
         <Link
-          href={`/${id}`}
+          href={`/chat/${id}`}
           className={`flex items-center gap-2.5 w-full px-2.5 py-2 rounded-lg transition-all duration-150 text-sm border-l-2 pr-8 ${
             isSelected
               ? 'bg-[#1a2d42] text-[#00C4A1] border-[#00C4A1]'

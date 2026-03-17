@@ -13,7 +13,7 @@ export function proxy(req: NextRequest) {
   }
 
   if (isAuthPath && hasSession) {
-    return NextResponse.redirect(new URL('/', req.url));
+    return NextResponse.redirect(new URL('/new', req.url));
   }
 
   return NextResponse.next();
