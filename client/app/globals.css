@@ -15,28 +15,28 @@
   --font-roboto: var(--font-roboto-mono);
 
   /* Surfaces */
-  --color-surface:           #1c1917;
-  --color-surface-dim:       #171513;
-  --color-surface-raised:    #242220;
-  --color-surface-elevated:  #2a2825;
-  --color-surface-overlay:   #302e2b;
-  --color-selected:          #232726;
+  --color-surface: #1c1917;
+  --color-surface-dim: #171513;
+  --color-surface-raised: #242220;
+  --color-surface-elevated: #2a2825;
+  --color-surface-overlay: #302e2b;
+  --color-selected: #232726;
 
   /* Borders */
-  --color-border:            #36322e;
-  --color-border-strong:     #47433f;
+  --color-border: #36322e;
+  --color-border-strong: #47433f;
 
   /* Text */
-  --color-primary:           #ede6df;
-  --color-heading:           #e6ddd6;
-  --color-body:              #b8b0a8;
-  --color-secondary:         #8a8480;
-  --color-muted:             #6e6a66;
-  --color-subtle:            #4a4643;
+  --color-primary: #ede6df;
+  --color-heading: #e6ddd6;
+  --color-body: #b8b0a8;
+  --color-secondary: #8a8480;
+  --color-muted: #6e6a66;
+  --color-subtle: #4a4643;
 
   /* Accent */
-  --color-accent:            #00C4A1;
-  --color-accent-hover:      #00E5C0;
+  --color-accent: #00c4a1;
+  --color-accent-hover: #00e5c0;
 }
 
 @media (prefers-color-scheme: dark) {

@@ -183,9 +183,17 @@ const ProjectDetailPage: FC = () => {
                 <button
                   onClick={openInstructionsEdit}
                   className="text-muted hover:text-accent transition-colors"
-                  title={project?.instructions ? 'Edit instructions' : 'Add instructions'}
+                  title={
+                    project?.instructions
+                      ? 'Edit instructions'
+                      : 'Add instructions'
+                  }
                 >
-                  {project?.instructions ? <FiEdit2 size={13} /> : <FiPlus size={14} />}
+                  {project?.instructions ? (
+                    <FiEdit2 size={13} />
+                  ) : (
+                    <FiPlus size={14} />
+                  )}
                 </button>
               </div>
               <div className="px-4 py-3">
@@ -322,9 +330,7 @@ const ProjectMenu: FC<{
   return (
     <div className="absolute right-0 top-full mt-1 w-72 bg-surface-raised border border-border rounded-xl shadow-2xl z-30 overflow-hidden">
       <div className="px-4 py-3 border-b border-border flex items-center justify-between">
-        <span className="text-heading text-xs font-medium">
-          Edit project
-        </span>
+        <span className="text-heading text-xs font-medium">Edit project</span>
         <button
           onClick={onClose}
           className="text-muted hover:text-body transition-colors"

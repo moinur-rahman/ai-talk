@@ -78,9 +78,7 @@ const SearchModal: FC<SearchModalProps> = ({ onClose }) => {
             </p>
           )}
           {debouncedQuery.trim() && isFetching && (
-            <p className="text-muted text-xs text-center py-8">
-              Searching...
-            </p>
+            <p className="text-muted text-xs text-center py-8">Searching...</p>
           )}
           {debouncedQuery.trim() && !isFetching && results.length === 0 && (
             <p className="text-muted text-xs text-center py-8">
@@ -111,10 +109,7 @@ const SearchResult: FC<{
     onClick={() => onSelect(result.id)}
     className="w-full px-4 py-3 flex items-start gap-3 hover:bg-surface-elevated transition-colors text-left border-b border-border/40 last:border-0"
   >
-    <FiMessageSquare
-      size={13}
-      className="text-muted flex-shrink-0 mt-0.5"
-    />
+    <FiMessageSquare size={13} className="text-muted flex-shrink-0 mt-0.5" />
     <div className="min-w-0">
       <p className="text-heading text-sm truncate">
         <HighlightedText text={result.title ?? 'Untitled'} query={query} />

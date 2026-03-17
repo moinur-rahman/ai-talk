@@ -107,9 +107,7 @@ const CreateModelModal = ({
               }
               className="w-4 h-4 rounded accent-accent"
             />
-            <span className="text-body text-sm">
-              Has reasoning capability
-            </span>
+            <span className="text-body text-sm">Has reasoning capability</span>
           </label>
 
           <label className="flex items-center gap-2.5 cursor-pointer">

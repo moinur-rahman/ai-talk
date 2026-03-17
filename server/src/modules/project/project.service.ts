@@ -45,7 +45,8 @@ export class ProjectService {
         updatedAt: true,
         _count: { select: { conversations: true } },
       },
-      orderBy: sort === 'created' ? { createdAt: 'desc' } : { updatedAt: 'desc' },
+      orderBy:
+        sort === 'created' ? { createdAt: 'desc' } : { updatedAt: 'desc' },
     });
   }
 

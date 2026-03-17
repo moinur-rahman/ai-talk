@@ -35,7 +35,9 @@ const AuthButton = ({
       disabled={disabled || loading}
       {...props}
     >
-      {loading && <AiOutlineLoading3Quarters className="animate-spin" size={16} />}
+      {loading && (
+        <AiOutlineLoading3Quarters className="animate-spin" size={16} />
+      )}
       {children}
     </button>
   );

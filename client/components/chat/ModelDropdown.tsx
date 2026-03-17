@@ -101,9 +101,7 @@ const ModelDropdown: FC = () => {
   const selectedProvider = useAppSelector(
     (state) => state.model.selectedProvider,
   );
-  const selectedModel = useAppSelector(
-    (state) => state.model.selectedModel,
-  );
+  const selectedModel = useAppSelector((state) => state.model.selectedModel);
 
   const defaultModel = useMemo(() => getStoredDefault(), []);
   const { data: providers } = useGetProvidersQuery();

@@ -194,9 +194,7 @@ const Sidebar: FC = () => {
                 <p className="text-heading text-xs font-medium truncate">
                   {user?.name}
                 </p>
-                <p className="text-muted text-[10px] truncate">
-                  {user?.email}
-                </p>
+                <p className="text-muted text-[10px] truncate">{user?.email}</p>
               </div>
               <div className="p-1">
                 {user?.role === 'admin' && (

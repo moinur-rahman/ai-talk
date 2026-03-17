@@ -130,9 +130,7 @@ const ModelsPage = () => {
           <div className="w-5 h-5 border-2 border-accent border-t-transparent rounded-full animate-spin" />
         </div>
       ) : filteredProviders.length === 0 ? (
-        <p className="text-center text-muted text-sm py-20">
-          No models found
-        </p>
+        <p className="text-center text-muted text-sm py-20">No models found</p>
       ) : (
         <div className="space-y-3">
           {filteredProviders.map((provider) => (

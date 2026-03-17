@@ -81,7 +81,11 @@ const features = [
     label: 'Multiple AI Models',
     desc: 'GPT-4, Claude, Gemini & more',
   },
-  { icon: FiZap, label: 'Real-time Streaming', desc: 'Instant, fluid responses' },
+  {
+    icon: FiZap,
+    label: 'Real-time Streaming',
+    desc: 'Instant, fluid responses',
+  },
   { icon: FiShield, label: 'Private & Secure', desc: 'Your data stays yours' },
 ];
 

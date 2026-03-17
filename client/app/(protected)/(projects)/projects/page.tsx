@@ -2,7 +2,14 @@
 
 import { FC, useRef, useState, useEffect } from 'react';
 import Link from 'next/link';
-import { FiPlus, FiX, FiFolder, FiSearch, FiChevronDown, FiCheck } from 'react-icons/fi';
+import {
+  FiPlus,
+  FiX,
+  FiFolder,
+  FiSearch,
+  FiChevronDown,
+  FiCheck,
+} from 'react-icons/fi';
 import {
   useGetProjectsQuery,
   useCreateProjectMutation,
@@ -54,7 +61,8 @@ const ProjectsPage = () => {
         setShowSortMenu(false);
       }
     };
-    if (showSortMenu) document.addEventListener('mousedown', handleClickOutside);
+    if (showSortMenu)
+      document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showSortMenu]);
 
