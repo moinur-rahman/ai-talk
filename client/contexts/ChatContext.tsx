@@ -164,13 +164,20 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
           undefined,
           (draft) => {
             if (draft.pages.length > 0) {
-              const alreadyExists = draft.pages.some((page) =>
-                page.conversations.some((c) => c.id === convId),
-              );
-              if (!alreadyExists) {
+              let found = false;
+              for (const page of draft.pages) {
+                const conv = page.conversations.find((c) => c.id === convId);
+                if (conv) {
+                  conv.title = event.title!;
+                  found = true;
+                  break;
+                }
+              }
+              if (!found) {
                 draft.pages[0].conversations.unshift({
                   id: convId,
                   title: event.title!,
+                  updatedAt: new Date().toISOString(),
                 });
               }
             }
@@ -192,6 +199,80 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
         dispatch(removeConversation(convId));
         pendingCleanupRef.current.delete(convId);
       }
+    }
+  };
+
+  const runStream = async (
+    currentId: string,
+    params: ISendMessageParams,
+    modelId: string,
+    enableReasoning: boolean,
+  ) => {
+    try {
+      const csrfToken = getCsrfTokenFromCookie();
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/chats/${currentId}/stream`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(csrfToken ? { 'X-CSRFToken': csrfToken } : {}),
+          },
+          credentials: 'include',
+          body: JSON.stringify({
+            prompt: params.prompt,
+            lastModelId: modelId,
+            enableReasoning,
+            fileIds: params.attachments
+              ? params.attachments.map((f) => f.id)
+              : [],
+          }),
+          signal: activeStreamsRef.current[currentId]?.signal,
+        },
+      );
+
+      if (!response.ok || !response.body) {
+        throw new Error('Stream request failed');
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() ?? '';
+
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue;
+          const jsonStr = line.slice(6).trim();
+          if (!jsonStr) continue;
+          try {
+            const event = JSON.parse(jsonStr);
+            handleStreamEvent(event, currentId);
+          } catch {
+            // ignore malformed events
+          }
+        }
+      }
+
+      delete activeStreamsRef.current[currentId];
+    } catch (err) {
+      if (err instanceof DOMException && err.name === 'AbortError') {
+        return;
+      }
+      console.error('Error in stream:', err);
+      setError((prev) => ({
+        ...prev,
+        [currentId]: 'Failed to send message. Please try again.',
+      }));
+      setStreaming((prev) => ({ ...prev, [currentId]: false }));
+      setReasoningStreaming((prev) => ({ ...prev, [currentId]: false }));
+      delete activeStreamsRef.current[currentId];
     }
   };
 
@@ -220,6 +301,29 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
           return undefined;
         }
         dispatch(setNewConversationId(currentId));
+
+        // Optimistically add to sidebar immediately using the user's message
+        // as the initial title. It will be replaced once the AI title arrives.
+        if (!projectId) {
+          const prompt = params.prompt.trim();
+          const initialTitle =
+            prompt.length > 60 ? `${prompt.slice(0, 60)}…` : prompt;
+          dispatch(
+            chatApi.util.updateQueryData(
+              'getConversations',
+              undefined,
+              (draft) => {
+                if (draft.pages.length > 0) {
+                  draft.pages[0].conversations.unshift({
+                    id: currentId!,
+                    title: initialTitle,
+                    updatedAt: new Date().toISOString(),
+                  });
+                }
+              },
+            ),
+          );
+        }
       }
 
       dispatch(
@@ -250,63 +354,17 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
       const abortController = new AbortController();
       activeStreamsRef.current[currentId] = abortController;
 
-      const csrfToken = getCsrfTokenFromCookie();
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/chats/${currentId}/stream`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            ...(csrfToken ? { 'X-CSRFToken': csrfToken } : {}),
-          },
-          credentials: 'include',
-          body: JSON.stringify({
-            prompt: params.prompt,
-            lastModelId: selectedModel.id,
-            enableReasoning: selectedModel.hasReasoning && reasoningEnabled,
-            fileIds: params.attachments
-              ? params.attachments.map((f) => f.id)
-              : [],
-          }),
-          signal: abortController.signal,
-        },
+      // Fire-and-forget: don't await the stream so the caller gets the ID
+      // immediately and can navigate to the chat page while streaming runs.
+      void runStream(
+        currentId,
+        params,
+        selectedModel.id,
+        selectedModel.hasReasoning && reasoningEnabled,
       );
 
-      if (!response.ok || !response.body) {
-        throw new Error('Stream request failed');
-      }
-
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-      let buffer = '';
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split('\n');
-        buffer = lines.pop() ?? '';
-
-        for (const line of lines) {
-          if (!line.startsWith('data: ')) continue;
-          const jsonStr = line.slice(6).trim();
-          if (!jsonStr) continue;
-          try {
-            const event = JSON.parse(jsonStr);
-            handleStreamEvent(event, currentId!);
-          } catch {
-            // ignore malformed events
-          }
-        }
-      }
-
-      delete activeStreamsRef.current[currentId];
       return currentId;
     } catch (err) {
-      if (err instanceof DOMException && err.name === 'AbortError') {
-        return currentId;
-      }
       console.error('Error in sendMessage:', err);
       setError((prev) => ({
         ...prev,
