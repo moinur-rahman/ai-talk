@@ -10,7 +10,7 @@ import Image from 'next/image';
 import { FiFileText } from 'react-icons/fi';
 import ImageModal from '@/components/common/ImageModal';
 
-const SendMessage = () => {
+const SendMessage = ({ defaultRows = 1 }: { defaultRows?: number }) => {
   const router = useRouter();
 
   const {
@@ -264,7 +264,7 @@ const SendMessage = () => {
             handleKeyDown(e);
           }}
           onPaste={handlePaste}
-          rows={1}
+          rows={defaultRows}
           style={{ maxHeight: '150px' }}
         />
 

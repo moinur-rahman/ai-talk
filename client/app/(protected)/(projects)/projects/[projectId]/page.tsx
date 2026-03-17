@@ -141,7 +141,7 @@ const ProjectDetailPage: FC = () => {
 
             {/* New conversation prompt */}
             <div className="mb-8 [&>div]:max-w-none">
-              <SendMessage />
+              <SendMessage defaultRows={3} />
             </div>
 
             {/* Conversations */}
