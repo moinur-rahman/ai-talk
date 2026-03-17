@@ -38,8 +38,10 @@ const NewChat = () => {
       const greeting = getTimeGreeting();
       return firstName ? `${greeting}, ${firstName}` : greeting;
     }
-    return GENERIC_MESSAGES[Math.floor(Math.random() * GENERIC_MESSAGES.length)];
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    return GENERIC_MESSAGES[
+      Math.floor(Math.random() * GENERIC_MESSAGES.length)
+    ];
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [!!firstName]);
 
   return (

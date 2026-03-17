@@ -143,6 +143,7 @@ const Sidebar: FC = () => {
               name={conversation.title}
               id={conversation.id}
               isSelected={conversation.id === conversationId}
+              isProjectConversation={!!conversation.projectId}
             />
           ))}
           <div ref={sentinelRef} className="h-1" />
@@ -234,11 +235,12 @@ const Sidebar: FC = () => {
   );
 };
 
-const SidebarItem: FC<{ name: string; id: string; isSelected?: boolean }> = ({
-  name,
-  id,
-  isSelected = false,
-}) => {
+const SidebarItem: FC<{
+  name: string;
+  id: string;
+  isSelected?: boolean;
+  isProjectConversation?: boolean;
+}> = ({ name, id, isSelected = false, isProjectConversation = false }) => {
   const router = useRouter();
   const [deleteConversation, { isLoading }] = useDeleteConversationMutation();
   const [showModal, setShowModal] = useState(false);
@@ -260,10 +262,17 @@ const SidebarItem: FC<{ name: string; id: string; isSelected?: boolean }> = ({
               : 'text-body hover:bg-surface-elevated hover:text-heading border-transparent'
           }`}
         >
-          <FiMessageSquare
-            size={13}
-            className={`flex-shrink-0 ${isSelected ? 'text-accent' : 'text-muted'}`}
-          />
+          {isProjectConversation ? (
+            <FiFolder
+              size={13}
+              className={`flex-shrink-0 ${isSelected ? 'text-accent' : 'text-muted'}`}
+            />
+          ) : (
+            <FiMessageSquare
+              size={13}
+              className={`flex-shrink-0 ${isSelected ? 'text-accent' : 'text-muted'}`}
+            />
+          )}
           <span className="truncate">{name}</span>
         </Link>
 

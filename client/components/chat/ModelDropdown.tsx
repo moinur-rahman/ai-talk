@@ -23,8 +23,8 @@ export const customStyles: StylesConfig<ModelOption> = {
     borderColor: 'var(--color-border)',
     borderRadius: '8px',
     boxShadow: 'none',
-    minHeight: '34px',
-    fontSize: '13px',
+    minHeight: '30px',
+    fontSize: '12px',
     '&:hover': {
       borderColor: 'var(--color-accent)',
       backgroundColor: 'rgba(0, 196, 161, 0.04)',
@@ -50,8 +50,8 @@ export const customStyles: StylesConfig<ModelOption> = {
         ? 'var(--color-surface-overlay)'
         : 'transparent',
     color: isSelected ? 'var(--color-accent)' : 'var(--color-heading)',
-    fontSize: '13px',
-    padding: '8px 12px',
+    fontSize: '12px',
+    padding: '6px 10px',
     borderRadius: '6px',
     cursor: 'pointer',
     '&:hover': { backgroundColor: 'var(--color-surface-overlay)' },
@@ -59,17 +59,17 @@ export const customStyles: StylesConfig<ModelOption> = {
   placeholder: (styles) => ({
     ...styles,
     color: 'var(--color-muted)',
-    fontSize: '13px',
+    fontSize: '12px',
   }),
   singleValue: (styles) => ({
     ...styles,
     color: 'var(--color-primary)',
-    fontSize: '13px',
+    fontSize: '12px',
   }),
   input: (styles) => ({
     ...styles,
     color: 'var(--color-primary)',
-    fontSize: '13px',
+    fontSize: '12px',
   }),
   dropdownIndicator: (styles) => ({
     ...styles,
@@ -212,7 +212,7 @@ const ModelDropdown: FC = () => {
       value={selectedOption}
       isSearchable
       placeholder="Choose a model..."
-      className="w-[13rem]"
+      className="w-full"
       styles={customStyles}
       onChange={handleOptionClick}
       components={{

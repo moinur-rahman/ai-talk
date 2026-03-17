@@ -1,14 +1,16 @@
 'use client';
 import { useRouter } from 'next/navigation';
 import { useState, FormEvent, useEffect, useRef, useCallback } from 'react';
-import { FiPaperclip, FiSend, FiMic, FiMicOff } from 'react-icons/fi';
+import { FiPaperclip, FiSend, FiMic, FiMicOff, FiFileText } from 'react-icons/fi';
 import { useChat } from '@/contexts/ChatContext';
 import { FaStop } from 'react-icons/fa';
 import { useUploadFileMutation } from '@/services/fileApi';
 import { FileMetadata } from '@/types/chat';
 import Image from 'next/image';
-import { FiFileText } from 'react-icons/fi';
 import ImageModal from '@/components/common/ImageModal';
+import ProviderDropdown from './ProviderDropdown';
+import ModelDropdown from './ModelDropdown';
+import ReasoningToggle from './ReasoningToggle';
 
 const SendMessage = ({ defaultRows = 1 }: { defaultRows?: number }) => {
   const router = useRouter();
@@ -232,7 +234,7 @@ const SendMessage = ({ defaultRows = 1 }: { defaultRows?: number }) => {
       <FilePreviews filePreviews={filePreviews} onRemove={removeFile} />
       <form
         onSubmit={handleGenerateText}
-        className="flex items-end bg-surface-elevated border border-border rounded-2xl focus-within:border-accent/40 transition-all duration-200 p-2"
+        className="flex flex-col bg-surface-elevated border border-border rounded-2xl focus-within:border-accent/40 transition-all duration-200 px-2 pt-2 pb-1"
       >
         <input
           type="file"
@@ -241,18 +243,10 @@ const SendMessage = ({ defaultRows = 1 }: { defaultRows?: number }) => {
           className="hidden"
           multiple
         />
-        <button
-          type="button"
-          className="p-2 text-muted hover:text-accent hover:bg-accent/10 rounded-lg transition-all duration-150 flex-shrink-0"
-          onClick={handleFileClick}
-          aria-label="Attach File"
-        >
-          <FiPaperclip size={18} />
-        </button>
 
         <textarea
           ref={textAreaRef}
-          className="flex-grow mx-2 py-2 px-1 bg-transparent text-primary placeholder-muted resize-none outline-none overflow-y-auto text-sm leading-relaxed"
+          className="w-full px-2 py-1.5 bg-transparent text-primary placeholder-muted resize-none outline-none overflow-y-auto text-sm leading-relaxed"
           placeholder="Message..."
           value={prompt}
           onChange={(e) => {
@@ -268,38 +262,61 @@ const SendMessage = ({ defaultRows = 1 }: { defaultRows?: number }) => {
           style={{ maxHeight: '150px' }}
         />
 
-        <button
-          type="button"
-          onClick={toggleListening}
-          aria-label={isListening ? 'Stop recording' : 'Start voice input'}
-          className={`p-2 rounded-lg transition-all duration-150 flex-shrink-0 ${
-            isListening
-              ? 'text-red-400 hover:text-red-300 hover:bg-red-400/10 animate-pulse'
-              : 'text-muted hover:text-accent hover:bg-accent/10'
-          }`}
-        >
-          {isListening ? <FiMicOff size={18} /> : <FiMic size={18} />}
-        </button>
-
-        {conversationId && streaming[conversationId] ? (
+        <div className="flex items-center gap-1 mt-1 pt-1 border-t border-border/50">
           <button
             type="button"
-            className="p-2 text-red-400 hover:text-red-300 hover:bg-red-400/10 rounded-lg transition-all duration-150 flex-shrink-0"
-            onClick={stopStream}
-            aria-label="Stop"
+            className="p-2 text-muted hover:text-accent hover:bg-accent/10 rounded-lg transition-all duration-150 flex-shrink-0"
+            onClick={handleFileClick}
+            aria-label="Attach File"
           >
-            <FaStop size={16} />
+            <FiPaperclip size={17} />
           </button>
-        ) : (
+
+          <div className="flex-1" />
+
+          <div className="w-[9rem] flex-shrink-0">
+            <ProviderDropdown />
+          </div>
+          <div className="w-px h-4 bg-border flex-shrink-0" />
+          <div className="w-[11rem] flex-shrink-0">
+            <ModelDropdown />
+          </div>
+
+          <ReasoningToggle />
+
           <button
-            type="submit"
-            className="p-2 text-accent hover:text-accent-hover hover:bg-accent/10 rounded-lg transition-all duration-150 flex-shrink-0 disabled:text-muted disabled:hover:bg-transparent disabled:cursor-not-allowed"
-            disabled={!prompt.trim() && uploadedAttachments.length === 0}
-            aria-label="Send Message"
+            type="button"
+            onClick={toggleListening}
+            aria-label={isListening ? 'Stop recording' : 'Start voice input'}
+            className={`p-2 rounded-lg transition-all duration-150 flex-shrink-0 ${
+              isListening
+                ? 'text-red-400 hover:text-red-300 hover:bg-red-400/10 animate-pulse'
+                : 'text-muted hover:text-accent hover:bg-accent/10'
+            }`}
           >
-            <FiSend size={18} />
+            {isListening ? <FiMicOff size={17} /> : <FiMic size={17} />}
           </button>
-        )}
+
+          {conversationId && streaming[conversationId] ? (
+            <button
+              type="button"
+              className="p-2 text-red-400 hover:text-red-300 hover:bg-red-400/10 rounded-lg transition-all duration-150 flex-shrink-0"
+              onClick={stopStream}
+              aria-label="Stop"
+            >
+              <FaStop size={15} />
+            </button>
+          ) : (
+            <button
+              type="submit"
+              className="p-2 text-accent hover:text-accent-hover hover:bg-accent/10 rounded-lg transition-all duration-150 flex-shrink-0 disabled:text-muted disabled:hover:bg-transparent disabled:cursor-not-allowed"
+              disabled={!prompt.trim() && uploadedAttachments.length === 0}
+              aria-label="Send Message"
+            >
+              <FiSend size={17} />
+            </button>
+          )}
+        </div>
       </form>
     </div>
   );

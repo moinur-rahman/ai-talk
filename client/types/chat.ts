@@ -17,6 +17,14 @@ export interface Conversation {
   id: string;
   title: string;
   updatedAt: string;
+  projectId: string | null;
+}
+
+export interface ConversationDetail {
+  id: string;
+  title: string;
+  projectId: string | null;
+  project: { id: string; name: string } | null;
 }
 
 export interface ConversationsPage {
@@ -44,9 +52,11 @@ export interface ChatHistoryResponse {
   data: {
     messages: Message[];
     lastModelAndProvider: {
-      lastModelId: string;
-      lastProviderId: string;
-    };
+      lastModelId: string | null;
+      lastProviderId: string | null;
+    } | null;
+    title: string | null;
+    project: { id: string; name: string } | null;
     messageCode: string;
   };
 }

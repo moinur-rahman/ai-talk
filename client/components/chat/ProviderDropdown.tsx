@@ -65,7 +65,7 @@ const ProviderDropdown: FC = () => {
       value={selectedOption}
       isSearchable
       placeholder="Choose a provider..."
-      className="w-[13rem]"
+      className="w-full"
       styles={customStyles}
       onChange={handleOptionClick}
       components={{

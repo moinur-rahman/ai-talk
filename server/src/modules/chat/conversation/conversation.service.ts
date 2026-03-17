@@ -21,10 +21,10 @@ export class ConversationService {
     const conversations = await this.prisma.conversation.findMany({
       where: {
         userId,
-        projectId: projectId ?? null,
+        ...(projectId !== undefined ? { projectId } : {}),
         ...(cursor ? { updatedAt: { lt: new Date(cursor) } } : {}),
       },
-      select: { id: true, title: true, updatedAt: true },
+      select: { id: true, title: true, updatedAt: true, projectId: true },
       orderBy: { updatedAt: 'desc' },
       take: limit + 1,
     });
@@ -36,10 +36,11 @@ export class ConversationService {
       : null;
 
     return {
-      conversations: items.map(({ id, title, updatedAt }) => ({
+      conversations: items.map(({ id, title, updatedAt, projectId }) => ({
         id,
         title,
         updatedAt,
+        projectId,
       })),
       hasNextPage,
       nextCursor,

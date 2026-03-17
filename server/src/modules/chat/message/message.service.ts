@@ -58,8 +58,21 @@ export class MessageService {
       orderBy: { createdAt: 'asc' },
     });
 
-    const lastModelAndProvider =
-      await this.conversationService.getLastModelAndProvider(conversationId);
+    const conversation = await this.prisma.conversation.findUnique({
+      where: { id: conversationId },
+      select: {
+        title: true,
+        lastProviderId: true,
+        lastModelId: true,
+        project: { select: { id: true, name: true } },
+      },
+    });
+    const lastModelAndProvider = conversation
+      ? {
+          lastProviderId: conversation.lastProviderId,
+          lastModelId: conversation.lastModelId,
+        }
+      : null;
 
     const fileIds = messages.flatMap((msg) =>
       msg.attachments.map((a) => a.fileId),
@@ -83,6 +96,11 @@ export class MessageService {
         .filter(Boolean),
     }));
 
-    return { messages: messagesWithFiles, lastModelAndProvider };
+    return {
+      messages: messagesWithFiles,
+      lastModelAndProvider,
+      title: conversation?.title ?? null,
+      project: conversation?.project ?? null,
+    };
   }
 }

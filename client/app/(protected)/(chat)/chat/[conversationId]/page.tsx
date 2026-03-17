@@ -1,10 +1,49 @@
+'use client';
+import { useParams } from 'next/navigation';
+import Link from 'next/link';
+import { FiChevronDown } from 'react-icons/fi';
 import ChatHistory from '@/components/chat/ChatHistory';
 import SendMessage from '@/components/chat/SendMessage';
+import { useGetChatHistoryQuery } from '@/services/chatApi';
 
 const Chat = () => {
+  const { conversationId } = useParams<{ conversationId: string }>();
+  const { data, isLoading } = useGetChatHistoryQuery(conversationId);
+  const project = data?.project;
+  const title = data?.title;
+
   return (
-    <main className="flex-1 flex flex-col h-[calc(100vh-4rem)] relative">
+    <main className="flex-1 flex flex-col h-full relative">
       <div className="absolute inset-0 flex flex-col">
+        <div className="flex-shrink-0 flex items-center px-5 py-3 border-b border-border bg-surface">
+          <div className="flex items-center gap-1.5 min-w-0">
+            {project && (
+              <>
+                <Link
+                  href={`/projects/${project.id}`}
+                  className="text-sm font-medium text-muted hover:text-body transition-colors truncate flex-shrink-0"
+                >
+                  {project.name}
+                </Link>
+                <span className="text-muted text-sm flex-shrink-0">/</span>
+              </>
+            )}
+            <button className="flex items-center gap-1 min-w-0 group">
+              {isLoading ? (
+                <span className="h-3.5 w-32 bg-border rounded animate-pulse inline-block" />
+              ) : (
+                <span className="text-sm font-medium text-body truncate">
+                  {title ?? 'New conversation'}
+                </span>
+              )}
+              <FiChevronDown
+                size={14}
+                className="text-muted group-hover:text-body transition-colors flex-shrink-0"
+              />
+            </button>
+          </div>
+        </div>
+
         <div className="flex-1 overflow-hidden">
           <ChatHistory />
         </div>
