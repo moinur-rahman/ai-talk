@@ -12,7 +12,7 @@ const ChatHistory = () => {
     return (
       <div className="h-full w-full overflow-y-auto px-4 flex flex-col items-center">
         <div className="w-full max-w-[52rem] flex flex-col space-y-6 py-6">
-          <div className="text-center text-[#4e677e] text-sm">
+          <div className="text-center text-muted text-sm">
             No conversation selected
           </div>
         </div>

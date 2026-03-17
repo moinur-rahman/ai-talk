@@ -63,10 +63,10 @@ const ProjectsPage = () => {
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-semibold text-[#e2ecf5]">Projects</h1>
+          <h1 className="text-2xl font-semibold text-primary">Projects</h1>
           <button
             onClick={() => setShowModal(true)}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl border border-[#2e3d52] text-[#92adc4] hover:text-[#00C4A1] hover:border-[#00C4A1]/30 hover:bg-[#00C4A1]/5 transition-all duration-200 text-sm"
+            className="flex items-center gap-2 px-4 py-2 rounded-xl border border-border text-body hover:text-accent hover:border-accent/30 hover:bg-accent/5 transition-all duration-200 text-sm"
           >
             <FiPlus size={14} />
             New project
@@ -78,13 +78,13 @@ const ProjectsPage = () => {
           <div className="relative mb-5">
             <FiSearch
               size={14}
-              className="absolute left-4 top-1/2 -translate-y-1/2 text-[#4e677e] pointer-events-none"
+              className="absolute left-4 top-1/2 -translate-y-1/2 text-muted pointer-events-none"
             />
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search projects..."
-              className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#1a2535] border border-[#2e3d52] text-[#e2ecf5] placeholder-[#4e677e] text-sm outline-none focus:border-[#3a4f68] transition-colors"
+              className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-surface-raised border border-border text-primary placeholder-muted text-sm outline-none focus:border-border-strong transition-colors"
             />
           </div>
         )}
@@ -95,10 +95,10 @@ const ProjectsPage = () => {
             <div ref={sortRef} className="relative">
               <button
                 onClick={() => setShowSortMenu((v) => !v)}
-                className="flex items-center gap-1.5 text-[#627a8e] hover:text-[#92adc4] text-xs transition-colors"
+                className="flex items-center gap-1.5 text-secondary hover:text-body text-xs transition-colors"
               >
                 Sort by
-                <span className="text-[#92adc4] font-medium">
+                <span className="text-body font-medium">
                   {SORT_LABELS[sort]}
                 </span>
                 <FiChevronDown
@@ -107,7 +107,7 @@ const ProjectsPage = () => {
                 />
               </button>
               {showSortMenu && (
-                <div className="absolute right-0 top-full mt-1.5 w-44 bg-[#1a2535] border border-[#2e3d52] rounded-xl shadow-xl overflow-hidden z-20">
+                <div className="absolute right-0 top-full mt-1.5 w-44 bg-surface-raised border border-border rounded-xl shadow-xl overflow-hidden z-20">
                   {(Object.keys(SORT_LABELS) as SortOption[]).map((key) => (
                     <button
                       key={key}
@@ -115,11 +115,11 @@ const ProjectsPage = () => {
                         setSort(key);
                         setShowSortMenu(false);
                       }}
-                      className="flex items-center justify-between w-full px-4 py-2.5 text-xs text-[#92adc4] hover:bg-[#222b3d] hover:text-[#d5e6f0] transition-colors"
+                      className="flex items-center justify-between w-full px-4 py-2.5 text-xs text-body hover:bg-surface-elevated hover:text-heading transition-colors"
                     >
                       {SORT_LABELS[key]}
                       {sort === key && (
-                        <FiCheck size={12} className="text-[#00C4A1]" />
+                        <FiCheck size={12} className="text-accent" />
                       )}
                     </button>
                   ))}
@@ -132,12 +132,12 @@ const ProjectsPage = () => {
         {/* Grid */}
         {isLoading ? (
           <div className="flex items-center justify-center py-24">
-            <p className="text-[#4e677e] text-sm">Loading projects...</p>
+            <p className="text-muted text-sm">Loading projects...</p>
           </div>
         ) : !projects || projects.length === 0 ? (
           debouncedSearch ? (
             <div className="flex flex-col items-center justify-center py-24 text-center">
-              <p className="text-[#4e677e] text-sm">
+              <p className="text-muted text-sm">
                 No projects match &ldquo;{debouncedSearch}&rdquo;
               </p>
             </div>
@@ -161,18 +161,18 @@ const ProjectsPage = () => {
 const ProjectCard: FC<{ project: Project }> = ({ project }) => (
   <Link
     href={`/projects/${project.id}`}
-    className="group block p-5 rounded-2xl bg-[#1a2535] border border-[#2e3d52] hover:border-[#3a4f68] hover:bg-[#1f2e42] transition-all duration-200"
+    className="group block p-5 rounded-2xl bg-surface-raised border border-border hover:border-border-strong hover:bg-[#1f2e42] transition-all duration-200"
   >
-    <h3 className="text-[#e2ecf5] font-semibold text-sm mb-2 group-hover:text-[#00C4A1] transition-colors">
+    <h3 className="text-primary font-semibold text-sm mb-2 group-hover:text-accent transition-colors">
       {project.name}
     </h3>
     {project.description && (
-      <p className="text-[#627a8e] text-xs leading-relaxed line-clamp-2 mb-4">
+      <p className="text-secondary text-xs leading-relaxed line-clamp-2 mb-4">
         {project.description}
       </p>
     )}
     {!project.description && <div className="mb-4" />}
-    <p className="text-[#4e677e] text-[11px]">
+    <p className="text-muted text-[11px]">
       Updated {getRelativeTime(project.updatedAt)}
     </p>
   </Link>
@@ -180,19 +180,19 @@ const ProjectCard: FC<{ project: Project }> = ({ project }) => (
 
 const EmptyState = ({ onNew }: { onNew: () => void }) => (
   <div className="flex flex-col items-center justify-center py-24 text-center">
-    <div className="w-14 h-14 rounded-2xl bg-[#222b3d] border border-[#2e3d52] flex items-center justify-center mb-5">
-      <FiFolder size={22} className="text-[#4e677e]" />
+    <div className="w-14 h-14 rounded-2xl bg-surface-elevated border border-border flex items-center justify-center mb-5">
+      <FiFolder size={22} className="text-muted" />
     </div>
-    <h2 className="text-[#d5e6f0] font-semibold text-base mb-2">
+    <h2 className="text-heading font-semibold text-base mb-2">
       No projects yet
     </h2>
-    <p className="text-[#4e677e] text-sm mb-6 max-w-xs">
+    <p className="text-muted text-sm mb-6 max-w-xs">
       Organise your conversations into projects and add custom instructions for
       each.
     </p>
     <button
       onClick={onNew}
-      className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#00C4A1] text-[#141826] text-sm font-medium hover:bg-[#00E5C0] transition-colors"
+      className="flex items-center gap-2 px-4 py-2 rounded-xl bg-accent text-surface-dim text-sm font-medium hover:bg-accent-hover transition-colors"
     >
       <FiPlus size={14} />
       New project
@@ -217,14 +217,14 @@ const CreateProjectModal = ({ onClose }: { onClose: () => void }) => {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-      <div className="w-full max-w-md bg-[#1a2535] border border-[#2e3d52] rounded-2xl shadow-2xl overflow-hidden">
-        <div className="px-6 py-5 border-b border-[#2e3d52] flex items-center justify-between">
-          <h2 className="text-[#e2ecf5] font-semibold">
+      <div className="w-full max-w-md bg-surface-raised border border-border rounded-2xl shadow-2xl overflow-hidden">
+        <div className="px-6 py-5 border-b border-border flex items-center justify-between">
+          <h2 className="text-primary font-semibold">
             Create a personal project
           </h2>
           <button
             onClick={onClose}
-            className="text-[#4e677e] hover:text-[#92adc4] transition-colors"
+            className="text-muted hover:text-body transition-colors"
           >
             <FiX size={18} />
           </button>
@@ -232,7 +232,7 @@ const CreateProjectModal = ({ onClose }: { onClose: () => void }) => {
 
         <form onSubmit={handleSubmit} className="px-6 py-5 space-y-5">
           <div>
-            <label className="block text-[#92adc4] text-xs font-medium mb-2">
+            <label className="block text-body text-xs font-medium mb-2">
               What are you working on?
             </label>
             <input
@@ -240,11 +240,11 @@ const CreateProjectModal = ({ onClose }: { onClose: () => void }) => {
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Name your project"
-              className="w-full px-4 py-3 rounded-xl bg-[#141826] border border-[#2e3d52] text-[#e2ecf5] placeholder-[#4e677e] text-sm outline-none focus:border-[#00C4A1]/50 transition-colors"
+              className="w-full px-4 py-3 rounded-xl bg-surface-dim border border-border text-primary placeholder-muted text-sm outline-none focus:border-accent/50 transition-colors"
             />
           </div>
           <div>
-            <label className="block text-[#92adc4] text-xs font-medium mb-2">
+            <label className="block text-body text-xs font-medium mb-2">
               What are you trying to achieve?
             </label>
             <textarea
@@ -252,7 +252,7 @@ const CreateProjectModal = ({ onClose }: { onClose: () => void }) => {
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Describe your project, goals, subject, etc..."
               rows={3}
-              className="w-full px-4 py-3 rounded-xl bg-[#141826] border border-[#2e3d52] text-[#e2ecf5] placeholder-[#4e677e] text-sm outline-none focus:border-[#00C4A1]/50 transition-colors resize-none"
+              className="w-full px-4 py-3 rounded-xl bg-surface-dim border border-border text-primary placeholder-muted text-sm outline-none focus:border-accent/50 transition-colors resize-none"
             />
           </div>
 
@@ -260,14 +260,14 @@ const CreateProjectModal = ({ onClose }: { onClose: () => void }) => {
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2.5 rounded-xl border border-[#2e3d52] text-[#92adc4] text-sm hover:bg-[#222b3d] transition-colors"
+              className="flex-1 px-4 py-2.5 rounded-xl border border-border text-body text-sm hover:bg-surface-elevated transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={!name.trim() || isLoading}
-              className="flex-1 px-4 py-2.5 rounded-xl bg-[#e2ecf5] text-[#141826] text-sm font-medium hover:bg-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 px-4 py-2.5 rounded-xl bg-primary text-surface-dim text-sm font-medium hover:bg-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isLoading ? 'Creating...' : 'Create project'}
             </button>

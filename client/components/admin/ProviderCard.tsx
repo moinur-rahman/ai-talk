@@ -16,19 +16,19 @@ const ProviderCard = ({
   const deprecatedCount = provider.models.filter((m) => m.isDeprecated).length;
 
   return (
-    <div className="rounded-xl border border-[#2e3d52] bg-[#141826] overflow-hidden">
+    <div className="rounded-xl border border-border bg-surface-dim overflow-hidden">
       <button
         onClick={onToggle}
-        className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-[#1a2535] transition-colors duration-150"
+        className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-surface-raised transition-colors duration-150"
       >
-        <div className="w-8 h-8 rounded-lg bg-[#222b3d] border border-[#2e3d52] flex items-center justify-center flex-shrink-0">
-          <FiCpu size={14} className="text-[#00C4A1]" />
+        <div className="w-8 h-8 rounded-lg bg-surface-elevated border border-border flex items-center justify-center flex-shrink-0">
+          <FiCpu size={14} className="text-accent" />
         </div>
         <div className="flex-1 text-left">
-          <p className="text-[#d5e6f0] text-sm font-medium capitalize">
+          <p className="text-heading text-sm font-medium capitalize">
             {provider.name}
           </p>
-          <p className="text-[#4e677e] text-[11px] mt-0.5">
+          <p className="text-muted text-[11px] mt-0.5">
             {enabledCount} enabled
             {deprecatedCount > 0 && (
               <span className="text-[#3a5068]">
@@ -39,16 +39,16 @@ const ProviderCard = ({
           </p>
         </div>
         {isExpanded ? (
-          <FiChevronUp size={14} className="text-[#4e677e] flex-shrink-0" />
+          <FiChevronUp size={14} className="text-muted flex-shrink-0" />
         ) : (
-          <FiChevronDown size={14} className="text-[#4e677e] flex-shrink-0" />
+          <FiChevronDown size={14} className="text-muted flex-shrink-0" />
         )}
       </button>
 
       {isExpanded && (
-        <div className="border-t border-[#2e3d52]">
+        <div className="border-t border-border">
           {provider.models.length === 0 ? (
-            <p className="px-4 py-4 text-[#4e677e] text-xs text-center">
+            <p className="px-4 py-4 text-muted text-xs text-center">
               No models — run sync to populate
             </p>
           ) : (

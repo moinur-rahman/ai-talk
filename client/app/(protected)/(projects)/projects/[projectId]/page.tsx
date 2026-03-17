@@ -77,7 +77,7 @@ const ProjectDetailPage: FC = () => {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <p className="text-[#4e677e] text-sm">Loading...</p>
+        <p className="text-muted text-sm">Loading...</p>
       </div>
     );
   }
@@ -91,7 +91,7 @@ const ProjectDetailPage: FC = () => {
             {/* Back link */}
             <Link
               href="/projects"
-              className="inline-flex items-center gap-1.5 text-[#4e677e] hover:text-[#92adc4] text-sm transition-colors mb-6"
+              className="inline-flex items-center gap-1.5 text-muted hover:text-body text-sm transition-colors mb-6"
             >
               <FiArrowLeft size={14} />
               All projects
@@ -100,16 +100,16 @@ const ProjectDetailPage: FC = () => {
             {/* Project header */}
             <div className="flex items-start justify-between gap-4 mb-6">
               <div className="min-w-0 flex-1">
-                <h1 className="text-2xl font-bold text-[#e2ecf5] mb-2">
+                <h1 className="text-2xl font-bold text-primary mb-2">
                   {project?.name}
                 </h1>
                 {description && (
-                  <p className="text-[#627a8e] text-sm leading-relaxed">
+                  <p className="text-secondary text-sm leading-relaxed">
                     {displayedDescription}
                     {descriptionTruncated && (
                       <button
                         onClick={() => setDescriptionExpanded((v) => !v)}
-                        className="ml-1 text-[#4e677e] hover:text-[#92adc4] underline text-sm transition-colors"
+                        className="ml-1 text-muted hover:text-body underline text-sm transition-colors"
                       >
                         {descriptionExpanded ? 'Show less' : 'Show more'}
                       </button>
@@ -120,7 +120,7 @@ const ProjectDetailPage: FC = () => {
               <div className="relative flex-shrink-0">
                 <button
                   onClick={() => setShowProjectMenu((v) => !v)}
-                  className="p-2 rounded-lg text-[#4e677e] hover:text-[#92adc4] hover:bg-[#222b3d] transition-colors"
+                  className="p-2 rounded-lg text-muted hover:text-body hover:bg-surface-elevated transition-colors"
                 >
                   <FiEdit2 size={16} />
                 </button>
@@ -147,21 +147,21 @@ const ProjectDetailPage: FC = () => {
             {/* Conversations */}
             {conversations.length > 0 && (
               <div>
-                <p className="text-[#4e677e] text-[10px] font-semibold uppercase tracking-widest mb-3">
+                <p className="text-muted text-[10px] font-semibold uppercase tracking-widest mb-3">
                   Conversations
                 </p>
-                <div className="divide-y divide-[#2e3d52]">
+                <div className="divide-y divide-border">
                   {conversations.map((conv) => (
                     <Link
                       key={conv.id}
                       href={`/chat/${conv.id}`}
                       className="flex flex-col gap-0.5 py-3.5 group"
                     >
-                      <span className="text-sm text-[#92adc4] group-hover:text-[#d5e6f0] transition-colors truncate">
+                      <span className="text-sm text-body group-hover:text-heading transition-colors truncate">
                         {conv.title || 'Untitled'}
                       </span>
                       {conv.updatedAt && (
-                        <span className="text-xs text-[#3d5368] group-hover:text-[#4e677e] transition-colors">
+                        <span className="text-xs text-subtle group-hover:text-muted transition-colors">
                           Last message {getRelativeTime(conv.updatedAt)}
                         </span>
                       )}
@@ -175,14 +175,14 @@ const ProjectDetailPage: FC = () => {
           {/* Right panel */}
           <div className="w-72 flex-shrink-0 space-y-3 pt-14">
             {/* Instructions */}
-            <div className="bg-[#1a2535] border border-[#2e3d52] rounded-xl overflow-hidden">
-              <div className="flex items-center justify-between px-4 py-3 border-b border-[#2e3d52]">
-                <span className="text-[#d5e6f0] text-sm font-medium">
+            <div className="bg-surface-raised border border-border rounded-xl overflow-hidden">
+              <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+                <span className="text-heading text-sm font-medium">
                   Instructions
                 </span>
                 <button
                   onClick={openInstructionsEdit}
-                  className="text-[#4e677e] hover:text-[#00C4A1] transition-colors"
+                  className="text-muted hover:text-accent transition-colors"
                   title={project?.instructions ? 'Edit instructions' : 'Add instructions'}
                 >
                   {project?.instructions ? <FiEdit2 size={13} /> : <FiPlus size={14} />}
@@ -190,11 +190,11 @@ const ProjectDetailPage: FC = () => {
               </div>
               <div className="px-4 py-3">
                 {project?.instructions ? (
-                  <p className="text-[#627a8e] text-xs leading-relaxed line-clamp-4">
+                  <p className="text-secondary text-xs leading-relaxed line-clamp-4">
                     {project.instructions}
                   </p>
                 ) : (
-                  <p className="text-[#4e677e] text-xs">
+                  <p className="text-muted text-xs">
                     Add instructions to tailor responses for this project.
                   </p>
                 )}
@@ -207,20 +207,20 @@ const ProjectDetailPage: FC = () => {
       {/* Edit instructions panel */}
       {showEditInstructions && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="w-full max-w-lg bg-[#1a2535] border border-[#2e3d52] rounded-2xl shadow-2xl overflow-hidden">
-            <div className="px-6 py-4 border-b border-[#2e3d52] flex items-center justify-between">
-              <h2 className="text-[#e2ecf5] font-semibold text-sm">
+          <div className="w-full max-w-lg bg-surface-raised border border-border rounded-2xl shadow-2xl overflow-hidden">
+            <div className="px-6 py-4 border-b border-border flex items-center justify-between">
+              <h2 className="text-primary font-semibold text-sm">
                 Project instructions
               </h2>
               <button
                 onClick={() => setShowEditInstructions(false)}
-                className="text-[#4e677e] hover:text-[#92adc4] transition-colors"
+                className="text-muted hover:text-body transition-colors"
               >
                 <FiX size={16} />
               </button>
             </div>
             <div className="px-6 py-5 space-y-4">
-              <p className="text-[#627a8e] text-xs">
+              <p className="text-secondary text-xs">
                 These instructions are automatically added to every conversation
                 in this project as a system prompt.
               </p>
@@ -230,18 +230,18 @@ const ProjectDetailPage: FC = () => {
                 onChange={(e) => setEditInstructions(e.target.value)}
                 placeholder="e.g. Always respond in formal English. Focus on conciseness."
                 rows={6}
-                className="w-full px-4 py-3 rounded-xl bg-[#141826] border border-[#2e3d52] text-[#e2ecf5] placeholder-[#4e677e] text-sm outline-none focus:border-[#00C4A1]/50 transition-colors resize-none"
+                className="w-full px-4 py-3 rounded-xl bg-surface-dim border border-border text-primary placeholder-muted text-sm outline-none focus:border-accent/50 transition-colors resize-none"
               />
               <div className="flex gap-3">
                 <button
                   onClick={() => setShowEditInstructions(false)}
-                  className="flex-1 px-4 py-2.5 rounded-xl border border-[#2e3d52] text-[#92adc4] text-sm hover:bg-[#222b3d] transition-colors"
+                  className="flex-1 px-4 py-2.5 rounded-xl border border-border text-body text-sm hover:bg-surface-elevated transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleSaveInstructions}
-                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#00C4A1] text-[#141826] text-sm font-medium hover:bg-[#00E5C0] transition-colors"
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-accent text-surface-dim text-sm font-medium hover:bg-accent-hover transition-colors"
                 >
                   <FiCheck size={14} /> Save
                 </button>
@@ -254,22 +254,22 @@ const ProjectDetailPage: FC = () => {
       {/* Delete modal */}
       {showDeleteModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="w-full max-w-sm bg-[#1a2535] border border-[#2e3d52] rounded-2xl shadow-2xl overflow-hidden">
-            <div className="px-5 py-4 border-b border-[#2e3d52] flex items-center justify-between">
-              <h3 className="text-[#e2ecf5] font-semibold text-sm">
+          <div className="w-full max-w-sm bg-surface-raised border border-border rounded-2xl shadow-2xl overflow-hidden">
+            <div className="px-5 py-4 border-b border-border flex items-center justify-between">
+              <h3 className="text-primary font-semibold text-sm">
                 Delete project
               </h3>
               <button
                 onClick={() => setShowDeleteModal(false)}
-                className="text-[#4e677e] hover:text-[#92adc4] transition-colors"
+                className="text-muted hover:text-body transition-colors"
               >
                 <FiX size={16} />
               </button>
             </div>
             <div className="px-5 py-4">
-              <p className="text-[#92adc4] text-sm">
+              <p className="text-body text-sm">
                 Delete{' '}
-                <span className="text-[#d5e6f0] font-medium">
+                <span className="text-heading font-medium">
                   &ldquo;{project?.name}&rdquo;
                 </span>
                 ? Conversations will not be deleted.
@@ -277,7 +277,7 @@ const ProjectDetailPage: FC = () => {
               <div className="flex gap-2 mt-4">
                 <button
                   onClick={() => setShowDeleteModal(false)}
-                  className="flex-1 px-4 py-2 rounded-lg border border-[#2e3d52] text-[#92adc4] hover:bg-[#222b3d] text-sm transition-colors"
+                  className="flex-1 px-4 py-2 rounded-lg border border-border text-body hover:bg-surface-elevated text-sm transition-colors"
                 >
                   Cancel
                 </button>
@@ -320,14 +320,14 @@ const ProjectMenu: FC<{
   };
 
   return (
-    <div className="absolute right-0 top-full mt-1 w-72 bg-[#1a2535] border border-[#2e3d52] rounded-xl shadow-2xl z-30 overflow-hidden">
-      <div className="px-4 py-3 border-b border-[#2e3d52] flex items-center justify-between">
-        <span className="text-[#d5e6f0] text-xs font-medium">
+    <div className="absolute right-0 top-full mt-1 w-72 bg-surface-raised border border-border rounded-xl shadow-2xl z-30 overflow-hidden">
+      <div className="px-4 py-3 border-b border-border flex items-center justify-between">
+        <span className="text-heading text-xs font-medium">
           Edit project
         </span>
         <button
           onClick={onClose}
-          className="text-[#4e677e] hover:text-[#92adc4] transition-colors"
+          className="text-muted hover:text-body transition-colors"
         >
           <FiX size={14} />
         </button>
@@ -338,20 +338,20 @@ const ProjectMenu: FC<{
           value={editName}
           onChange={(e) => setEditName(e.target.value)}
           placeholder="Project name"
-          className="w-full px-3 py-2 text-xs bg-[#141826] border border-[#2e3d52] rounded-lg text-[#e2ecf5] placeholder-[#4e677e] outline-none focus:border-[#00C4A1]/50"
+          className="w-full px-3 py-2 text-xs bg-surface-dim border border-border rounded-lg text-primary placeholder-muted outline-none focus:border-accent/50"
         />
         <textarea
           value={editDescription}
           onChange={(e) => setEditDescription(e.target.value)}
           placeholder="Description (optional)"
           rows={2}
-          className="w-full px-3 py-2 text-xs bg-[#141826] border border-[#2e3d52] rounded-lg text-[#e2ecf5] placeholder-[#4e677e] outline-none focus:border-[#00C4A1]/50 resize-none"
+          className="w-full px-3 py-2 text-xs bg-surface-dim border border-border rounded-lg text-primary placeholder-muted outline-none focus:border-accent/50 resize-none"
         />
         <div className="flex gap-2">
           <button
             type="submit"
             disabled={!editName.trim() || isLoading}
-            className="flex-1 py-1.5 rounded-lg bg-[#00C4A1] text-[#141826] text-xs font-medium hover:bg-[#00E5C0] transition-colors disabled:opacity-50"
+            className="flex-1 py-1.5 rounded-lg bg-accent text-surface-dim text-xs font-medium hover:bg-accent-hover transition-colors disabled:opacity-50"
           >
             Save
           </button>

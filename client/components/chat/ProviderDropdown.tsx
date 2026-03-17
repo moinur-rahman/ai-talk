@@ -43,7 +43,7 @@ const ProviderDropdown: FC = () => {
   };
 
   if (isLoading) {
-    return <p className="text-xs text-[#4e677e]">Loading providers...</p>;
+    return <p className="text-xs text-muted">Loading providers...</p>;
   }
 
   const options = providers.map((provider) => ({

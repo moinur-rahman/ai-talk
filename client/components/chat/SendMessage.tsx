@@ -232,7 +232,7 @@ const SendMessage = () => {
       <FilePreviews filePreviews={filePreviews} onRemove={removeFile} />
       <form
         onSubmit={handleGenerateText}
-        className="flex items-end bg-[#222b3d] border border-[#2e3d52] rounded-2xl focus-within:border-[#3a4f68] transition-all duration-200 p-2"
+        className="flex items-end bg-surface-elevated border border-border rounded-2xl focus-within:border-accent/40 transition-all duration-200 p-2"
       >
         <input
           type="file"
@@ -243,7 +243,7 @@ const SendMessage = () => {
         />
         <button
           type="button"
-          className="p-2 text-[#4e677e] hover:text-[#00C4A1] hover:bg-[#00C4A1]/10 rounded-lg transition-all duration-150 flex-shrink-0"
+          className="p-2 text-muted hover:text-accent hover:bg-accent/10 rounded-lg transition-all duration-150 flex-shrink-0"
           onClick={handleFileClick}
           aria-label="Attach File"
         >
@@ -252,7 +252,7 @@ const SendMessage = () => {
 
         <textarea
           ref={textAreaRef}
-          className="flex-grow mx-2 py-2 px-1 bg-transparent text-[#e2ecf5] placeholder-[#4e677e] resize-none outline-none overflow-y-auto text-sm leading-relaxed"
+          className="flex-grow mx-2 py-2 px-1 bg-transparent text-primary placeholder-muted resize-none outline-none overflow-y-auto text-sm leading-relaxed"
           placeholder="Message..."
           value={prompt}
           onChange={(e) => {
@@ -275,7 +275,7 @@ const SendMessage = () => {
           className={`p-2 rounded-lg transition-all duration-150 flex-shrink-0 ${
             isListening
               ? 'text-red-400 hover:text-red-300 hover:bg-red-400/10 animate-pulse'
-              : 'text-[#4e677e] hover:text-[#00C4A1] hover:bg-[#00C4A1]/10'
+              : 'text-muted hover:text-accent hover:bg-accent/10'
           }`}
         >
           {isListening ? <FiMicOff size={18} /> : <FiMic size={18} />}
@@ -293,7 +293,7 @@ const SendMessage = () => {
         ) : (
           <button
             type="submit"
-            className="p-2 text-[#00C4A1] hover:text-[#00E5C0] hover:bg-[#00C4A1]/10 rounded-lg transition-all duration-150 flex-shrink-0 disabled:text-[#4e677e] disabled:hover:bg-transparent disabled:cursor-not-allowed"
+            className="p-2 text-accent hover:text-accent-hover hover:bg-accent/10 rounded-lg transition-all duration-150 flex-shrink-0 disabled:text-muted disabled:hover:bg-transparent disabled:cursor-not-allowed"
             disabled={!prompt.trim() && uploadedAttachments.length === 0}
             aria-label="Send Message"
           >
@@ -328,16 +328,16 @@ const FilePreviews = ({ filePreviews, onRemove }: FilePreviewsProps) => {
 
   return (
     <>
-      <div className="mb-2 p-3 bg-[#222b3d] rounded-xl border border-[#2e3d52]">
+      <div className="mb-2 p-3 bg-surface-elevated rounded-xl border border-border">
         <div className="flex items-center justify-between mb-2">
-          <h4 className="text-xs font-medium text-[#92adc4] tracking-wide">
+          <h4 className="text-xs font-medium text-body tracking-wide">
             Attachments ({filePreviews.length})
           </h4>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-2 max-h-[200px] overflow-y-auto p-0.5">
           {filePreviews.map(({ id, preview, type, name }) => (
             <div key={id} className="relative w-full pb-[100%] group">
-              <div className="absolute inset-0 bg-[#273040] rounded-lg overflow-hidden border border-[#2e3d52] transition-all duration-200 hover:border-[#3a4f68]">
+              <div className="absolute inset-0 bg-surface-overlay rounded-lg overflow-hidden border border-border transition-all duration-200 hover:border-border-strong">
                 {type === 'image' ? (
                   <div className="relative w-full h-full">
                     <button
@@ -351,25 +351,25 @@ const FilePreviews = ({ filePreviews, onRemove }: FilePreviewsProps) => {
                         className="rounded-lg object-cover"
                       />
                     </button>
-                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-[#141826]/90 to-transparent p-2 pt-6 pointer-events-none">
-                      <p className="text-xs text-[#92adc4] truncate w-full">
+                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-surface-dim/90 to-transparent p-2 pt-6 pointer-events-none">
+                      <p className="text-xs text-body truncate w-full">
                         {name}
                       </p>
                     </div>
                   </div>
                 ) : (
                   <div className="w-full h-full flex flex-col items-center justify-center p-3 text-center">
-                    <div className="bg-[#2e3d52] p-3 rounded-lg mb-2">
-                      <FiFileText size={28} className="text-[#00C4A1]" />
+                    <div className="bg-border p-3 rounded-lg mb-2">
+                      <FiFileText size={28} className="text-accent" />
                     </div>
-                    <p className="text-xs text-[#92adc4] truncate w-full font-medium">
+                    <p className="text-xs text-body truncate w-full font-medium">
                       {name}
                     </p>
                   </div>
                 )}
                 <button
                   onClick={() => onRemove(id)}
-                  className="absolute top-1.5 right-1.5 w-5 h-5 flex items-center justify-center bg-[#222b3d]/90 rounded-full text-[#92adc4] hover:text-red-400 text-sm transition-all duration-200 opacity-0 group-hover:opacity-100 z-10"
+                  className="absolute top-1.5 right-1.5 w-5 h-5 flex items-center justify-center bg-surface-elevated/90 rounded-full text-body hover:text-red-400 text-sm transition-all duration-200 opacity-0 group-hover:opacity-100 z-10"
                   aria-label="Remove file preview"
                 >
                   ×

@@ -6,7 +6,7 @@ import Header from '@/components/chat/Header';
 const Layout: FC<{ children: ReactNode }> = ({ children }) => {
   return (
     <ChatProvider>
-      <div className="flex h-screen bg-[#1b2030]">
+      <div className="flex h-screen bg-surface">
         <Sidebar />
         <div className="flex flex-col flex-1 overflow-hidden">
           <Header />

@@ -1,6 +1,5 @@
 'use client';
 import { FC, useEffect, useMemo } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
 import Select, { StylesConfig } from 'react-select';
 import {
   setSelectedModel,
@@ -8,7 +7,7 @@ import {
   setReasoningEnabled,
 } from '@/redux/slices/modelSlice';
 import { useGetProvidersQuery, useGetModelsQuery } from '@/services/modelApi';
-import { RootState } from '@/redux/store';
+import { useAppDispatch, useAppSelector } from '@/redux/hooks';
 import { useChat } from '@/contexts/ChatContext';
 
 interface ModelOption {
@@ -20,21 +19,21 @@ export const customStyles: StylesConfig<ModelOption> = {
   control: (styles) => ({
     ...styles,
     backgroundColor: 'transparent',
-    color: '#e2ecf5',
-    borderColor: '#2e3d52',
+    color: 'var(--color-primary)',
+    borderColor: 'var(--color-border)',
     borderRadius: '8px',
     boxShadow: 'none',
     minHeight: '34px',
     fontSize: '13px',
     '&:hover': {
-      borderColor: '#00C4A1',
+      borderColor: 'var(--color-accent)',
       backgroundColor: 'rgba(0, 196, 161, 0.04)',
     },
   }),
   menu: (styles) => ({
     ...styles,
-    backgroundColor: '#222b3d',
-    border: '1px solid #2e3d52',
+    backgroundColor: 'var(--color-surface-elevated)',
+    border: '1px solid var(--color-border)',
     borderRadius: '10px',
     boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
     overflow: 'hidden',
@@ -48,35 +47,35 @@ export const customStyles: StylesConfig<ModelOption> = {
     backgroundColor: isSelected
       ? 'rgba(0, 196, 161, 0.1)'
       : isFocused
-        ? '#273040'
+        ? 'var(--color-surface-overlay)'
         : 'transparent',
-    color: isSelected ? '#00C4A1' : '#d5e6f0',
+    color: isSelected ? 'var(--color-accent)' : 'var(--color-heading)',
     fontSize: '13px',
     padding: '8px 12px',
     borderRadius: '6px',
     cursor: 'pointer',
-    '&:hover': { backgroundColor: '#273040' },
+    '&:hover': { backgroundColor: 'var(--color-surface-overlay)' },
   }),
   placeholder: (styles) => ({
     ...styles,
-    color: '#4e677e',
+    color: 'var(--color-muted)',
     fontSize: '13px',
   }),
   singleValue: (styles) => ({
     ...styles,
-    color: '#e2ecf5',
+    color: 'var(--color-primary)',
     fontSize: '13px',
   }),
   input: (styles) => ({
     ...styles,
-    color: '#e2ecf5',
+    color: 'var(--color-primary)',
     fontSize: '13px',
   }),
   dropdownIndicator: (styles) => ({
     ...styles,
-    color: '#4e677e',
+    color: 'var(--color-muted)',
     padding: '4px 6px',
-    '&:hover': { color: '#92adc4' },
+    '&:hover': { color: 'var(--color-body)' },
   }),
   valueContainer: (styles) => ({
     ...styles,
@@ -98,12 +97,12 @@ function getStoredDefault(): { modelId: string; providerId: string } | null {
 const ModelDropdown: FC = () => {
   const { conversationId } = useChat();
 
-  const dispatch = useDispatch();
-  const selectedProvider = useSelector(
-    (state: RootState) => state.model.selectedProvider,
+  const dispatch = useAppDispatch();
+  const selectedProvider = useAppSelector(
+    (state) => state.model.selectedProvider,
   );
-  const selectedModel = useSelector(
-    (state: RootState) => state.model.selectedModel,
+  const selectedModel = useAppSelector(
+    (state) => state.model.selectedModel,
   );
 
   const defaultModel = useMemo(() => getStoredDefault(), []);
@@ -196,7 +195,7 @@ const ModelDropdown: FC = () => {
   };
 
   if (isLoading) {
-    return <p className="text-xs text-[#4e677e]">Loading models...</p>;
+    return <p className="text-xs text-muted">Loading models...</p>;
   }
 
   const options = models.map((model) => ({

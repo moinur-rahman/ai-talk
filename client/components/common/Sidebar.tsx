@@ -91,20 +91,20 @@ const Sidebar: FC = () => {
 
   return (
     <>
-      <nav className="w-60 h-screen flex flex-col bg-[#141826] border-r border-[#2e3d52]">
-        <div className="px-4 pt-5 pb-4 flex-shrink-0 border-b border-[#2e3d52]">
+      <nav className="w-60 h-screen flex flex-col bg-surface-dim border-r border-border">
+        <div className="px-4 pt-5 pb-4 flex-shrink-0 border-b border-border">
           <div className="flex items-center gap-2.5 mb-5">
-            <div className="w-7 h-7 rounded-lg bg-[#00C4A1] flex items-center justify-center flex-shrink-0">
-              <div className="w-3 h-3 rotate-45 rounded-sm border-2 border-[#141826]" />
+            <div className="w-7 h-7 rounded-lg bg-accent flex items-center justify-center flex-shrink-0">
+              <div className="w-3 h-3 rotate-45 rounded-sm border-2 border-surface-dim" />
             </div>
-            <span className="text-[#e2ecf5] font-semibold text-sm tracking-wide">
+            <span className="text-primary font-semibold text-sm tracking-wide">
               AI Talk
             </span>
           </div>
           <div className="flex flex-col gap-2">
             <Link
               href="/new"
-              className="flex items-center gap-2 w-full px-3 py-2 rounded-lg border border-[#2e3d52] text-[#92adc4] hover:text-[#00C4A1] hover:border-[#00C4A1]/30 hover:bg-[#00C4A1]/5 transition-all duration-200 text-sm"
+              className="flex items-center gap-2 w-full px-3 py-2 rounded-lg border border-border text-body hover:text-accent hover:border-accent/30 hover:bg-accent/5 transition-all duration-200 text-sm"
             >
               <FiPlus size={14} />
               <span>New conversation</span>
@@ -113,8 +113,8 @@ const Sidebar: FC = () => {
               href="/projects"
               className={`flex items-center gap-2 w-full px-3 py-2 rounded-lg border transition-all duration-200 text-sm ${
                 isOnProjects
-                  ? 'border-[#00C4A1]/30 bg-[#00C4A1]/5 text-[#00C4A1]'
-                  : 'border-[#2e3d52] text-[#92adc4] hover:text-[#00C4A1] hover:border-[#00C4A1]/30 hover:bg-[#00C4A1]/5'
+                  ? 'border-accent/30 bg-accent/5 text-accent'
+                  : 'border-border text-body hover:text-accent hover:border-accent/30 hover:bg-accent/5'
               }`}
             >
               <FiFolder size={14} />
@@ -123,7 +123,7 @@ const Sidebar: FC = () => {
             <button
               onClick={() => setSearchOpen(true)}
               title="Search (⌘K)"
-              className="flex items-center gap-2 w-full px-3 py-2 rounded-lg border border-[#2e3d52] text-[#92adc4] hover:text-[#00C4A1] hover:border-[#00C4A1]/30 hover:bg-[#00C4A1]/5 transition-all duration-200 text-sm"
+              className="flex items-center gap-2 w-full px-3 py-2 rounded-lg border border-border text-body hover:text-accent hover:border-accent/30 hover:bg-accent/5 transition-all duration-200 text-sm"
             >
               <FiSearch size={14} />
               <span>Search</span>
@@ -133,7 +133,7 @@ const Sidebar: FC = () => {
 
         <div className="flex-1 overflow-y-auto px-3 py-3">
           {conversations.length > 0 && (
-            <p className="text-[#4e677e] text-[10px] font-semibold uppercase tracking-widest px-2 py-1.5 mb-1">
+            <p className="text-muted text-[10px] font-semibold uppercase tracking-widest px-2 py-1.5 mb-1">
               Recent
             </p>
           )}
@@ -147,7 +147,7 @@ const Sidebar: FC = () => {
           ))}
           <div ref={sentinelRef} className="h-1" />
           {isFetchingNextPage && (
-            <p className="text-[#4e677e] text-[10px] text-center py-2">
+            <p className="text-muted text-[10px] text-center py-2">
               Loading...
             </p>
           )}
@@ -156,29 +156,29 @@ const Sidebar: FC = () => {
         {/* User menu */}
         <div
           ref={menuRef}
-          className="flex-shrink-0 px-3 py-3 border-t border-[#2e3d52] relative"
+          className="flex-shrink-0 px-3 py-3 border-t border-border relative"
         >
           <button
             onClick={() => setMenuOpen((o) => !o)}
-            className="flex items-center gap-2.5 w-full px-3 py-2 rounded-lg text-[#92adc4] hover:bg-[#1a2535] transition-all duration-200"
+            className="flex items-center gap-2.5 w-full px-3 py-2 rounded-lg text-body hover:bg-surface-raised transition-all duration-200"
           >
-            <div className="w-7 h-7 rounded-full bg-[#00C4A1]/20 border border-[#00C4A1]/30 flex items-center justify-center flex-shrink-0">
-              <span className="text-[#00C4A1] text-[11px] font-semibold">
+            <div className="w-7 h-7 rounded-full bg-accent/20 border border-accent/30 flex items-center justify-center flex-shrink-0">
+              <span className="text-accent text-[11px] font-semibold">
                 {user?.name.charAt(0).toUpperCase() ?? '?'}
               </span>
             </div>
             <div className="flex-1 min-w-0 text-left">
               <div className="flex items-center gap-1.5">
-                <p className="text-[#d5e6f0] text-xs font-medium truncate">
+                <p className="text-heading text-xs font-medium truncate">
                   {user?.name ?? ''}
                 </p>
                 {user?.role === 'admin' && (
-                  <span className="flex-shrink-0 px-1.5 py-0.5 rounded bg-[#00C4A1]/15 border border-[#00C4A1]/25 text-[#00C4A1] text-[9px] font-semibold uppercase tracking-wide">
+                  <span className="flex-shrink-0 px-1.5 py-0.5 rounded bg-accent/15 border border-accent/25 text-accent text-[9px] font-semibold uppercase tracking-wide">
                     Admin
                   </span>
                 )}
               </div>
-              <p className="text-[#4e677e] text-[10px] truncate">
+              <p className="text-muted text-[10px] truncate">
                 {user?.email ?? ''}
               </p>
             </div>
@@ -189,12 +189,12 @@ const Sidebar: FC = () => {
           </button>
 
           {menuOpen && (
-            <div className="absolute bottom-full left-3 right-3 mb-1 bg-[#1a2535] border border-[#2e3d52] rounded-xl shadow-xl overflow-hidden">
-              <div className="px-4 py-3 border-b border-[#2e3d52]">
-                <p className="text-[#d5e6f0] text-xs font-medium truncate">
+            <div className="absolute bottom-full left-3 right-3 mb-1 bg-surface-raised border border-border rounded-xl shadow-xl overflow-hidden">
+              <div className="px-4 py-3 border-b border-border">
+                <p className="text-heading text-xs font-medium truncate">
                   {user?.name}
                 </p>
-                <p className="text-[#4e677e] text-[10px] truncate">
+                <p className="text-muted text-[10px] truncate">
                   {user?.email}
                 </p>
               </div>
@@ -203,7 +203,7 @@ const Sidebar: FC = () => {
                   <Link
                     href="/admin"
                     onClick={() => setMenuOpen(false)}
-                    className="flex items-center gap-2.5 w-full px-3 py-2 rounded-lg text-[#92adc4] hover:text-[#00C4A1] hover:bg-[#00C4A1]/5 transition-all duration-200 text-sm"
+                    className="flex items-center gap-2.5 w-full px-3 py-2 rounded-lg text-body hover:text-accent hover:bg-accent/5 transition-all duration-200 text-sm"
                   >
                     <FiShield size={14} />
                     <span>Admin Panel</span>
@@ -212,7 +212,7 @@ const Sidebar: FC = () => {
                 <Link
                   href="/settings"
                   onClick={() => setMenuOpen(false)}
-                  className="flex items-center gap-2.5 w-full px-3 py-2 rounded-lg text-[#92adc4] hover:text-[#00C4A1] hover:bg-[#00C4A1]/5 transition-all duration-200 text-sm"
+                  className="flex items-center gap-2.5 w-full px-3 py-2 rounded-lg text-body hover:text-accent hover:bg-accent/5 transition-all duration-200 text-sm"
                 >
                   <FiSettings size={14} />
                   <span>Settings</span>
@@ -220,7 +220,7 @@ const Sidebar: FC = () => {
                 <button
                   onClick={handleLogout}
                   disabled={loggingOut}
-                  className="flex items-center gap-2.5 w-full px-3 py-2 rounded-lg text-[#92adc4] hover:text-red-400 hover:bg-red-400/5 transition-all duration-200 text-sm disabled:opacity-50"
+                  className="flex items-center gap-2.5 w-full px-3 py-2 rounded-lg text-body hover:text-red-400 hover:bg-red-400/5 transition-all duration-200 text-sm disabled:opacity-50"
                 >
                   <FiLogOut size={14} />
                   <span>{loggingOut ? 'Logging out...' : 'Log out'}</span>
@@ -258,13 +258,13 @@ const SidebarItem: FC<{ name: string; id: string; isSelected?: boolean }> = ({
           href={`/chat/${id}`}
           className={`flex items-center gap-2.5 w-full px-2.5 py-2 rounded-lg transition-all duration-150 text-sm border-l-2 pr-8 ${
             isSelected
-              ? 'bg-[#1a2d42] text-[#00C4A1] border-[#00C4A1]'
-              : 'text-[#92adc4] hover:bg-[#222b3d] hover:text-[#d5e6f0] border-transparent'
+              ? 'bg-selected text-accent border-accent'
+              : 'text-body hover:bg-surface-elevated hover:text-heading border-transparent'
           }`}
         >
           <FiMessageSquare
             size={13}
-            className={`flex-shrink-0 ${isSelected ? 'text-[#00C4A1]' : 'text-[#4e677e]'}`}
+            className={`flex-shrink-0 ${isSelected ? 'text-accent' : 'text-muted'}`}
           />
           <span className="truncate">{name}</span>
         </Link>
@@ -274,7 +274,7 @@ const SidebarItem: FC<{ name: string; id: string; isSelected?: boolean }> = ({
             e.preventDefault();
             setShowModal(true);
           }}
-          className="absolute right-1.5 top-1/2 -translate-y-1/2 p-1 rounded text-[#4e677e] hover:text-red-400 hover:bg-red-400/10 transition-colors opacity-0 group-hover:opacity-100"
+          className="absolute right-1.5 top-1/2 -translate-y-1/2 p-1 rounded text-muted hover:text-red-400 hover:bg-red-400/10 transition-colors opacity-0 group-hover:opacity-100"
         >
           <FiTrash2 size={14} />
         </button>
@@ -282,22 +282,22 @@ const SidebarItem: FC<{ name: string; id: string; isSelected?: boolean }> = ({
 
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="w-full max-w-sm bg-[#1a2535] border border-[#2e3d52] rounded-2xl shadow-2xl overflow-hidden">
-            <div className="px-5 py-4 border-b border-[#2e3d52] flex items-center justify-between">
-              <h3 className="text-[#e2ecf5] font-semibold text-sm">
+          <div className="w-full max-w-sm bg-surface-raised border border-border rounded-2xl shadow-2xl overflow-hidden">
+            <div className="px-5 py-4 border-b border-border flex items-center justify-between">
+              <h3 className="text-primary font-semibold text-sm">
                 Delete conversation
               </h3>
               <button
                 onClick={() => setShowModal(false)}
-                className="text-[#4e677e] hover:text-[#92adc4] transition-colors"
+                className="text-muted hover:text-body transition-colors"
               >
                 <FiX size={16} />
               </button>
             </div>
             <div className="px-5 py-4">
-              <p className="text-[#92adc4] text-sm">
+              <p className="text-body text-sm">
                 Are you sure you want to delete{' '}
-                <span className="text-[#d5e6f0] font-medium">
+                <span className="text-heading font-medium">
                   &ldquo;{name}&rdquo;
                 </span>
                 ? This cannot be undone.
@@ -305,7 +305,7 @@ const SidebarItem: FC<{ name: string; id: string; isSelected?: boolean }> = ({
               <div className="flex gap-2 mt-4">
                 <button
                   onClick={() => setShowModal(false)}
-                  className="flex-1 px-4 py-2 rounded-lg border border-[#2e3d52] text-[#92adc4] hover:bg-[#222b3d] text-sm transition-colors"
+                  className="flex-1 px-4 py-2 rounded-lg border border-border text-body hover:bg-surface-elevated text-sm transition-colors"
                 >
                   Cancel
                 </button>

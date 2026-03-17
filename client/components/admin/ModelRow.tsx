@@ -41,12 +41,12 @@ const ModelRow = ({ model }: { model: AdminModel }) => {
 
   if (editing) {
     return (
-      <div className="px-4 py-3 bg-[#1a2535] space-y-2">
+      <div className="px-4 py-3 bg-surface-raised space-y-2">
         <div className="flex gap-2">
           <input
             value={form.name}
             onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-            className="flex-1 bg-[#141826] border border-[#2e3d52] rounded-lg px-2.5 py-1.5 text-[#d5e6f0] text-xs focus:outline-none focus:border-[#00C4A1]/50"
+            className="flex-1 bg-surface-dim border border-border rounded-lg px-2.5 py-1.5 text-heading text-xs focus:outline-none focus:border-accent/50"
             placeholder="Name"
           />
           <input
@@ -54,7 +54,7 @@ const ModelRow = ({ model }: { model: AdminModel }) => {
             onChange={(e) =>
               setForm((f) => ({ ...f, description: e.target.value }))
             }
-            className="flex-1 bg-[#141826] border border-[#2e3d52] rounded-lg px-2.5 py-1.5 text-[#d5e6f0] text-xs focus:outline-none focus:border-[#00C4A1]/50"
+            className="flex-1 bg-surface-dim border border-border rounded-lg px-2.5 py-1.5 text-heading text-xs focus:outline-none focus:border-accent/50"
             placeholder="Description"
           />
         </div>
@@ -66,21 +66,21 @@ const ModelRow = ({ model }: { model: AdminModel }) => {
               onChange={(e) =>
                 setForm((f) => ({ ...f, hasReasoning: e.target.checked }))
               }
-              className="w-3.5 h-3.5 accent-[#00C4A1]"
+              className="w-3.5 h-3.5 accent-accent"
             />
-            <span className="text-[#92adc4] text-xs">Reasoning</span>
+            <span className="text-body text-xs">Reasoning</span>
           </label>
           <div className="flex items-center gap-1.5">
             <button
               onClick={handleCancel}
-              className="p-1.5 rounded-lg text-[#4e677e] hover:text-[#92adc4] hover:bg-[#222b3d] transition-colors"
+              className="p-1.5 rounded-lg text-muted hover:text-body hover:bg-surface-elevated transition-colors"
             >
               <FiX size={13} />
             </button>
             <button
               onClick={handleSave}
               disabled={isLoading}
-              className="p-1.5 rounded-lg text-[#00C4A1] hover:bg-[#00C4A1]/10 transition-colors disabled:opacity-50"
+              className="p-1.5 rounded-lg text-accent hover:bg-accent/10 transition-colors disabled:opacity-50"
             >
               <FiCheck size={13} />
             </button>
@@ -95,11 +95,11 @@ const ModelRow = ({ model }: { model: AdminModel }) => {
       className={`flex items-center gap-3 px-4 py-3 group ${model.isDeprecated ? 'opacity-50' : ''}`}
     >
       <div className="flex-1 min-w-0">
-        <p className="text-[#d5e6f0] text-xs font-medium truncate">
+        <p className="text-heading text-xs font-medium truncate">
           {model.name}
         </p>
         {model.description && (
-          <p className="text-[#4e677e] text-[11px] truncate mt-0.5">
+          <p className="text-muted text-[11px] truncate mt-0.5">
             {model.description}
           </p>
         )}
@@ -120,7 +120,7 @@ const ModelRow = ({ model }: { model: AdminModel }) => {
           disabled={toggling}
           title={model.isEnabled ? 'Disable model' : 'Enable model'}
           className={`relative inline-flex h-4 w-7 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed ${
-            model.isEnabled ? 'bg-[#00C4A1]' : 'bg-[#2e3d52]'
+            model.isEnabled ? 'bg-accent' : 'bg-border'
           }`}
         >
           <span
@@ -131,7 +131,7 @@ const ModelRow = ({ model }: { model: AdminModel }) => {
         </button>
         <button
           onClick={() => setEditing(true)}
-          className="p-1.5 rounded-lg text-[#4e677e] hover:text-[#92adc4] hover:bg-[#222b3d] opacity-0 group-hover:opacity-100 transition-all"
+          className="p-1.5 rounded-lg text-muted hover:text-body hover:bg-surface-elevated opacity-0 group-hover:opacity-100 transition-all"
         >
           <FiEdit2 size={12} />
         </button>

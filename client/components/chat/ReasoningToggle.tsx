@@ -1,17 +1,14 @@
 'use client';
 import { FC } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
 import { FiCpu } from 'react-icons/fi';
-import { RootState } from '@/redux/store';
+import { useAppDispatch, useAppSelector } from '@/redux/hooks';
 import { setReasoningEnabled } from '@/redux/slices/modelSlice';
 
 const ReasoningToggle: FC = () => {
-  const dispatch = useDispatch();
-  const selectedModel = useSelector(
-    (state: RootState) => state.model.selectedModel,
-  );
-  const reasoningEnabled = useSelector(
-    (state: RootState) => state.model.reasoningEnabled,
+  const dispatch = useAppDispatch();
+  const selectedModel = useAppSelector((state) => state.model.selectedModel);
+  const reasoningEnabled = useAppSelector(
+    (state) => state.model.reasoningEnabled,
   );
 
   if (!selectedModel || !selectedModel.hasReasoning) {
@@ -23,20 +20,20 @@ const ReasoningToggle: FC = () => {
   };
 
   return (
-    <div className="flex items-center gap-2 px-3 py-1.5 bg-[#222b3d] rounded-lg border border-[#2e3d52]">
+    <div className="flex items-center gap-2 px-3 py-1.5 bg-surface-elevated rounded-lg border border-border">
       <FiCpu
         size={14}
         className={`${
-          reasoningEnabled ? 'text-amber-400' : 'text-[#4e677e]'
+          reasoningEnabled ? 'text-amber-400' : 'text-muted'
         } transition-colors`}
       />
-      <span className="text-xs text-[#92adc4] font-medium tracking-wide">
+      <span className="text-xs text-body font-medium tracking-wide">
         Reasoning
       </span>
       <button
         onClick={handleToggle}
-        className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none focus:ring-1 focus:ring-amber-500/50 focus:ring-offset-1 focus:ring-offset-[#222b3d] ${
-          reasoningEnabled ? 'bg-amber-500' : 'bg-[#2e3d52]'
+        className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none focus:ring-1 focus:ring-amber-500/50 focus:ring-offset-1 focus:ring-offset-surface-elevated ${
+          reasoningEnabled ? 'bg-amber-500' : 'bg-border'
         }`}
         role="switch"
         aria-checked={reasoningEnabled}

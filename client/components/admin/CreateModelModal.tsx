@@ -38,12 +38,12 @@ const CreateModelModal = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="w-full max-w-md bg-[#1a2535] border border-[#2e3d52] rounded-2xl shadow-2xl overflow-hidden">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-[#2e3d52]">
-          <h3 className="text-[#e2ecf5] font-semibold text-sm">Add Model</h3>
+      <div className="w-full max-w-md bg-surface-raised border border-border rounded-2xl shadow-2xl overflow-hidden">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-border">
+          <h3 className="text-primary font-semibold text-sm">Add Model</h3>
           <button
             onClick={onClose}
-            className="text-[#4e677e] hover:text-[#92adc4] transition-colors"
+            className="text-muted hover:text-body transition-colors"
           >
             <FiX size={16} />
           </button>
@@ -51,7 +51,7 @@ const CreateModelModal = ({
 
         <form onSubmit={handleSubmit} className="px-5 py-4 space-y-4">
           <div>
-            <label className="block text-[#627a8e] text-xs mb-1.5">
+            <label className="block text-secondary text-xs mb-1.5">
               Provider
             </label>
             <select
@@ -59,7 +59,7 @@ const CreateModelModal = ({
               onChange={(e) =>
                 setForm((f) => ({ ...f, providerId: e.target.value }))
               }
-              className="w-full bg-[#141826] border border-[#2e3d52] rounded-lg px-3 py-2 text-[#d5e6f0] text-sm focus:outline-none focus:border-[#00C4A1]/50 capitalize"
+              className="w-full bg-surface-dim border border-border rounded-lg px-3 py-2 text-heading text-sm focus:outline-none focus:border-accent/50 capitalize"
             >
               {providers.map((p) => (
                 <option key={p.id} value={p.id} className="capitalize">
@@ -70,7 +70,7 @@ const CreateModelModal = ({
           </div>
 
           <div>
-            <label className="block text-[#627a8e] text-xs mb-1.5">
+            <label className="block text-secondary text-xs mb-1.5">
               Model Name
             </label>
             <input
@@ -79,12 +79,12 @@ const CreateModelModal = ({
               onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
               placeholder="e.g. gpt-4o"
               required
-              className="w-full bg-[#141826] border border-[#2e3d52] rounded-lg px-3 py-2 text-[#d5e6f0] text-sm placeholder-[#3a5068] focus:outline-none focus:border-[#00C4A1]/50"
+              className="w-full bg-surface-dim border border-border rounded-lg px-3 py-2 text-heading text-sm placeholder-[#3a5068] focus:outline-none focus:border-accent/50"
             />
           </div>
 
           <div>
-            <label className="block text-[#627a8e] text-xs mb-1.5">
+            <label className="block text-secondary text-xs mb-1.5">
               Description
             </label>
             <input
@@ -94,7 +94,7 @@ const CreateModelModal = ({
                 setForm((f) => ({ ...f, description: e.target.value }))
               }
               placeholder="Optional description"
-              className="w-full bg-[#141826] border border-[#2e3d52] rounded-lg px-3 py-2 text-[#d5e6f0] text-sm placeholder-[#3a5068] focus:outline-none focus:border-[#00C4A1]/50"
+              className="w-full bg-surface-dim border border-border rounded-lg px-3 py-2 text-heading text-sm placeholder-[#3a5068] focus:outline-none focus:border-accent/50"
             />
           </div>
 
@@ -105,9 +105,9 @@ const CreateModelModal = ({
               onChange={(e) =>
                 setForm((f) => ({ ...f, hasReasoning: e.target.checked }))
               }
-              className="w-4 h-4 rounded accent-[#00C4A1]"
+              className="w-4 h-4 rounded accent-accent"
             />
-            <span className="text-[#92adc4] text-sm">
+            <span className="text-body text-sm">
               Has reasoning capability
             </span>
           </label>
@@ -119,9 +119,9 @@ const CreateModelModal = ({
               onChange={(e) =>
                 setForm((f) => ({ ...f, isEnabled: e.target.checked }))
               }
-              className="w-4 h-4 rounded accent-[#00C4A1]"
+              className="w-4 h-4 rounded accent-accent"
             />
-            <span className="text-[#92adc4] text-sm">Enable for users</span>
+            <span className="text-body text-sm">Enable for users</span>
           </label>
 
           {error && <p className="text-red-400 text-xs">{error}</p>}
@@ -130,14 +130,14 @@ const CreateModelModal = ({
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2 rounded-lg border border-[#2e3d52] text-[#92adc4] hover:bg-[#222b3d] text-sm transition-colors"
+              className="flex-1 px-4 py-2 rounded-lg border border-border text-body hover:bg-surface-elevated text-sm transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isLoading}
-              className="flex-1 px-4 py-2 rounded-lg bg-[#00C4A1] hover:bg-[#00b090] text-[#141826] font-medium text-sm transition-colors disabled:opacity-60"
+              className="flex-1 px-4 py-2 rounded-lg bg-accent hover:bg-[#00b090] text-surface-dim font-medium text-sm transition-colors disabled:opacity-60"
             >
               {isLoading ? 'Creating...' : 'Create'}
             </button>

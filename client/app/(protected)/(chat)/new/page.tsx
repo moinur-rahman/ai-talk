@@ -21,15 +21,15 @@ const NewChat = () => {
         <div className="relative z-10 text-center max-w-md">
           {/* Logo mark */}
           <div className="flex items-center justify-center mb-8">
-            <div className="w-14 h-14 rounded-2xl bg-[#222b3d] border border-[#2e3d52] flex items-center justify-center">
-              <div className="w-5 h-5 rotate-45 rounded-sm border-2 border-[#00C4A1]" />
+            <div className="w-14 h-14 rounded-2xl bg-surface-elevated border border-border flex items-center justify-center">
+              <div className="w-5 h-5 rotate-45 rounded-sm border-2 border-accent" />
             </div>
           </div>
 
-          <h1 className="text-3xl font-bold text-[#e2ecf5] mb-3 tracking-tight">
+          <h1 className="text-3xl font-bold text-primary mb-3 tracking-tight">
             Start a conversation
           </h1>
-          <p className="text-[#92adc4] text-sm leading-relaxed">
+          <p className="text-body text-sm leading-relaxed">
             Choose a provider and model above, then type your message below.
           </p>
 
@@ -37,7 +37,7 @@ const NewChat = () => {
             {hints.map((hint) => (
               <div
                 key={hint}
-                className="px-4 py-3 rounded-xl bg-[#222b3d] border border-[#2e3d52] text-[#627a8e] text-xs text-left"
+                className="px-4 py-3 rounded-xl bg-surface-elevated border border-border text-secondary text-xs text-left"
               >
                 {hint}
               </div>

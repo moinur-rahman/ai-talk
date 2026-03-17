@@ -48,23 +48,23 @@ const SearchModal: FC<SearchModalProps> = ({ onClose }) => {
       onClick={onClose}
     >
       <div
-        className="w-[560px] bg-[#1b2030] border border-[#2e3d52] rounded-xl shadow-2xl overflow-hidden"
+        className="w-[560px] bg-surface border border-border rounded-xl shadow-2xl overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center gap-3 px-4 py-3.5 border-b border-[#2e3d52]">
-          <FiSearch size={15} className="text-[#4e677e] flex-shrink-0" />
+        <div className="flex items-center gap-3 px-4 py-3.5 border-b border-border">
+          <FiSearch size={15} className="text-muted flex-shrink-0" />
           <input
             ref={inputRef}
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search conversations..."
-            className="flex-1 bg-transparent text-[#e2ecf5] text-sm outline-none placeholder:text-[#4e677e]"
+            className="flex-1 bg-transparent text-primary text-sm outline-none placeholder:text-muted"
           />
           {query && (
             <button
               onClick={() => setQuery('')}
-              className="text-[#4e677e] hover:text-[#92adc4] transition-colors"
+              className="text-muted hover:text-body transition-colors"
             >
               <FiX size={14} />
             </button>
@@ -73,17 +73,17 @@ const SearchModal: FC<SearchModalProps> = ({ onClose }) => {
 
         <div className="max-h-[420px] overflow-y-auto">
           {!debouncedQuery.trim() && (
-            <p className="text-[#4e677e] text-xs text-center py-8">
+            <p className="text-muted text-xs text-center py-8">
               Type to search through conversations
             </p>
           )}
           {debouncedQuery.trim() && isFetching && (
-            <p className="text-[#4e677e] text-xs text-center py-8">
+            <p className="text-muted text-xs text-center py-8">
               Searching...
             </p>
           )}
           {debouncedQuery.trim() && !isFetching && results.length === 0 && (
-            <p className="text-[#4e677e] text-xs text-center py-8">
+            <p className="text-muted text-xs text-center py-8">
               No conversations found
             </p>
           )}
@@ -109,18 +109,18 @@ const SearchResult: FC<{
 }> = ({ result, query, onSelect }) => (
   <button
     onClick={() => onSelect(result.id)}
-    className="w-full px-4 py-3 flex items-start gap-3 hover:bg-[#222b3d] transition-colors text-left border-b border-[#2e3d52]/40 last:border-0"
+    className="w-full px-4 py-3 flex items-start gap-3 hover:bg-surface-elevated transition-colors text-left border-b border-border/40 last:border-0"
   >
     <FiMessageSquare
       size={13}
-      className="text-[#4e677e] flex-shrink-0 mt-0.5"
+      className="text-muted flex-shrink-0 mt-0.5"
     />
     <div className="min-w-0">
-      <p className="text-[#d5e6f0] text-sm truncate">
+      <p className="text-heading text-sm truncate">
         <HighlightedText text={result.title ?? 'Untitled'} query={query} />
       </p>
       {result.snippet && (
-        <p className="text-[#627a8e] text-xs mt-0.5 line-clamp-2 leading-relaxed">
+        <p className="text-secondary text-xs mt-0.5 line-clamp-2 leading-relaxed">
           <HighlightedText text={result.snippet} query={query} />
         </p>
       )}
@@ -143,7 +143,7 @@ const HighlightedText: FC<{ text: string; query: string }> = ({
         part.toLowerCase() === query.toLowerCase() ? (
           <mark
             key={i}
-            className="bg-[#00C4A1]/20 text-[#00C4A1] not-italic rounded-sm px-0.5"
+            className="bg-accent/20 text-accent not-italic rounded-sm px-0.5"
           >
             {part}
           </mark>
