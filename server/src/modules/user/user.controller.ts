@@ -1,15 +1,15 @@
 import {
   Controller,
   Get,
+  Patch,
   Post,
   Body,
   HttpCode,
   HttpStatus,
-  UsePipes,
-  ValidationPipe,
 } from '@nestjs/common';
 import { UserService } from './user.service.js';
 import { CreateUserDto } from './dto/create-user.dto.js';
+import { UpdateUserDto } from './dto/update-user.dto.js';
 import { Public } from '../../common/decorators/public.decorator.js';
 import {
   CurrentUser,
@@ -21,14 +21,18 @@ export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @Get('me')
-  getMe(@CurrentUser() user: SessionUser): SessionUser {
-    return user;
+  getMe(@CurrentUser() user: SessionUser) {
+    return this.userService.getMe(user.id);
+  }
+
+  @Patch('me')
+  updateMe(@CurrentUser() user: SessionUser, @Body() dto: UpdateUserDto) {
+    return this.userService.updateMe(user.id, dto);
   }
 
   @Public()
   @Post('create')
   @HttpCode(HttpStatus.CREATED)
-  @UsePipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }))
   async createUser(@Body() createUserDto: CreateUserDto) {
     const user = await this.userService.createUser(createUserDto);
     return {

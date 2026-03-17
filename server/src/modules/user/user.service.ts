@@ -2,6 +2,7 @@ import { Injectable, ConflictException } from '@nestjs/common';
 import * as bcrypt from 'bcryptjs';
 import { PrismaService } from '../../providers/prisma/prisma.service.js';
 import { CreateUserDto } from './dto/create-user.dto.js';
+import { UpdateUserDto } from './dto/update-user.dto.js';
 import { Prisma } from '../../../generated/prisma/client.js';
 
 @Injectable()
@@ -36,5 +37,51 @@ export class UserService {
       }
       throw error;
     }
+  }
+
+  async updateMe(userId: string, dto: UpdateUserDto) {
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: dto,
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        displayName: true,
+        workDescription: true,
+        customInstructions: true,
+        role: true,
+      },
+    });
+  }
+
+  async getMe(userId: string) {
+    return this.prisma.user.findUniqueOrThrow({
+      where: { id: userId },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        displayName: true,
+        workDescription: true,
+        customInstructions: true,
+        role: true,
+      },
+    });
+  }
+
+  async getUserPreferences(userId: string): Promise<{
+    displayName: string | null;
+    workDescription: string | null;
+    customInstructions: string | null;
+  }> {
+    return this.prisma.user.findUniqueOrThrow({
+      where: { id: userId },
+      select: {
+        displayName: true,
+        workDescription: true,
+        customInstructions: true,
+      },
+    });
   }
 }

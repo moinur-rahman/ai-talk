@@ -10,6 +10,10 @@ import {
 import type { Request, Response } from 'express';
 import { StreamChatDto } from './dto/stream-chat.dto.js';
 import { ChatStreamService } from './chat-stream.service.js';
+import {
+  CurrentUser,
+  type SessionUser,
+} from '../../../common/decorators/current-user.decorator.js';
 
 @Controller('chats')
 export class ChatStreamController {
@@ -21,6 +25,7 @@ export class ChatStreamController {
   async streamChat(
     @Param('conversationId') conversationId: string,
     @Body() dto: StreamChatDto,
+    @CurrentUser() user: SessionUser,
     @Req() req: Request,
     @Res() res: Response,
   ) {
@@ -44,6 +49,7 @@ export class ChatStreamController {
     try {
       await this.chatStreamService.stream(
         conversationId,
+        user.id,
         dto,
         sendEvent,
         (resolved) => {

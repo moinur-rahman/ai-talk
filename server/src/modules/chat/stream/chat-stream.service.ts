@@ -5,6 +5,7 @@ import { MessageService } from '../message/message.service.js';
 import { FileService } from '../../file/file.service.js';
 import { ConversationService } from '../conversation/conversation.service.js';
 import { ProjectService } from '../../project/project.service.js';
+import { UserService } from '../../user/user.service.js';
 import { LLMMessage, TokenType } from '../../llm/types/llm.types.js';
 import { FileMetadataResponseDto } from '../../file/dto/file-metadata-response.dto.js';
 import { SenderType } from '../message/dto/save-message.dto.js';
@@ -22,6 +23,7 @@ export class ChatStreamService {
     private readonly fileService: FileService,
     private readonly conversationService: ConversationService,
     private readonly projectService: ProjectService,
+    private readonly userService: UserService,
     private readonly llmService: LlmService,
   ) {}
 
@@ -31,6 +33,7 @@ export class ChatStreamService {
 
   async stream(
     conversationId: string,
+    userId: string,
     dto: StreamChatDto,
     sendEvent: SendEvent,
     onProviderResolved: (providerName: string) => void,
@@ -45,13 +48,17 @@ export class ChatStreamService {
 
     onProviderResolved(providerName);
 
-    const projectId =
-      await this.conversationService.getProjectId(conversationId);
-    const rawInstructions =
+    const [projectId, userPrefs] = await Promise.all([
+      this.conversationService.getProjectId(conversationId),
+      this.userService.getUserPreferences(userId),
+    ]);
+
+    const projectInstructions =
       projectId != null
         ? await this.projectService.getProjectInstructions(String(projectId))
         : null;
-    const systemPrompt = rawInstructions ?? undefined;
+
+    const systemPrompt = this.buildSystemPrompt(userPrefs, projectInstructions);
 
     const { messages: chatHistory } =
       await this.messageService.getMessagesByConversationId(conversationId);
@@ -152,6 +159,38 @@ export class ChatStreamService {
     );
 
     await Promise.all([streamPromise, titlePromise]);
+  }
+
+  private buildSystemPrompt(
+    userPrefs: {
+      displayName: string | null;
+      workDescription: string | null;
+      customInstructions: string | null;
+    },
+    projectInstructions: string | null,
+  ): string | undefined {
+    const parts: string[] = [];
+
+    const profileParts: string[] = [];
+    if (userPrefs.displayName) {
+      profileParts.push(`Name: ${userPrefs.displayName}`);
+    }
+    if (userPrefs.workDescription) {
+      profileParts.push(`Work: ${userPrefs.workDescription}`);
+    }
+    if (profileParts.length > 0) {
+      parts.push(`[User profile]\n${profileParts.join('\n')}`);
+    }
+
+    if (userPrefs.customInstructions) {
+      parts.push(`[Personal preferences]\n${userPrefs.customInstructions}`);
+    }
+
+    if (projectInstructions) {
+      parts.push(`[Project instructions]\n${projectInstructions}`);
+    }
+
+    return parts.length > 0 ? parts.join('\n\n') : undefined;
   }
 
   private async generateAndSendTitle(

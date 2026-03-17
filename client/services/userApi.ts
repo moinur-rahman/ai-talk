@@ -3,8 +3,18 @@ import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 export interface User {
   id: string;
   name: string;
+  displayName: string | null;
+  workDescription: string | null;
+  customInstructions: string | null;
   email: string;
   role: 'admin' | 'user';
+}
+
+export interface UpdateUserDto {
+  name?: string;
+  displayName?: string;
+  workDescription?: string;
+  customInstructions?: string;
 }
 
 export const userApi = createApi({
@@ -17,7 +27,10 @@ export const userApi = createApi({
     getMe: builder.query<User, void>({
       query: () => '/users/me',
     }),
+    updateMe: builder.mutation<User, UpdateUserDto>({
+      query: (body) => ({ url: '/users/me', method: 'PATCH', body }),
+    }),
   }),
 });
 
-export const { useGetMeQuery } = userApi;
+export const { useGetMeQuery, useUpdateMeMutation } = userApi;
