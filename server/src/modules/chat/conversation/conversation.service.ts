@@ -36,7 +36,11 @@ export class ConversationService {
       : null;
 
     return {
-      conversations: items.map(({ id, title }) => ({ id, title })),
+      conversations: items.map(({ id, title, updatedAt }) => ({
+        id,
+        title,
+        updatedAt,
+      })),
       hasNextPage,
       nextCursor,
     };

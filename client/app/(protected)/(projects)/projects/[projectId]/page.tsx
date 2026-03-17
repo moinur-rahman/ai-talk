@@ -6,8 +6,6 @@ import Link from 'next/link';
 import {
   FiArrowLeft,
   FiPlus,
-  FiMessageSquare,
-  FiFileText,
   FiEdit2,
   FiTrash2,
   FiX,
@@ -48,6 +46,7 @@ const ProjectDetailPage: FC = () => {
   const [editInstructions, setEditInstructions] = useState('');
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showProjectMenu, setShowProjectMenu] = useState(false);
+  const [descriptionExpanded, setDescriptionExpanded] = useState(false);
 
   const openInstructionsEdit = () => {
     setEditInstructions(project?.instructions ?? '');
@@ -68,6 +67,12 @@ const ProjectDetailPage: FC = () => {
   };
 
   const conversations = conversationsPage?.conversations ?? [];
+  const description = project?.description ?? '';
+  const descriptionTruncated = description.length > 160;
+  const displayedDescription =
+    descriptionTruncated && !descriptionExpanded
+      ? description.slice(0, 160) + '...'
+      : description;
 
   if (isLoading) {
     return (
@@ -79,113 +84,121 @@ const ProjectDetailPage: FC = () => {
 
   return (
     <div className="min-h-screen flex flex-col">
-      {/* Back link */}
-      <div className="px-8 pt-6 pb-2">
-        <Link
-          href="/projects"
-          className="inline-flex items-center gap-1.5 text-[#4e677e] hover:text-[#92adc4] text-sm transition-colors"
-        >
-          <FiArrowLeft size={14} />
-          All projects
-        </Link>
-      </div>
+      <div className="flex-1 overflow-y-auto">
+        <div className="flex max-w-6xl mx-auto px-8 py-8 gap-8 min-h-full">
+          {/* Main content */}
+          <div className="flex-1 min-w-0">
+            {/* Back link */}
+            <Link
+              href="/projects"
+              className="inline-flex items-center gap-1.5 text-[#4e677e] hover:text-[#92adc4] text-sm transition-colors mb-6"
+            >
+              <FiArrowLeft size={14} />
+              All projects
+            </Link>
 
-      <div className="flex flex-1 overflow-hidden">
-        {/* Main content */}
-        <div className="flex-1 overflow-y-auto px-8 py-4">
-          {/* Project header */}
-          <div className="flex items-start justify-between gap-4 mb-8">
-            <div className="min-w-0">
-              <h1 className="text-2xl font-semibold text-[#e2ecf5] mb-2">
-                {project?.name}
-              </h1>
-              {project?.description && (
-                <p className="text-[#627a8e] text-sm leading-relaxed max-w-xl">
-                  {project.description}
-                </p>
-              )}
-            </div>
-            <div className="relative flex-shrink-0">
-              <button
-                onClick={() => setShowProjectMenu((v) => !v)}
-                className="p-2 rounded-lg text-[#4e677e] hover:text-[#92adc4] hover:bg-[#222b3d] transition-colors"
-              >
-                <FiEdit2 size={16} />
-              </button>
-              {showProjectMenu && (
-                <ProjectMenu
-                  onDelete={() => {
-                    setShowProjectMenu(false);
-                    setShowDeleteModal(true);
-                  }}
-                  onClose={() => setShowProjectMenu(false)}
-                  projectId={projectId}
-                  projectName={project?.name ?? ''}
-                  projectDescription={project?.description ?? ''}
-                />
-              )}
-            </div>
-          </div>
-
-          {/* New conversation prompt */}
-          <div className="mb-8">
-            <SendMessage />
-          </div>
-
-          {/* Conversations */}
-          {conversations.length === 0 ? (
-            <p className="text-[#4e677e] text-sm">
-              No conversations yet. Start one above.
-            </p>
-          ) : (
-            <div className="max-w-xl">
-              <p className="text-[#4e677e] text-[10px] font-semibold uppercase tracking-widest mb-3">
-                Conversations
-              </p>
-              <div className="divide-y divide-[#2e3d52]">
-                {conversations.map((conv) => (
-                  <Link
-                    key={conv.id}
-                    href={`/${conv.id}`}
-                    className="flex items-center gap-3 py-3 text-[#92adc4] hover:text-[#d5e6f0] transition-colors group"
-                  >
-                    <FiMessageSquare
-                      size={14}
-                      className="flex-shrink-0 text-[#4e677e] group-hover:text-[#627a8e]"
-                    />
-                    <span className="text-sm truncate">{conv.title}</span>
-                  </Link>
-                ))}
+            {/* Project header */}
+            <div className="flex items-start justify-between gap-4 mb-6">
+              <div className="min-w-0 flex-1">
+                <h1 className="text-2xl font-bold text-[#e2ecf5] mb-2">
+                  {project?.name}
+                </h1>
+                {description && (
+                  <p className="text-[#627a8e] text-sm leading-relaxed">
+                    {displayedDescription}
+                    {descriptionTruncated && (
+                      <button
+                        onClick={() => setDescriptionExpanded((v) => !v)}
+                        className="ml-1 text-[#4e677e] hover:text-[#92adc4] underline text-sm transition-colors"
+                      >
+                        {descriptionExpanded ? 'Show less' : 'Show more'}
+                      </button>
+                    )}
+                  </p>
+                )}
+              </div>
+              <div className="relative flex-shrink-0">
+                <button
+                  onClick={() => setShowProjectMenu((v) => !v)}
+                  className="p-2 rounded-lg text-[#4e677e] hover:text-[#92adc4] hover:bg-[#222b3d] transition-colors"
+                >
+                  <FiEdit2 size={16} />
+                </button>
+                {showProjectMenu && (
+                  <ProjectMenu
+                    onDelete={() => {
+                      setShowProjectMenu(false);
+                      setShowDeleteModal(true);
+                    }}
+                    onClose={() => setShowProjectMenu(false)}
+                    projectId={projectId}
+                    projectName={project?.name ?? ''}
+                    projectDescription={project?.description ?? ''}
+                  />
+                )}
               </div>
             </div>
-          )}
-        </div>
 
-        {/* Right panel */}
-        <div className="w-72 flex-shrink-0 border-l border-[#2e3d52] px-5 py-6 space-y-4 overflow-y-auto">
-          {/* Instructions */}
-          <div className="bg-[#1a2535] border border-[#2e3d52] rounded-xl overflow-hidden">
-            <div className="flex items-center justify-between px-4 py-3 border-b border-[#2e3d52]">
-              <span className="text-[#d5e6f0] text-sm font-medium">
-                Instructions
-              </span>
-              <button
-                onClick={openInstructionsEdit}
-                className="text-[#4e677e] hover:text-[#00C4A1] transition-colors"
-              >
-                <FiPlus size={14} />
-              </button>
+            {/* New conversation prompt */}
+            <div className="mb-8 [&>div]:max-w-none">
+              <SendMessage />
             </div>
-            <div className="px-4 py-3">
-              {project?.instructions ? (
-                <p className="text-[#627a8e] text-xs leading-relaxed line-clamp-4">
-                  {project.instructions}
+
+            {/* Conversations */}
+            {conversations.length > 0 && (
+              <div>
+                <p className="text-[#4e677e] text-[10px] font-semibold uppercase tracking-widest mb-3">
+                  Conversations
                 </p>
-              ) : (
-                <p className="text-[#4e677e] text-xs">
-                  Add instructions to tailor responses for this project.
-                </p>
-              )}
+                <div className="divide-y divide-[#2e3d52]">
+                  {conversations.map((conv) => (
+                    <Link
+                      key={conv.id}
+                      href={`/chat/${conv.id}`}
+                      className="flex flex-col gap-0.5 py-3.5 group"
+                    >
+                      <span className="text-sm text-[#92adc4] group-hover:text-[#d5e6f0] transition-colors truncate">
+                        {conv.title || 'Untitled'}
+                      </span>
+                      {conv.updatedAt && (
+                        <span className="text-xs text-[#3d5368] group-hover:text-[#4e677e] transition-colors">
+                          Last message {getRelativeTime(conv.updatedAt)}
+                        </span>
+                      )}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Right panel */}
+          <div className="w-72 flex-shrink-0 space-y-3 pt-14">
+            {/* Instructions */}
+            <div className="bg-[#1a2535] border border-[#2e3d52] rounded-xl overflow-hidden">
+              <div className="flex items-center justify-between px-4 py-3 border-b border-[#2e3d52]">
+                <span className="text-[#d5e6f0] text-sm font-medium">
+                  Instructions
+                </span>
+                <button
+                  onClick={openInstructionsEdit}
+                  className="text-[#4e677e] hover:text-[#00C4A1] transition-colors"
+                  title={project?.instructions ? 'Edit instructions' : 'Add instructions'}
+                >
+                  {project?.instructions ? <FiEdit2 size={13} /> : <FiPlus size={14} />}
+                </button>
+              </div>
+              <div className="px-4 py-3">
+                {project?.instructions ? (
+                  <p className="text-[#627a8e] text-xs leading-relaxed line-clamp-4">
+                    {project.instructions}
+                  </p>
+                ) : (
+                  <p className="text-[#4e677e] text-xs">
+                    Add instructions to tailor responses for this project.
+                  </p>
+                )}
+              </div>
             </div>
           </div>
         </div>
