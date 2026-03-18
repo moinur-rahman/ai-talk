@@ -73,7 +73,52 @@ export const chatApi = createApi({
         method: 'PATCH',
         body: { title },
       }),
-      invalidatesTags: ['Conversations', 'ProjectConversations'],
+      onQueryStarted: async (
+        { conversationId, title },
+        { dispatch, queryFulfilled, getState },
+      ) => {
+        const applyTitlePatch = (draft: { pages: ConversationsPage[] }) => {
+          for (const page of draft.pages) {
+            const conv = page.conversations.find((c) => c.id === conversationId);
+            if (conv) {
+              conv.title = title;
+              break;
+            }
+          }
+        };
+
+        const chatHistoryPatch = dispatch(
+          chatApi.util.updateQueryData('getChatHistory', conversationId, (draft) => {
+            draft.title = title;
+          }),
+        );
+
+        const conversationsPatch = dispatch(
+          chatApi.util.updateQueryData('getConversations', undefined, applyTitlePatch),
+        );
+
+        const projectIds = chatApi.util.selectCachedArgsForQuery(
+          getState(),
+          'getProjectConversations',
+        );
+        const projectPatches = projectIds.map((projectId) =>
+          dispatch(
+            chatApi.util.updateQueryData(
+              'getProjectConversations',
+              projectId,
+              applyTitlePatch,
+            ),
+          ),
+        );
+
+        try {
+          await queryFulfilled;
+        } catch {
+          chatHistoryPatch.undo();
+          conversationsPatch.undo();
+          projectPatches.forEach((p) => p.undo());
+        }
+      },
     }),
     updateConversationProject: builder.mutation<
       void,
