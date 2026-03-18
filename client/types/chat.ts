@@ -31,6 +31,7 @@ export interface ConversationsPage {
   conversations: Conversation[];
   hasNextPage: boolean;
   nextCursor: string | null;
+  total?: number;
 }
 
 export interface GetConversationsPageResponse {

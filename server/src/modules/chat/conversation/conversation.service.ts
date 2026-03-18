@@ -18,16 +18,30 @@ export class ConversationService {
     cursor?: string,
     projectId?: string,
   ) {
-    const conversations = await this.prisma.conversation.findMany({
+    const baseWhere = {
+      userId,
+      ...(projectId !== undefined ? { projectId } : {}),
+    };
+
+    const findPromise = this.prisma.conversation.findMany({
       where: {
-        userId,
-        ...(projectId !== undefined ? { projectId } : {}),
+        ...baseWhere,
         ...(cursor ? { updatedAt: { lt: new Date(cursor) } } : {}),
       },
       select: { id: true, title: true, updatedAt: true, projectId: true },
       orderBy: { updatedAt: 'desc' },
       take: limit + 1,
     });
+
+    const countPromise =
+      projectId !== undefined
+        ? this.prisma.conversation.count({ where: baseWhere })
+        : Promise.resolve(null);
+
+    const [conversations, total] = await Promise.all([
+      findPromise,
+      countPromise,
+    ]);
 
     const hasNextPage = conversations.length > limit;
     const items = hasNextPage ? conversations.slice(0, limit) : conversations;
@@ -44,6 +58,7 @@ export class ConversationService {
       })),
       hasNextPage,
       nextCursor,
+      ...(total !== null ? { total } : {}),
     };
   }
 

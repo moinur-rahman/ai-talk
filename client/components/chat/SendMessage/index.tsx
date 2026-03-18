@@ -1,39 +1,32 @@
 'use client';
+import { FormEvent, useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useState, FormEvent, useEffect, useRef, useCallback } from 'react';
 import {
-  FiPaperclip,
-  FiSend,
+  FiCheck,
+  FiChevronRight,
+  FiFolder,
   FiMic,
   FiMicOff,
-  FiFileText,
+  FiPaperclip,
   FiPlus,
-  FiFolder,
+  FiSend,
   FiType,
-  FiChevronRight,
-  FiCheck,
 } from 'react-icons/fi';
-import { useChat } from '@/contexts/ChatContext';
 import { FaStop } from 'react-icons/fa';
-import { useUploadFileMutation } from '@/services/fileApi';
+import { useChat } from '@/contexts/ChatContext';
 import { useUpdateConversationProjectMutation } from '@/services/chatApi';
 import { useGetProjectsQuery } from '@/services/projectApi';
-import { FileMetadata, Project } from '@/types/chat';
-import Image from 'next/image';
-import ImageModal from '@/components/common/ImageModal';
-import ProviderDropdown from './ProviderDropdown';
-import ModelDropdown from './ModelDropdown';
-import ReasoningToggle from './ReasoningToggle';
 import { useAppDispatch, useAppSelector } from '@/redux/hooks';
 import { setResponseStyle } from '@/redux/slices/modelSlice';
+import type { Project } from '@/types/chat';
+import ProviderDropdown from '../ProviderDropdown';
+import ModelDropdown from '../ModelDropdown';
+import ReasoningToggle from '../ReasoningToggle';
+import FilePreviews from './FilePreviews';
+import useVoiceInput from './useVoiceInput';
+import useFileUpload from './useFileUpload';
 
-const RESPONSE_STYLES = [
-  'Normal',
-  'Learning',
-  'Concise',
-  'Explanatory',
-  'Formal',
-];
+const RESPONSE_STYLES = ['Normal', 'Learning', 'Concise', 'Explanatory', 'Formal'];
 
 interface SendMessageProps {
   defaultRows?: number;
@@ -47,53 +40,43 @@ const SendMessage = ({
   disableProjectPicker = false,
 }: SendMessageProps) => {
   const router = useRouter();
-
-  const {
-    streaming,
-    error,
-    setError,
-    sendMessage,
-    stopStream,
-    conversationId,
-  } = useChat();
+  const { streaming, error, sendMessage, stopStream, conversationId } = useChat();
 
   const dispatch = useAppDispatch();
   const responseStyle = useAppSelector((state) => state.model.responseStyle);
 
   const [prompt, setPrompt] = useState('');
-  const [filePreviews, setFilePreviews] = useState<
-    { id: string; preview: string; type: string; name: string }[]
-  >([]);
-  const [uploadedAttachments, setUploadedAttachments] = useState<
-    FileMetadata[]
-  >([]);
-
-  const [isListening, setIsListening] = useState(false);
-  const recognitionRef = useRef<SpeechRecognition | null>(null);
-
+  const [pendingProject, setPendingProject] = useState<{ id: string; name: string } | null>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showStyleSubmenu, setShowStyleSubmenu] = useState(false);
   const [showProjectSubmenu, setShowProjectSubmenu] = useState(false);
-  const styleSubmenuTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const projectSubmenuTimer = useRef<ReturnType<typeof setTimeout> | null>(
-    null,
-  );
-  const [pendingProject, setPendingProject] = useState<{
-    id: string;
-    name: string;
-  } | null>(null);
+
   const menuRef = useRef<HTMLDivElement>(null);
+  const textAreaRef = useRef<HTMLTextAreaElement>(null);
+  const styleSubmenuTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const projectSubmenuTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [updateProject] = useUpdateConversationProjectMutation();
-  const { data: projects = [], isLoading: isLoadingProjects } =
-    useGetProjectsQuery();
+  const { data: projects = [], isLoading: isLoadingProjects } = useGetProjectsQuery();
 
-  // Active project: for existing convs use prop; for new convs use pending state
   const activeProject = conversationId ? currentProject : pendingProject;
 
-  const [uploadFile] = useUploadFileMutation();
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const textAreaRef = useRef<HTMLTextAreaElement>(null);
+  const {
+    filePreviews,
+    uploadedAttachments,
+    fileInputRef,
+    handleFileClick,
+    handleFileChange,
+    handlePaste,
+    removeFile,
+    reset: resetFiles,
+  } = useFileUpload();
+
+  const handleTranscript = useCallback(
+    (text: string) => setPrompt((prev) => (prev ? `${prev} ${text}` : text)),
+    [],
+  );
+  const { isListening, toggleListening, stopIfListening } = useVoiceInput(handleTranscript);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -110,53 +93,13 @@ const SendMessage = ({
   useEffect(() => {
     const textarea = textAreaRef.current;
     if (!textarea) return;
-
     const adjustHeight = () => {
       textarea.style.height = 'auto';
-      const maxHeight = 150;
-      const scrollHeight = textarea.scrollHeight;
-      textarea.style.height = `${Math.min(scrollHeight, maxHeight)}px`;
+      textarea.style.height = `${Math.min(textarea.scrollHeight, 150)}px`;
     };
-
     textarea.addEventListener('input', adjustHeight);
     return () => textarea.removeEventListener('input', adjustHeight);
   }, []);
-
-  const toggleListening = useCallback(() => {
-    if (isListening) {
-      recognitionRef.current?.stop();
-      return;
-    }
-
-    const SpeechRecognitionAPI =
-      window.SpeechRecognition ?? window.webkitSpeechRecognition;
-
-    if (!SpeechRecognitionAPI) return;
-    const recognition = new SpeechRecognitionAPI();
-    recognition.continuous = true;
-    recognition.interimResults = false;
-    recognition.lang = 'en-US';
-
-    recognition.onresult = (event: SpeechRecognitionEvent) => {
-      const transcript = Array.from(event.results)
-        .slice(event.resultIndex)
-        .map((r: SpeechRecognitionResult) => r[0].transcript)
-        .join('');
-      setPrompt((prev) => (prev ? `${prev} ${transcript}` : transcript));
-    };
-
-    recognition.onerror = () => {
-      setIsListening(false);
-    };
-
-    recognition.onend = () => {
-      setIsListening(false);
-    };
-
-    recognitionRef.current = recognition;
-    recognition.start();
-    setIsListening(true);
-  }, [isListening]);
 
   const handleSelectProject = async (project: { id: string; name: string }) => {
     setIsMenuOpen(false);
@@ -176,142 +119,35 @@ const SendMessage = ({
     }
   };
 
-  const handleGenerateText = async (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-
-    if ((conversationId && streaming[conversationId]) || !prompt.trim()) {
-      return;
-    }
+    if ((conversationId && streaming[conversationId]) || !prompt.trim()) return;
 
     try {
       const effectiveProject = pendingProject ?? currentProject ?? undefined;
       const newConversationId = await sendMessage({
-        prompt: prompt,
-        attachments:
-          uploadedAttachments.length > 0 ? uploadedAttachments : undefined,
-        projectId: effectiveProject?.id,
-        project: effectiveProject ?? undefined,
+        prompt,
+        attachments: uploadedAttachments.length > 0 ? uploadedAttachments : undefined,
+        project: effectiveProject,
       });
 
       setPrompt('');
-      setUploadedAttachments([]);
-      setFilePreviews([]);
+      resetFiles();
       setPendingProject(null);
 
       if (newConversationId && !conversationId) {
         router.push(`/chat/${newConversationId}`);
       }
-    } catch (error) {
-      console.error('Error generating text:', error);
+    } catch (err) {
+      console.error('Error generating text:', err);
     }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      handleGenerateText(e as unknown as FormEvent);
+      handleSubmit(e as unknown as FormEvent);
     }
-  };
-
-  const handlePaste = async (e: React.ClipboardEvent) => {
-    const items = e.clipboardData?.items;
-    if (!items) return;
-
-    const imageFiles: File[] = [];
-
-    for (const item of items) {
-      if (item.type.startsWith('image/')) {
-        const file = item.getAsFile();
-        if (file) {
-          imageFiles.push(file);
-        }
-      }
-    }
-
-    if (imageFiles.length > 0) {
-      e.preventDefault();
-      await processFiles(imageFiles);
-    }
-  };
-
-  const processFiles = async (files: File[]) => {
-    setError({});
-    const newPreviews: {
-      id: string;
-      preview: string;
-      type: string;
-      name: string;
-    }[] = [];
-    const newAttachments: FileMetadata[] = [];
-
-    for (const file of files) {
-      const id = Math.random().toString(36).substr(2, 9);
-
-      if (file.type.startsWith('image/')) {
-        try {
-          const preview = await new Promise<string>((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onloadend = () => resolve(reader.result as string);
-            reader.onerror = reject;
-            reader.readAsDataURL(file);
-          });
-
-          newPreviews.push({ id, preview, type: 'image', name: file.name });
-        } catch (error) {
-          console.error('Error creating preview:', error);
-        }
-      } else {
-        newPreviews.push({
-          id,
-          preview: '',
-          type: 'document',
-          name: file.name,
-        });
-      }
-
-      try {
-        const formData = new FormData();
-        formData.append('file', file);
-        const result = await uploadFile(formData).unwrap();
-        newAttachments.push(result.data);
-      } catch (error) {
-        console.error('Error uploading file:', error);
-        setError((prev) => ({
-          ...prev,
-          global: 'Failed to upload one or more files. Please try again.',
-        }));
-      }
-    }
-
-    setFilePreviews((prev) => [...prev, ...newPreviews]);
-    setUploadedAttachments((prev) => [...prev, ...newAttachments]);
-  };
-
-  const handleFileClick = () => {
-    fileInputRef.current?.click();
-  };
-
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files?.length) {
-      return;
-    }
-
-    await processFiles(Array.from(files));
-
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
-  };
-
-  const removeFile = (id: string) => {
-    setFilePreviews((prev) => {
-      const newPreviews = prev.filter((p) => p.id !== id);
-      if (newPreviews.length === 0) {
-        setUploadedAttachments([]);
-      }
-      return newPreviews;
-    });
   };
 
   return (
@@ -321,9 +157,11 @@ const SendMessage = ({
           {error?.global || (conversationId && error?.[conversationId])}
         </div>
       )}
+
       <FilePreviews filePreviews={filePreviews} onRemove={removeFile} />
+
       <form
-        onSubmit={handleGenerateText}
+        onSubmit={handleSubmit}
         className="flex flex-col bg-surface-elevated border border-border rounded-2xl focus-within:border-accent/40 transition-all duration-200 px-2 pt-2 pb-1"
       >
         <input
@@ -340,11 +178,11 @@ const SendMessage = ({
           placeholder="Message..."
           value={prompt}
           onChange={(e) => {
-            if (isListening) recognitionRef.current?.stop();
+            stopIfListening();
             setPrompt(e.target.value);
           }}
           onKeyDown={(e) => {
-            if (isListening) recognitionRef.current?.stop();
+            stopIfListening();
             handleKeyDown(e);
           }}
           onPaste={handlePaste}
@@ -366,7 +204,6 @@ const SendMessage = ({
 
             {isMenuOpen && (
               <div className="absolute bottom-full mb-2 left-0 bg-surface-elevated border border-border rounded-xl shadow-xl z-50 py-1 w-52 overflow-visible">
-                {/* Add files */}
                 <button
                   type="button"
                   onClick={() => {
@@ -379,13 +216,11 @@ const SendMessage = ({
                   Add files or photos
                 </button>
 
-                {/* Add to project — hover submenu */}
                 {!disableProjectPicker && (
                   <div
                     className="relative"
                     onMouseEnter={() => {
-                      if (projectSubmenuTimer.current)
-                        clearTimeout(projectSubmenuTimer.current);
+                      if (projectSubmenuTimer.current) clearTimeout(projectSubmenuTimer.current);
                       setShowProjectSubmenu(true);
                     }}
                     onMouseLeave={() => {
@@ -399,27 +234,17 @@ const SendMessage = ({
                       type="button"
                       className="flex items-center gap-3 w-full px-3 py-2 text-sm text-body hover:bg-surface-overlay transition-colors"
                     >
-                      <FiFolder
-                        size={14}
-                        className="text-muted flex-shrink-0"
-                      />
+                      <FiFolder size={14} className="text-muted flex-shrink-0" />
                       <span className="flex-1 text-left">Add to project</span>
-                      <FiChevronRight
-                        size={13}
-                        className="text-muted flex-shrink-0"
-                      />
+                      <FiChevronRight size={13} className="text-muted flex-shrink-0" />
                     </button>
 
                     {showProjectSubmenu && (
                       <div className="absolute left-full top-0 ml-1 bg-surface-elevated border border-border rounded-xl shadow-xl py-1 w-56 z-50 max-h-60 overflow-y-auto">
                         {isLoadingProjects ? (
-                          <p className="text-xs text-muted px-3 py-2">
-                            Loading...
-                          </p>
+                          <p className="text-xs text-muted px-3 py-2">Loading...</p>
                         ) : projects.length === 0 ? (
-                          <p className="text-xs text-muted px-3 py-2">
-                            No projects found.
-                          </p>
+                          <p className="text-xs text-muted px-3 py-2">No projects found.</p>
                         ) : (
                           projects.map((project: Project) => (
                             <button
@@ -432,10 +257,7 @@ const SendMessage = ({
                                 size={13}
                                 className={`flex-shrink-0 ${activeProject?.id === project.id ? 'text-accent' : 'opacity-0'}`}
                               />
-                              <FiFolder
-                                size={13}
-                                className="text-muted flex-shrink-0"
-                              />
+                              <FiFolder size={13} className="text-muted flex-shrink-0" />
                               <span className="truncate">{project.name}</span>
                             </button>
                           ))
@@ -445,12 +267,10 @@ const SendMessage = ({
                   </div>
                 )}
 
-                {/* Use style — hover submenu */}
                 <div
                   className="relative"
                   onMouseEnter={() => {
-                    if (styleSubmenuTimer.current)
-                      clearTimeout(styleSubmenuTimer.current);
+                    if (styleSubmenuTimer.current) clearTimeout(styleSubmenuTimer.current);
                     setShowStyleSubmenu(true);
                   }}
                   onMouseLeave={() => {
@@ -467,14 +287,9 @@ const SendMessage = ({
                     <FiType size={14} className="text-muted flex-shrink-0" />
                     <span className="flex-1 text-left">Use style</span>
                     {responseStyle !== 'Normal' && (
-                      <span className="text-xs text-accent mr-1">
-                        {responseStyle}
-                      </span>
+                      <span className="text-xs text-accent mr-1">{responseStyle}</span>
                     )}
-                    <FiChevronRight
-                      size={13}
-                      className="text-muted flex-shrink-0"
-                    />
+                    <FiChevronRight size={13} className="text-muted flex-shrink-0" />
                   </button>
 
                   {showStyleSubmenu && (
@@ -508,9 +323,7 @@ const SendMessage = ({
           {activeProject && (
             <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-accent/10 border border-accent/20 text-accent flex-shrink-0">
               <FiFolder size={12} />
-              <span className="text-xs max-w-[72px] truncate">
-                {activeProject.name}
-              </span>
+              <span className="text-xs max-w-[72px] truncate">{activeProject.name}</span>
               {!disableProjectPicker && (
                 <button
                   type="button"
@@ -587,93 +400,6 @@ const SendMessage = ({
         </div>
       </form>
     </div>
-  );
-};
-
-interface FilePreviewsProps {
-  filePreviews: { id: string; preview: string; type: string; name: string }[];
-  onRemove: (id: string) => void;
-}
-
-const FilePreviews = ({ filePreviews, onRemove }: FilePreviewsProps) => {
-  const [modalImage, setModalImage] = useState<{
-    src: string;
-    alt: string;
-  } | null>(null);
-
-  const openModal = (src: string, alt: string) => {
-    setModalImage({ src, alt });
-  };
-
-  const closeModal = () => {
-    setModalImage(null);
-  };
-
-  if (filePreviews.length === 0) return null;
-
-  return (
-    <>
-      <div className="mb-2 p-3 bg-surface-elevated rounded-xl border border-border">
-        <div className="flex items-center justify-between mb-2">
-          <h4 className="text-xs font-medium text-body tracking-wide">
-            Attachments ({filePreviews.length})
-          </h4>
-        </div>
-        <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-2 max-h-[200px] overflow-y-auto p-0.5">
-          {filePreviews.map(({ id, preview, type, name }) => (
-            <div key={id} className="relative w-full pb-[100%] group">
-              <div className="absolute inset-0 bg-surface-overlay rounded-lg overflow-hidden border border-border transition-all duration-200 hover:border-border-strong">
-                {type === 'image' ? (
-                  <div className="relative w-full h-full">
-                    <button
-                      onClick={() => openModal(preview, name)}
-                      className="w-full h-full cursor-pointer hover:opacity-90 transition-opacity duration-200"
-                    >
-                      <Image
-                        src={preview}
-                        alt="Preview"
-                        fill
-                        className="rounded-lg object-cover"
-                      />
-                    </button>
-                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-surface-dim/90 to-transparent p-2 pt-6 pointer-events-none">
-                      <p className="text-xs text-body truncate w-full">
-                        {name}
-                      </p>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="w-full h-full flex flex-col items-center justify-center p-3 text-center">
-                    <div className="bg-border p-3 rounded-lg mb-2">
-                      <FiFileText size={28} className="text-accent" />
-                    </div>
-                    <p className="text-xs text-body truncate w-full font-medium">
-                      {name}
-                    </p>
-                  </div>
-                )}
-                <button
-                  onClick={() => onRemove(id)}
-                  className="absolute top-1.5 right-1.5 w-5 h-5 flex items-center justify-center bg-surface-elevated/90 rounded-full text-body hover:text-red-400 text-sm transition-all duration-200 opacity-0 group-hover:opacity-100 z-10"
-                  aria-label="Remove file preview"
-                >
-                  ×
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {modalImage && (
-        <ImageModal
-          isOpen={!!modalImage}
-          onClose={closeModal}
-          imageSrc={modalImage.src}
-          imageAlt={modalImage.alt}
-        />
-      )}
-    </>
   );
 };
 

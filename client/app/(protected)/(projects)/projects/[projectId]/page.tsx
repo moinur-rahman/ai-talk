@@ -16,7 +16,7 @@ import {
   useUpdateProjectMutation,
   useDeleteProjectMutation,
 } from '@/services/projectApi';
-import { useGetProjectConversationsQuery } from '@/services/chatApi';
+import { useGetProjectConversationsInfiniteQuery } from '@/services/chatApi';
 import SendMessage from '@/components/chat/SendMessage';
 
 function getRelativeTime(dateString: string): string {
@@ -37,8 +37,12 @@ const ProjectDetailPage: FC = () => {
   const router = useRouter();
 
   const { data: project, isLoading } = useGetProjectQuery(projectId);
-  const { data: conversationsPage } =
-    useGetProjectConversationsQuery(projectId);
+  const {
+    data: conversationsData,
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+  } = useGetProjectConversationsInfiniteQuery(projectId);
   const [updateProject] = useUpdateProjectMutation();
   const [deleteProject, { isLoading: isDeleting }] = useDeleteProjectMutation();
 
@@ -66,7 +70,9 @@ const ProjectDetailPage: FC = () => {
     router.push('/projects');
   };
 
-  const conversations = conversationsPage?.conversations ?? [];
+  const conversations =
+    conversationsData?.pages.flatMap((p) => p.conversations) ?? [];
+  const total = conversationsData?.pages[0]?.total;
   const description = project?.description ?? '';
   const descriptionTruncated = description.length > 160;
   const displayedDescription =
@@ -153,9 +159,14 @@ const ProjectDetailPage: FC = () => {
             {/* Conversations */}
             {conversations.length > 0 && (
               <div>
-                <p className="text-muted text-[10px] font-semibold uppercase tracking-widest mb-3">
-                  Conversations
-                </p>
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-muted text-[10px] font-semibold uppercase tracking-widest">
+                    Conversations
+                  </p>
+                  {total !== undefined && (
+                    <span className="text-muted text-[10px]">{total}</span>
+                  )}
+                </div>
                 <div className="divide-y divide-border">
                   {conversations.map((conv) => (
                     <Link
@@ -174,6 +185,17 @@ const ProjectDetailPage: FC = () => {
                     </Link>
                   ))}
                 </div>
+                {hasNextPage && (
+                  <button
+                    onClick={() => fetchNextPage()}
+                    disabled={isFetchingNextPage}
+                    className="mt-4 w-full py-2 text-xs text-muted hover:text-body border border-border rounded-lg hover:bg-surface-elevated transition-colors disabled:opacity-50"
+                  >
+                    {isFetchingNextPage
+                      ? 'Loading...'
+                      : `Load more${total !== undefined ? ` (${total - conversations.length} remaining)` : ''}`}
+                  </button>
+                )}
               </div>
             )}
           </div>

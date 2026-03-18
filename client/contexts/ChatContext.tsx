@@ -26,7 +26,6 @@ import { getCsrfTokenFromCookie } from '@/utils/getCsrfTokenFromCookie';
 interface ISendMessageParams {
   prompt: string;
   attachments?: FileMetadata[];
-  projectId?: string;
   project?: { id: string; name: string };
 }
 
@@ -166,34 +165,34 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
             { type: 'ProjectConversations', id: effectiveProjId },
           ]),
         );
-      } else {
-        const result = chatApi.util.updateQueryData(
-          'getConversations',
-          undefined,
-          (draft) => {
-            if (draft.pages.length > 0) {
-              let found = false;
-              for (const page of draft.pages) {
-                const conv = page.conversations.find((c) => c.id === convId);
-                if (conv) {
-                  conv.title = event.title!;
-                  found = true;
-                  break;
-                }
-              }
-              if (!found) {
-                draft.pages[0].conversations.unshift({
-                  id: convId,
-                  title: event.title!,
-                  updatedAt: new Date().toISOString(),
-                  projectId: null,
-                });
+      }
+
+      const result = chatApi.util.updateQueryData(
+        'getConversations',
+        undefined,
+        (draft) => {
+          if (draft.pages.length > 0) {
+            let found = false;
+            for (const page of draft.pages) {
+              const conv = page.conversations.find((c) => c.id === convId);
+              if (conv) {
+                conv.title = event.title!;
+                found = true;
+                break;
               }
             }
-          },
-        );
-        dispatch(result);
-      }
+            if (!found) {
+              draft.pages[0].conversations.unshift({
+                id: convId,
+                title: event.title!,
+                updatedAt: new Date().toISOString(),
+                projectId: effectiveProjId ?? null,
+              });
+            }
+          }
+        },
+      );
+      dispatch(result);
     } else if (event.type === 'error') {
       const message = event.message ?? 'An error occurred';
       console.error(`Error for conversation ${convId}:`, message);
@@ -300,7 +299,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
       return;
     }
 
-    const effectiveProjId = params.projectId ?? projectId;
+    const effectiveProjId = params.project?.id;
     effectiveProjectIdRef.current = effectiveProjId;
 
     try {
@@ -319,27 +318,25 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
 
         // Optimistically add to sidebar immediately using the user's message
         // as the initial title. It will be replaced once the AI title arrives.
-        if (!effectiveProjId) {
-          const prompt = params.prompt.trim();
-          const initialTitle =
-            prompt.length > 60 ? `${prompt.slice(0, 60)}…` : prompt;
-          dispatch(
-            chatApi.util.updateQueryData(
-              'getConversations',
-              undefined,
-              (draft) => {
-                if (draft.pages.length > 0) {
-                  draft.pages[0].conversations.unshift({
-                    id: currentId!,
-                    title: initialTitle,
-                    updatedAt: new Date().toISOString(),
-                    projectId: null,
-                  });
-                }
-              },
-            ),
-          );
-        }
+        const prompt = params.prompt.trim();
+        const initialTitle =
+          prompt.length > 60 ? `${prompt.slice(0, 60)}…` : prompt;
+        dispatch(
+          chatApi.util.updateQueryData(
+            'getConversations',
+            undefined,
+            (draft) => {
+              if (draft.pages.length > 0) {
+                draft.pages[0].conversations.unshift({
+                  id: currentId!,
+                  title: initialTitle,
+                  updatedAt: new Date().toISOString(),
+                  projectId: effectiveProjId ?? null,
+                });
+              }
+            },
+          ),
+        );
       }
 
       dispatch(

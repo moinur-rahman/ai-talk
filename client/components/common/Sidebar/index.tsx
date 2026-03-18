@@ -1,28 +1,23 @@
 'use client';
 import { FC, useEffect, useRef, useState } from 'react';
-import {
-  useGetConversationsInfiniteQuery,
-  useDeleteConversationMutation,
-} from '@/services/chatApi';
 import Link from 'next/link';
-import { useRouter, usePathname } from 'next/navigation';
-import { useChat } from '@/contexts/ChatContext';
+import { usePathname } from 'next/navigation';
 import {
-  FiPlus,
-  FiMessageSquare,
-  FiSearch,
-  FiLogOut,
   FiChevronUp,
-  FiShield,
-  FiTrash2,
-  FiX,
-  FiSettings,
   FiFolder,
+  FiLogOut,
+  FiPlus,
+  FiSearch,
+  FiSettings,
+  FiShield,
 } from 'react-icons/fi';
-import SearchModal from './SearchModal';
+import { useGetConversationsInfiniteQuery } from '@/services/chatApi';
+import { useGetMeQuery } from '@/services/userApi';
+import { useChat } from '@/contexts/ChatContext';
 import axiosInstance from '@/apis/axiosInstance';
 import { url } from '@/utils/url';
-import { useGetMeQuery } from '@/services/userApi';
+import SearchModal from '../SearchModal';
+import SidebarItem from './SidebarItem';
 
 const Sidebar: FC = () => {
   const { conversationId } = useChat();
@@ -59,25 +54,18 @@ const Sidebar: FC = () => {
 
   useEffect(() => {
     if (!hasNextPage) return;
-
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting && !isFetchingNextPage) {
-          fetchNextPage();
-        }
+        if (entries[0].isIntersecting && !isFetchingNextPage) fetchNextPage();
       },
       { threshold: 0.1 },
     );
-
-    if (sentinelRef.current) {
-      observer.observe(sentinelRef.current);
-    }
-
+    if (sentinelRef.current) observer.observe(sentinelRef.current);
     return () => observer.disconnect();
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   useEffect(() => {
-    const handleKey = (e: KeyboardEvent) => {
+    const handleKey = (e: globalThis.KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault();
         setSearchOpen(true);
@@ -142,8 +130,8 @@ const Sidebar: FC = () => {
               key={conversation.id}
               name={conversation.title}
               id={conversation.id}
+              projectId={conversation.projectId}
               isSelected={conversation.id === conversationId}
-              isProjectConversation={!!conversation.projectId}
             />
           ))}
           <div ref={sentinelRef} className="h-1" />
@@ -231,103 +219,6 @@ const Sidebar: FC = () => {
       </nav>
 
       {searchOpen && <SearchModal onClose={() => setSearchOpen(false)} />}
-    </>
-  );
-};
-
-const SidebarItem: FC<{
-  name: string;
-  id: string;
-  isSelected?: boolean;
-  isProjectConversation?: boolean;
-}> = ({ name, id, isSelected = false, isProjectConversation = false }) => {
-  const router = useRouter();
-  const [deleteConversation, { isLoading }] = useDeleteConversationMutation();
-  const [showModal, setShowModal] = useState(false);
-
-  const handleDelete = async () => {
-    await deleteConversation(id).unwrap();
-    setShowModal(false);
-    if (isSelected) router.push('/new');
-  };
-
-  return (
-    <>
-      <div className="relative group mb-0.5">
-        <Link
-          href={`/chat/${id}`}
-          className={`flex items-center gap-2.5 w-full px-2.5 py-2 rounded-lg transition-all duration-150 text-sm border-l-2 pr-8 ${
-            isSelected
-              ? 'bg-selected text-accent border-accent'
-              : 'text-body hover:bg-surface-elevated hover:text-heading border-transparent'
-          }`}
-        >
-          {isProjectConversation ? (
-            <FiFolder
-              size={13}
-              className={`flex-shrink-0 ${isSelected ? 'text-accent' : 'text-muted'}`}
-            />
-          ) : (
-            <FiMessageSquare
-              size={13}
-              className={`flex-shrink-0 ${isSelected ? 'text-accent' : 'text-muted'}`}
-            />
-          )}
-          <span className="truncate">{name}</span>
-        </Link>
-
-        <button
-          onClick={(e) => {
-            e.preventDefault();
-            setShowModal(true);
-          }}
-          className="absolute right-1.5 top-1/2 -translate-y-1/2 p-1 rounded text-muted hover:text-red-400 hover:bg-red-400/10 transition-colors opacity-0 group-hover:opacity-100"
-        >
-          <FiTrash2 size={14} />
-        </button>
-      </div>
-
-      {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="w-full max-w-sm bg-surface-raised border border-border rounded-2xl shadow-2xl overflow-hidden">
-            <div className="px-5 py-4 border-b border-border flex items-center justify-between">
-              <h3 className="text-primary font-semibold text-sm">
-                Delete conversation
-              </h3>
-              <button
-                onClick={() => setShowModal(false)}
-                className="text-muted hover:text-body transition-colors"
-              >
-                <FiX size={16} />
-              </button>
-            </div>
-            <div className="px-5 py-4">
-              <p className="text-body text-sm">
-                Are you sure you want to delete{' '}
-                <span className="text-heading font-medium">
-                  &ldquo;{name}&rdquo;
-                </span>
-                ? This cannot be undone.
-              </p>
-              <div className="flex gap-2 mt-4">
-                <button
-                  onClick={() => setShowModal(false)}
-                  className="flex-1 px-4 py-2 rounded-lg border border-border text-body hover:bg-surface-elevated text-sm transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleDelete}
-                  disabled={isLoading}
-                  className="flex-1 px-4 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white font-medium text-sm transition-colors disabled:opacity-60"
-                >
-                  {isLoading ? 'Deleting...' : 'Delete'}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </>
   );
 };

@@ -64,6 +64,17 @@ export const chatApi = createApi({
         { type: 'ChatHistory', id: conversationId },
       ],
     }),
+    updateConversationTitle: builder.mutation<
+      void,
+      { conversationId: string; title: string }
+    >({
+      query: ({ conversationId, title }) => ({
+        url: `/chats/conversations/${conversationId}/title`,
+        method: 'PATCH',
+        body: { title },
+      }),
+      invalidatesTags: ['Conversations', 'ProjectConversations'],
+    }),
     updateConversationProject: builder.mutation<
       void,
       { conversationId: string; projectId: string | null }
@@ -79,13 +90,25 @@ export const chatApi = createApi({
         'ProjectConversations',
       ],
     }),
-    getProjectConversations: builder.query<ConversationsPage, string>({
-      query: (projectId) => ({
+    getProjectConversations: builder.infiniteQuery<
+      ConversationsPage,
+      string,
+      string | null
+    >({
+      query: ({ queryArg: projectId, pageParam }) => ({
         url: '/chats/conversations',
-        params: { projectId, limit: 50 },
+        params: {
+          projectId,
+          limit: 20,
+          ...(pageParam ? { cursor: pageParam } : {}),
+        },
       }),
       transformResponse: (response: GetConversationsPageResponse) =>
         response.data,
+      infiniteQueryOptions: {
+        initialPageParam: null,
+        getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+      },
       providesTags: (result, error, projectId) => [
         { type: 'ProjectConversations', id: projectId },
       ],
@@ -99,6 +122,7 @@ export const {
   useGetChatHistoryQuery,
   useDeleteConversationMutation,
   useDeleteAllConversationsMutation,
+  useUpdateConversationTitleMutation,
   useUpdateConversationProjectMutation,
-  useGetProjectConversationsQuery,
+  useGetProjectConversationsInfiniteQuery,
 } = chatApi;
