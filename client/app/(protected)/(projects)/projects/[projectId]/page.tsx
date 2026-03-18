@@ -1,22 +1,28 @@
 'use client';
 
-import { FC, useState } from 'react';
+import { FC, KeyboardEvent, useEffect, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
   FiArrowLeft,
-  FiPlus,
+  FiCheck,
   FiEdit2,
+  FiMoreHorizontal,
+  FiPlus,
   FiTrash2,
   FiX,
-  FiCheck,
 } from 'react-icons/fi';
 import {
   useGetProjectQuery,
   useUpdateProjectMutation,
   useDeleteProjectMutation,
 } from '@/services/projectApi';
-import { useGetProjectConversationsInfiniteQuery } from '@/services/chatApi';
+import {
+  useGetProjectConversationsInfiniteQuery,
+  useDeleteConversationMutation,
+  useUpdateConversationTitleMutation,
+} from '@/services/chatApi';
+import ConversationContextMenu from '@/components/common/Sidebar/ConversationContextMenu';
 import SendMessage from '@/components/chat/SendMessage';
 
 function getRelativeTime(dateString: string): string {
@@ -91,7 +97,7 @@ const ProjectDetailPage: FC = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <div className="flex-1 overflow-y-auto">
-        <div className="flex max-w-6xl mx-auto px-8 py-8 gap-8 min-h-full">
+        <div className="flex max-w-5xl mx-auto px-8 py-8 gap-8 min-h-full">
           {/* Main content */}
           <div className="flex-1 min-w-0">
             {/* Back link */}
@@ -169,20 +175,13 @@ const ProjectDetailPage: FC = () => {
                 </div>
                 <div className="divide-y divide-border">
                   {conversations.map((conv) => (
-                    <Link
+                    <ProjectConversationRow
                       key={conv.id}
-                      href={`/chat/${conv.id}`}
-                      className="flex flex-col gap-0.5 py-3.5 group"
-                    >
-                      <span className="text-sm text-body group-hover:text-heading transition-colors truncate">
-                        {conv.title || 'Untitled'}
-                      </span>
-                      {conv.updatedAt && (
-                        <span className="text-xs text-subtle group-hover:text-muted transition-colors">
-                          Last message {getRelativeTime(conv.updatedAt)}
-                        </span>
-                      )}
-                    </Link>
+                      id={conv.id}
+                      title={conv.title}
+                      updatedAt={conv.updatedAt}
+                      projectId={projectId}
+                    />
                   ))}
                 </div>
                 {hasNextPage && (
@@ -330,6 +329,168 @@ const ProjectDetailPage: FC = () => {
         </div>
       )}
     </div>
+  );
+};
+
+const ProjectConversationRow: FC<{
+  id: string;
+  title: string | null;
+  updatedAt: string;
+  projectId: string;
+}> = ({ id, title, updatedAt, projectId }) => {
+  const router = useRouter();
+  const [deleteConversation, { isLoading: isDeleting }] =
+    useDeleteConversationMutation();
+  const [updateTitle] = useUpdateConversationTitleMutation();
+
+  const [menuPos, setMenuPos] = useState<{ x: number; y: number } | null>(null);
+  const [isRenaming, setIsRenaming] = useState(false);
+  const [renameValue, setRenameValue] = useState(title ?? '');
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+
+  const moreButtonRef = useRef<HTMLButtonElement>(null);
+  const renameInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (isRenaming) renameInputRef.current?.select();
+  }, [isRenaming]);
+
+  const openMenu = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const rect = moreButtonRef.current!.getBoundingClientRect();
+    setMenuPos({ x: rect.left - 192 - 6, y: rect.top });
+  };
+
+  const handleRenameCommit = async () => {
+    const trimmed = renameValue.trim();
+    if (trimmed && trimmed !== title) {
+      await updateTitle({ conversationId: id, title: trimmed });
+    } else {
+      setRenameValue(title ?? '');
+    }
+    setIsRenaming(false);
+  };
+
+  const handleRenameKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') handleRenameCommit();
+    if (e.key === 'Escape') {
+      setRenameValue(title ?? '');
+      setIsRenaming(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    await deleteConversation(id).unwrap();
+    setShowDeleteModal(false);
+    router.refresh();
+  };
+
+  const displayName = title || 'Untitled';
+
+  return (
+    <>
+      <div className="relative group flex items-center gap-2 py-3.5">
+        {isRenaming ? (
+          <div className="flex-1 min-w-0 flex flex-col gap-0.5">
+            <input
+              ref={renameInputRef}
+              value={renameValue}
+              onChange={(e) => setRenameValue(e.target.value)}
+              onBlur={handleRenameCommit}
+              onKeyDown={handleRenameKeyDown}
+              maxLength={50}
+              className="bg-transparent text-sm text-primary outline-none border-b border-accent/50 w-full"
+            />
+            {updatedAt && (
+              <span className="text-xs text-subtle">
+                Last message {getRelativeTime(updatedAt)}
+              </span>
+            )}
+          </div>
+        ) : (
+          <Link
+            href={`/chat/${id}`}
+            className="flex-1 min-w-0 flex flex-col gap-0.5 pr-8"
+          >
+            <span className="text-sm text-body group-hover:text-heading transition-colors truncate">
+              {displayName}
+            </span>
+            {updatedAt && (
+              <span className="text-xs text-subtle group-hover:text-muted transition-colors">
+                Last message {getRelativeTime(updatedAt)}
+              </span>
+            )}
+          </Link>
+        )}
+
+        {!isRenaming && (
+          <button
+            ref={moreButtonRef}
+            onClick={openMenu}
+            className="absolute right-0 top-1/2 -translate-y-1/2 p-1.5 rounded-lg text-muted hover:text-body hover:bg-surface-elevated transition-colors opacity-0 group-hover:opacity-100"
+          >
+            <FiMoreHorizontal size={15} />
+          </button>
+        )}
+      </div>
+
+      {menuPos && (
+        <ConversationContextMenu
+          pos={menuPos}
+          conversationId={id}
+          projectId={projectId}
+          onClose={() => setMenuPos(null)}
+          onRename={() => {
+            setRenameValue(title ?? '');
+            setIsRenaming(true);
+          }}
+          onDelete={() => setShowDeleteModal(true)}
+        />
+      )}
+
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="w-full max-w-sm bg-surface-raised border border-border rounded-2xl shadow-2xl overflow-hidden">
+            <div className="px-5 py-4 border-b border-border flex items-center justify-between">
+              <h3 className="text-primary font-semibold text-sm">
+                Delete conversation
+              </h3>
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                className="text-muted hover:text-body transition-colors"
+              >
+                <FiX size={16} />
+              </button>
+            </div>
+            <div className="px-5 py-4">
+              <p className="text-body text-sm">
+                Are you sure you want to delete{' '}
+                <span className="text-heading font-medium">
+                  &ldquo;{displayName}&rdquo;
+                </span>
+                ? This cannot be undone.
+              </p>
+              <div className="flex gap-2 mt-4">
+                <button
+                  onClick={() => setShowDeleteModal(false)}
+                  className="flex-1 px-4 py-2 rounded-lg border border-border text-body hover:bg-surface-elevated text-sm transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleDelete}
+                  disabled={isDeleting}
+                  className="flex-1 px-4 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white font-medium text-sm transition-colors disabled:opacity-60"
+                >
+                  {isDeleting ? 'Deleting...' : 'Delete'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 };
 

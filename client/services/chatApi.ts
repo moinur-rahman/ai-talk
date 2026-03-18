@@ -48,7 +48,7 @@ export const chatApi = createApi({
         url: `/chats/conversations/${conversationId}`,
         method: 'DELETE',
       }),
-      invalidatesTags: ['Conversations'],
+      invalidatesTags: ['Conversations', 'ProjectConversations'],
     }),
     deleteAllConversations: builder.mutation<void, void>({
       query: () => ({

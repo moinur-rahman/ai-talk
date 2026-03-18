@@ -17,7 +17,10 @@ interface FilePreviewsProps {
 }
 
 const FilePreviews = ({ filePreviews, onRemove }: FilePreviewsProps) => {
-  const [modalImage, setModalImage] = useState<{ src: string; alt: string } | null>(null);
+  const [modalImage, setModalImage] = useState<{
+    src: string;
+    alt: string;
+  } | null>(null);
 
   if (filePreviews.length === 0) return null;
 
@@ -47,7 +50,9 @@ const FilePreviews = ({ filePreviews, onRemove }: FilePreviewsProps) => {
                       />
                     </button>
                     <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-surface-dim/90 to-transparent p-2 pt-6 pointer-events-none">
-                      <p className="text-xs text-body truncate w-full">{name}</p>
+                      <p className="text-xs text-body truncate w-full">
+                        {name}
+                      </p>
                     </div>
                   </div>
                 ) : (
@@ -55,7 +60,9 @@ const FilePreviews = ({ filePreviews, onRemove }: FilePreviewsProps) => {
                     <div className="bg-border p-3 rounded-lg mb-2">
                       <FiFileText size={28} className="text-accent" />
                     </div>
-                    <p className="text-xs text-body truncate w-full font-medium">{name}</p>
+                    <p className="text-xs text-body truncate w-full font-medium">
+                      {name}
+                    </p>
                   </div>
                 )}
                 <button

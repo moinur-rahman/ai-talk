@@ -2,7 +2,12 @@
 import { FC, KeyboardEvent, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { FiFolder, FiMessageSquare, FiMoreHorizontal, FiX } from 'react-icons/fi';
+import {
+  FiFolder,
+  FiMessageSquare,
+  FiMoreHorizontal,
+  FiX,
+} from 'react-icons/fi';
 import {
   useDeleteConversationMutation,
   useUpdateConversationTitleMutation,

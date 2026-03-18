@@ -15,7 +15,9 @@ const useFileUpload = () => {
   const [uploadFile] = useUploadFileMutation();
 
   const [filePreviews, setFilePreviews] = useState<FilePreview[]>([]);
-  const [uploadedAttachments, setUploadedAttachments] = useState<FileMetadata[]>([]);
+  const [uploadedAttachments, setUploadedAttachments] = useState<
+    FileMetadata[]
+  >([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const processFiles = async (files: File[]) => {
@@ -39,7 +41,12 @@ const useFileUpload = () => {
           console.error('Error creating preview');
         }
       } else {
-        newPreviews.push({ id, preview: '', type: 'document', name: file.name });
+        newPreviews.push({
+          id,
+          preview: '',
+          type: 'document',
+          name: file.name,
+        });
       }
 
       try {

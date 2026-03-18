@@ -26,7 +26,13 @@ import FilePreviews from './FilePreviews';
 import useVoiceInput from './useVoiceInput';
 import useFileUpload from './useFileUpload';
 
-const RESPONSE_STYLES = ['Normal', 'Learning', 'Concise', 'Explanatory', 'Formal'];
+const RESPONSE_STYLES = [
+  'Normal',
+  'Learning',
+  'Concise',
+  'Explanatory',
+  'Formal',
+];
 
 interface SendMessageProps {
   defaultRows?: number;
@@ -40,13 +46,17 @@ const SendMessage = ({
   disableProjectPicker = false,
 }: SendMessageProps) => {
   const router = useRouter();
-  const { streaming, error, sendMessage, stopStream, conversationId } = useChat();
+  const { streaming, error, sendMessage, stopStream, conversationId } =
+    useChat();
 
   const dispatch = useAppDispatch();
   const responseStyle = useAppSelector((state) => state.model.responseStyle);
 
   const [prompt, setPrompt] = useState('');
-  const [pendingProject, setPendingProject] = useState<{ id: string; name: string } | null>(null);
+  const [pendingProject, setPendingProject] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showStyleSubmenu, setShowStyleSubmenu] = useState(false);
   const [showProjectSubmenu, setShowProjectSubmenu] = useState(false);
@@ -54,10 +64,13 @@ const SendMessage = ({
   const menuRef = useRef<HTMLDivElement>(null);
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
   const styleSubmenuTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const projectSubmenuTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const projectSubmenuTimer = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
 
   const [updateProject] = useUpdateConversationProjectMutation();
-  const { data: projects = [], isLoading: isLoadingProjects } = useGetProjectsQuery();
+  const { data: projects = [], isLoading: isLoadingProjects } =
+    useGetProjectsQuery();
 
   const activeProject = conversationId ? currentProject : pendingProject;
 
@@ -76,7 +89,8 @@ const SendMessage = ({
     (text: string) => setPrompt((prev) => (prev ? `${prev} ${text}` : text)),
     [],
   );
-  const { isListening, toggleListening, stopIfListening } = useVoiceInput(handleTranscript);
+  const { isListening, toggleListening, stopIfListening } =
+    useVoiceInput(handleTranscript);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -127,7 +141,8 @@ const SendMessage = ({
       const effectiveProject = pendingProject ?? currentProject ?? undefined;
       const newConversationId = await sendMessage({
         prompt,
-        attachments: uploadedAttachments.length > 0 ? uploadedAttachments : undefined,
+        attachments:
+          uploadedAttachments.length > 0 ? uploadedAttachments : undefined,
         project: effectiveProject,
       });
 
@@ -220,7 +235,8 @@ const SendMessage = ({
                   <div
                     className="relative"
                     onMouseEnter={() => {
-                      if (projectSubmenuTimer.current) clearTimeout(projectSubmenuTimer.current);
+                      if (projectSubmenuTimer.current)
+                        clearTimeout(projectSubmenuTimer.current);
                       setShowProjectSubmenu(true);
                     }}
                     onMouseLeave={() => {
@@ -234,17 +250,27 @@ const SendMessage = ({
                       type="button"
                       className="flex items-center gap-3 w-full px-3 py-2 text-sm text-body hover:bg-surface-overlay transition-colors"
                     >
-                      <FiFolder size={14} className="text-muted flex-shrink-0" />
+                      <FiFolder
+                        size={14}
+                        className="text-muted flex-shrink-0"
+                      />
                       <span className="flex-1 text-left">Add to project</span>
-                      <FiChevronRight size={13} className="text-muted flex-shrink-0" />
+                      <FiChevronRight
+                        size={13}
+                        className="text-muted flex-shrink-0"
+                      />
                     </button>
 
                     {showProjectSubmenu && (
                       <div className="absolute left-full top-0 ml-1 bg-surface-elevated border border-border rounded-xl shadow-xl py-1 w-56 z-50 max-h-60 overflow-y-auto">
                         {isLoadingProjects ? (
-                          <p className="text-xs text-muted px-3 py-2">Loading...</p>
+                          <p className="text-xs text-muted px-3 py-2">
+                            Loading...
+                          </p>
                         ) : projects.length === 0 ? (
-                          <p className="text-xs text-muted px-3 py-2">No projects found.</p>
+                          <p className="text-xs text-muted px-3 py-2">
+                            No projects found.
+                          </p>
                         ) : (
                           projects.map((project: Project) => (
                             <button
@@ -257,7 +283,10 @@ const SendMessage = ({
                                 size={13}
                                 className={`flex-shrink-0 ${activeProject?.id === project.id ? 'text-accent' : 'opacity-0'}`}
                               />
-                              <FiFolder size={13} className="text-muted flex-shrink-0" />
+                              <FiFolder
+                                size={13}
+                                className="text-muted flex-shrink-0"
+                              />
                               <span className="truncate">{project.name}</span>
                             </button>
                           ))
@@ -270,7 +299,8 @@ const SendMessage = ({
                 <div
                   className="relative"
                   onMouseEnter={() => {
-                    if (styleSubmenuTimer.current) clearTimeout(styleSubmenuTimer.current);
+                    if (styleSubmenuTimer.current)
+                      clearTimeout(styleSubmenuTimer.current);
                     setShowStyleSubmenu(true);
                   }}
                   onMouseLeave={() => {
@@ -287,9 +317,14 @@ const SendMessage = ({
                     <FiType size={14} className="text-muted flex-shrink-0" />
                     <span className="flex-1 text-left">Use style</span>
                     {responseStyle !== 'Normal' && (
-                      <span className="text-xs text-accent mr-1">{responseStyle}</span>
+                      <span className="text-xs text-accent mr-1">
+                        {responseStyle}
+                      </span>
                     )}
-                    <FiChevronRight size={13} className="text-muted flex-shrink-0" />
+                    <FiChevronRight
+                      size={13}
+                      className="text-muted flex-shrink-0"
+                    />
                   </button>
 
                   {showStyleSubmenu && (
@@ -323,7 +358,9 @@ const SendMessage = ({
           {activeProject && (
             <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-accent/10 border border-accent/20 text-accent flex-shrink-0">
               <FiFolder size={12} />
-              <span className="text-xs max-w-[72px] truncate">{activeProject.name}</span>
+              <span className="text-xs max-w-[72px] truncate">
+                {activeProject.name}
+              </span>
               {!disableProjectPicker && (
                 <button
                   type="button"

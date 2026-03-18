@@ -1,13 +1,7 @@
 'use client';
 import { FC, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import {
-  FiArrowLeft,
-  FiEdit2,
-  FiFolder,
-  FiTrash2,
-  FiX,
-} from 'react-icons/fi';
+import { FiArrowLeft, FiEdit2, FiFolder, FiTrash2, FiX } from 'react-icons/fi';
 import { useUpdateConversationProjectMutation } from '@/services/chatApi';
 import { useGetProjectsQuery } from '@/services/projectApi';
 
