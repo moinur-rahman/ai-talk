@@ -12,6 +12,7 @@ import { CurrentUser } from '../../../common/decorators/current-user.decorator.j
 import type { SessionUser } from '../../../common/decorators/current-user.decorator.js';
 import { ConversationService } from './conversation.service.js';
 import { UpdateConversationTitleDto } from './dto/update-conversation-title.dto.js';
+import { UpdateConversationProjectDto } from './dto/update-conversation-project.dto.js';
 import { GetConversationsQueryDto } from './dto/get-conversations-query.dto.js';
 import { SearchConversationsQueryDto } from './dto/search-conversations-query.dto.js';
 import { CreateConversationDto } from './dto/create-conversation.dto.js';
@@ -86,5 +87,19 @@ export class ConversationController {
   ) {
     await this.conversationService.updateTitle(conversationId, body.title);
     return { message: 'Conversation title updated successfully' };
+  }
+
+  @Patch(':conversationId/project')
+  async updateProject(
+    @CurrentUser() user: SessionUser,
+    @Param('conversationId') conversationId: string,
+    @Body() body: UpdateConversationProjectDto,
+  ) {
+    await this.conversationService.updateProject(
+      conversationId,
+      user.id,
+      body.projectId ?? null,
+    );
+    return { message: 'Conversation project updated successfully' };
   }
 }

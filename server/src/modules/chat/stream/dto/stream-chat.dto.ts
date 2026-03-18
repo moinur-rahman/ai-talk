@@ -15,4 +15,8 @@ export class StreamChatDto {
   @IsString({ each: true })
   @IsOptional()
   fileIds?: string[];
+
+  @IsString()
+  @IsOptional()
+  responseStyle?: string;
 }

@@ -5,12 +5,28 @@ import { FiChevronDown } from 'react-icons/fi';
 import ChatHistory from '@/components/chat/ChatHistory';
 import SendMessage from '@/components/chat/SendMessage';
 import { useGetChatHistoryQuery } from '@/services/chatApi';
+import { useSelector } from 'react-redux';
+import { RootState } from '@/redux/store';
 
 const Chat = () => {
   const { conversationId } = useParams<{ conversationId: string }>();
-  const { data, isLoading } = useGetChatHistoryQuery(conversationId);
-  const project = data?.project;
-  const title = data?.title;
+
+  const newConversationId = useSelector(
+    (state: RootState) => state.chat.newConversationId,
+  );
+  const newConversationTitle = useSelector(
+    (state: RootState) => state.chat.newConversationTitle,
+  );
+  const newConversationProject = useSelector(
+    (state: RootState) => state.chat.newConversationProject,
+  );
+  const isNew = newConversationId === conversationId;
+
+  const { data, isLoading } = useGetChatHistoryQuery(conversationId, {
+    skip: isNew,
+  });
+  const project = isNew ? newConversationProject : (data?.project ?? null);
+  const title = isNew ? newConversationTitle : (data?.title ?? null);
 
   return (
     <main className="flex-1 flex flex-col h-full relative">
@@ -29,7 +45,7 @@ const Chat = () => {
               </>
             )}
             <button className="flex items-center gap-1 min-w-0 group">
-              {isLoading ? (
+              {isLoading && !isNew ? (
                 <span className="h-3.5 w-32 bg-border rounded animate-pulse inline-block" />
               ) : (
                 <span className="text-sm font-medium text-body truncate">
@@ -48,7 +64,7 @@ const Chat = () => {
           <ChatHistory />
         </div>
         <div className="w-full bg-surface px-4 pb-4 pt-2 flex justify-center">
-          <SendMessage />
+          <SendMessage currentProject={data?.project ?? null} />
         </div>
       </div>
     </main>

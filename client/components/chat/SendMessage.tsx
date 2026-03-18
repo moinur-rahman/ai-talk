@@ -1,18 +1,51 @@
 'use client';
 import { useRouter } from 'next/navigation';
 import { useState, FormEvent, useEffect, useRef, useCallback } from 'react';
-import { FiPaperclip, FiSend, FiMic, FiMicOff, FiFileText } from 'react-icons/fi';
+import {
+  FiPaperclip,
+  FiSend,
+  FiMic,
+  FiMicOff,
+  FiFileText,
+  FiPlus,
+  FiFolder,
+  FiType,
+  FiChevronRight,
+  FiCheck,
+} from 'react-icons/fi';
 import { useChat } from '@/contexts/ChatContext';
 import { FaStop } from 'react-icons/fa';
 import { useUploadFileMutation } from '@/services/fileApi';
-import { FileMetadata } from '@/types/chat';
+import { useUpdateConversationProjectMutation } from '@/services/chatApi';
+import { useGetProjectsQuery } from '@/services/projectApi';
+import { FileMetadata, Project } from '@/types/chat';
 import Image from 'next/image';
 import ImageModal from '@/components/common/ImageModal';
 import ProviderDropdown from './ProviderDropdown';
 import ModelDropdown from './ModelDropdown';
 import ReasoningToggle from './ReasoningToggle';
+import { useAppDispatch, useAppSelector } from '@/redux/hooks';
+import { setResponseStyle } from '@/redux/slices/modelSlice';
 
-const SendMessage = ({ defaultRows = 1 }: { defaultRows?: number }) => {
+const RESPONSE_STYLES = [
+  'Normal',
+  'Learning',
+  'Concise',
+  'Explanatory',
+  'Formal',
+];
+
+interface SendMessageProps {
+  defaultRows?: number;
+  currentProject?: { id: string; name: string } | null;
+  disableProjectPicker?: boolean;
+}
+
+const SendMessage = ({
+  defaultRows = 1,
+  currentProject,
+  disableProjectPicker = false,
+}: SendMessageProps) => {
   const router = useRouter();
 
   const {
@@ -23,6 +56,9 @@ const SendMessage = ({ defaultRows = 1 }: { defaultRows?: number }) => {
     stopStream,
     conversationId,
   } = useChat();
+
+  const dispatch = useAppDispatch();
+  const responseStyle = useAppSelector((state) => state.model.responseStyle);
 
   const [prompt, setPrompt] = useState('');
   const [filePreviews, setFilePreviews] = useState<
@@ -35,9 +71,41 @@ const SendMessage = ({ defaultRows = 1 }: { defaultRows?: number }) => {
   const [isListening, setIsListening] = useState(false);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
 
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [showStyleSubmenu, setShowStyleSubmenu] = useState(false);
+  const [showProjectSubmenu, setShowProjectSubmenu] = useState(false);
+  const styleSubmenuTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const projectSubmenuTimer = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
+  const [pendingProject, setPendingProject] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  const [updateProject] = useUpdateConversationProjectMutation();
+  const { data: projects = [], isLoading: isLoadingProjects } =
+    useGetProjectsQuery();
+
+  // Active project: for existing convs use prop; for new convs use pending state
+  const activeProject = conversationId ? currentProject : pendingProject;
+
   const [uploadFile] = useUploadFileMutation();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setIsMenuOpen(false);
+        setShowStyleSubmenu(false);
+        setShowProjectSubmenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   useEffect(() => {
     const textarea = textAreaRef.current;
@@ -90,6 +158,24 @@ const SendMessage = ({ defaultRows = 1 }: { defaultRows?: number }) => {
     setIsListening(true);
   }, [isListening]);
 
+  const handleSelectProject = async (project: { id: string; name: string }) => {
+    setIsMenuOpen(false);
+    setShowProjectSubmenu(false);
+    if (conversationId) {
+      await updateProject({ conversationId, projectId: project.id });
+    } else {
+      setPendingProject(project);
+    }
+  };
+
+  const handleRemoveProject = async () => {
+    if (conversationId) {
+      await updateProject({ conversationId, projectId: null });
+    } else {
+      setPendingProject(null);
+    }
+  };
+
   const handleGenerateText = async (e: FormEvent) => {
     e.preventDefault();
 
@@ -98,15 +184,19 @@ const SendMessage = ({ defaultRows = 1 }: { defaultRows?: number }) => {
     }
 
     try {
+      const effectiveProject = pendingProject ?? currentProject ?? undefined;
       const newConversationId = await sendMessage({
         prompt: prompt,
         attachments:
           uploadedAttachments.length > 0 ? uploadedAttachments : undefined,
+        projectId: effectiveProject?.id,
+        project: effectiveProject ?? undefined,
       });
 
       setPrompt('');
       setUploadedAttachments([]);
       setFilePreviews([]);
+      setPendingProject(null);
 
       if (newConversationId && !conversationId) {
         router.push(`/chat/${newConversationId}`);
@@ -263,14 +353,192 @@ const SendMessage = ({ defaultRows = 1 }: { defaultRows?: number }) => {
         />
 
         <div className="flex items-center gap-1 mt-1 pt-1 border-t border-border/50">
-          <button
-            type="button"
-            className="p-2 text-muted hover:text-accent hover:bg-accent/10 rounded-lg transition-all duration-150 flex-shrink-0"
-            onClick={handleFileClick}
-            aria-label="Attach File"
-          >
-            <FiPaperclip size={17} />
-          </button>
+          {/* + button with menu */}
+          <div className="relative flex-shrink-0" ref={menuRef}>
+            <button
+              type="button"
+              onClick={() => setIsMenuOpen((v) => !v)}
+              className="p-2 text-muted hover:text-accent hover:bg-accent/10 rounded-lg transition-all duration-150"
+              aria-label="More options"
+            >
+              <FiPlus size={17} />
+            </button>
+
+            {isMenuOpen && (
+              <div className="absolute bottom-full mb-2 left-0 bg-surface-elevated border border-border rounded-xl shadow-xl z-50 py-1 w-52 overflow-visible">
+                {/* Add files */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleFileClick();
+                    setIsMenuOpen(false);
+                  }}
+                  className="flex items-center gap-3 w-full px-3 py-2 text-sm text-body hover:bg-surface-overlay transition-colors"
+                >
+                  <FiPaperclip size={14} className="text-muted flex-shrink-0" />
+                  Add files or photos
+                </button>
+
+                {/* Add to project — hover submenu */}
+                {!disableProjectPicker && (
+                  <div
+                    className="relative"
+                    onMouseEnter={() => {
+                      if (projectSubmenuTimer.current)
+                        clearTimeout(projectSubmenuTimer.current);
+                      setShowProjectSubmenu(true);
+                    }}
+                    onMouseLeave={() => {
+                      projectSubmenuTimer.current = setTimeout(
+                        () => setShowProjectSubmenu(false),
+                        150,
+                      );
+                    }}
+                  >
+                    <button
+                      type="button"
+                      className="flex items-center gap-3 w-full px-3 py-2 text-sm text-body hover:bg-surface-overlay transition-colors"
+                    >
+                      <FiFolder
+                        size={14}
+                        className="text-muted flex-shrink-0"
+                      />
+                      <span className="flex-1 text-left">Add to project</span>
+                      <FiChevronRight
+                        size={13}
+                        className="text-muted flex-shrink-0"
+                      />
+                    </button>
+
+                    {showProjectSubmenu && (
+                      <div className="absolute left-full top-0 ml-1 bg-surface-elevated border border-border rounded-xl shadow-xl py-1 w-56 z-50 max-h-60 overflow-y-auto">
+                        {isLoadingProjects ? (
+                          <p className="text-xs text-muted px-3 py-2">
+                            Loading...
+                          </p>
+                        ) : projects.length === 0 ? (
+                          <p className="text-xs text-muted px-3 py-2">
+                            No projects found.
+                          </p>
+                        ) : (
+                          projects.map((project: Project) => (
+                            <button
+                              key={project.id}
+                              type="button"
+                              onClick={() => handleSelectProject(project)}
+                              className="flex items-center gap-2.5 w-full px-3 py-2 text-sm text-body hover:bg-surface-overlay transition-colors"
+                            >
+                              <FiCheck
+                                size={13}
+                                className={`flex-shrink-0 ${activeProject?.id === project.id ? 'text-accent' : 'opacity-0'}`}
+                              />
+                              <FiFolder
+                                size={13}
+                                className="text-muted flex-shrink-0"
+                              />
+                              <span className="truncate">{project.name}</span>
+                            </button>
+                          ))
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Use style — hover submenu */}
+                <div
+                  className="relative"
+                  onMouseEnter={() => {
+                    if (styleSubmenuTimer.current)
+                      clearTimeout(styleSubmenuTimer.current);
+                    setShowStyleSubmenu(true);
+                  }}
+                  onMouseLeave={() => {
+                    styleSubmenuTimer.current = setTimeout(
+                      () => setShowStyleSubmenu(false),
+                      150,
+                    );
+                  }}
+                >
+                  <button
+                    type="button"
+                    className="flex items-center gap-3 w-full px-3 py-2 text-sm text-body hover:bg-surface-overlay transition-colors"
+                  >
+                    <FiType size={14} className="text-muted flex-shrink-0" />
+                    <span className="flex-1 text-left">Use style</span>
+                    {responseStyle !== 'Normal' && (
+                      <span className="text-xs text-accent mr-1">
+                        {responseStyle}
+                      </span>
+                    )}
+                    <FiChevronRight
+                      size={13}
+                      className="text-muted flex-shrink-0"
+                    />
+                  </button>
+
+                  {showStyleSubmenu && (
+                    <div className="absolute left-full top-0 ml-1 bg-surface-elevated border border-border rounded-xl shadow-xl py-1 w-44 z-50">
+                      {RESPONSE_STYLES.map((style) => (
+                        <button
+                          key={style}
+                          type="button"
+                          onClick={() => {
+                            dispatch(setResponseStyle(style));
+                            setIsMenuOpen(false);
+                            setShowStyleSubmenu(false);
+                          }}
+                          className="flex items-center gap-3 w-full px-3 py-2 text-sm text-body hover:bg-surface-overlay transition-colors"
+                        >
+                          <FiCheck
+                            size={13}
+                            className={`flex-shrink-0 ${responseStyle === style ? 'text-accent' : 'opacity-0'}`}
+                          />
+                          {style}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Active project badge */}
+          {activeProject && (
+            <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-accent/10 border border-accent/20 text-accent flex-shrink-0">
+              <FiFolder size={12} />
+              <span className="text-xs max-w-[72px] truncate">
+                {activeProject.name}
+              </span>
+              {!disableProjectPicker && (
+                <button
+                  type="button"
+                  onClick={handleRemoveProject}
+                  className="text-xs leading-none hover:text-accent-hover ml-0.5"
+                  aria-label="Remove project"
+                >
+                  ×
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* Active style badge */}
+          {responseStyle !== 'Normal' && (
+            <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-accent/10 border border-accent/20 text-accent flex-shrink-0">
+              <FiType size={12} />
+              <span className="text-xs">{responseStyle}</span>
+              <button
+                type="button"
+                onClick={() => dispatch(setResponseStyle('Normal'))}
+                className="text-xs leading-none hover:text-accent-hover ml-0.5"
+                aria-label="Clear style"
+              >
+                ×
+              </button>
+            </div>
+          )}
 
           <div className="flex-1" />
 

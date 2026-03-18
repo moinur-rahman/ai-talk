@@ -5,12 +5,14 @@ interface ModelState {
   selectedModel: Model | null;
   selectedProvider: Provider | null;
   reasoningEnabled: boolean;
+  responseStyle: string;
 }
 
 const initialState: ModelState = {
   selectedModel: null,
   selectedProvider: null,
   reasoningEnabled: false,
+  responseStyle: 'Normal',
 };
 
 export const modelSlice = createSlice({
@@ -26,9 +28,16 @@ export const modelSlice = createSlice({
     setReasoningEnabled: (state, action: PayloadAction<boolean>) => {
       state.reasoningEnabled = action.payload;
     },
+    setResponseStyle: (state, action: PayloadAction<string>) => {
+      state.responseStyle = action.payload;
+    },
   },
 });
 
-export const { setSelectedModel, setSelectedProvider, setReasoningEnabled } =
-  modelSlice.actions;
+export const {
+  setSelectedModel,
+  setSelectedProvider,
+  setReasoningEnabled,
+  setResponseStyle,
+} = modelSlice.actions;
 export default modelSlice.reducer;

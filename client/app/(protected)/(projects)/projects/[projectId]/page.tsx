@@ -141,7 +141,13 @@ const ProjectDetailPage: FC = () => {
 
             {/* New conversation prompt */}
             <div className="mb-8 [&>div]:max-w-none">
-              <SendMessage defaultRows={3} />
+              <SendMessage
+                defaultRows={3}
+                currentProject={
+                  project ? { id: project.id, name: project.name } : null
+                }
+                disableProjectPicker
+              />
             </div>
 
             {/* Conversations */}

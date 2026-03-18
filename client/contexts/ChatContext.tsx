@@ -12,6 +12,8 @@ import {
   updateLastMessage,
   addMessage,
   setNewConversationId,
+  setNewConversationTitle,
+  setNewConversationProject,
   removeConversation,
 } from '@/redux/slices/chatSlice';
 import { chatApi } from '@/services/chatApi';
@@ -24,6 +26,8 @@ import { getCsrfTokenFromCookie } from '@/utils/getCsrfTokenFromCookie';
 interface ISendMessageParams {
   prompt: string;
   attachments?: FileMetadata[];
+  projectId?: string;
+  project?: { id: string; name: string };
 }
 
 interface IChatContext {
@@ -69,6 +73,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
   const previousConversationIdRef = useRef<string | undefined>(undefined);
   const pendingCleanupRef = useRef<Set<string>>(new Set());
   const activeStreamsRef = useRef<Record<string, AbortController>>({});
+  const effectiveProjectIdRef = useRef<string | undefined>(undefined);
 
   const dispatch = useDispatch<AppDispatch>();
 
@@ -82,6 +87,10 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
 
   const reasoningEnabled = useSelector(
     (state: RootState) => state.model.reasoningEnabled,
+  );
+
+  const responseStyle = useSelector(
+    (state: RootState) => state.model.responseStyle,
   );
 
   useEffect(() => {
@@ -130,10 +139,6 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
           setStreaming((prev) => ({ ...prev, [convId]: false }));
           setReasoningStreaming((prev) => ({ ...prev, [convId]: false }));
 
-          dispatch(
-            chatApi.util.invalidateTags([{ type: 'ChatHistory', id: convId }]),
-          );
-
           if (
             pendingCleanupRef.current.has(convId) &&
             convId !== previousConversationIdRef.current
@@ -152,10 +157,13 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
     } else if (event.type === 'conversation-title') {
       if (!convId || !event.title) return;
 
-      if (projectId) {
+      dispatch(setNewConversationTitle(event.title));
+
+      const effectiveProjId = effectiveProjectIdRef.current;
+      if (effectiveProjId) {
         dispatch(
           chatApi.util.invalidateTags([
-            { type: 'ProjectConversations', id: projectId },
+            { type: 'ProjectConversations', id: effectiveProjId },
           ]),
         );
       } else {
@@ -178,6 +186,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
                   id: convId,
                   title: event.title!,
                   updatedAt: new Date().toISOString(),
+                  projectId: null,
                 });
               }
             }
@@ -207,6 +216,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
     params: ISendMessageParams,
     modelId: string,
     enableReasoning: boolean,
+    style: string,
   ) => {
     try {
       const csrfToken = getCsrfTokenFromCookie();
@@ -226,6 +236,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
             fileIds: params.attachments
               ? params.attachments.map((f) => f.id)
               : [],
+            responseStyle: style,
           }),
           signal: activeStreamsRef.current[currentId]?.signal,
         },
@@ -289,9 +300,12 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
       return;
     }
 
+    const effectiveProjId = params.projectId ?? projectId;
+    effectiveProjectIdRef.current = effectiveProjId;
+
     try {
       if (!currentId) {
-        currentId = await createConversation(projectId);
+        currentId = await createConversation(effectiveProjId);
         if (!currentId) {
           setError((prev) => ({
             ...prev,
@@ -301,10 +315,11 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
           return undefined;
         }
         dispatch(setNewConversationId(currentId));
+        dispatch(setNewConversationProject(params.project ?? null));
 
         // Optimistically add to sidebar immediately using the user's message
         // as the initial title. It will be replaced once the AI title arrives.
-        if (!projectId) {
+        if (!effectiveProjId) {
           const prompt = params.prompt.trim();
           const initialTitle =
             prompt.length > 60 ? `${prompt.slice(0, 60)}…` : prompt;
@@ -318,6 +333,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
                     id: currentId!,
                     title: initialTitle,
                     updatedAt: new Date().toISOString(),
+                    projectId: null,
                   });
                 }
               },
@@ -361,6 +377,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
         params,
         selectedModel.id,
         selectedModel.hasReasoning && reasoningEnabled,
+        responseStyle,
       );
 
       return currentId;

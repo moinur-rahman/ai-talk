@@ -64,6 +64,21 @@ export const chatApi = createApi({
         { type: 'ChatHistory', id: conversationId },
       ],
     }),
+    updateConversationProject: builder.mutation<
+      void,
+      { conversationId: string; projectId: string | null }
+    >({
+      query: ({ conversationId, projectId }) => ({
+        url: `/chats/conversations/${conversationId}/project`,
+        method: 'PATCH',
+        body: { projectId },
+      }),
+      invalidatesTags: (result, error, { conversationId }) => [
+        { type: 'ChatHistory', id: conversationId },
+        'Conversations',
+        'ProjectConversations',
+      ],
+    }),
     getProjectConversations: builder.query<ConversationsPage, string>({
       query: (projectId) => ({
         url: '/chats/conversations',
@@ -84,5 +99,6 @@ export const {
   useGetChatHistoryQuery,
   useDeleteConversationMutation,
   useDeleteAllConversationsMutation,
+  useUpdateConversationProjectMutation,
   useGetProjectConversationsQuery,
 } = chatApi;

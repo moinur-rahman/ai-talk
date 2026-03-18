@@ -113,6 +113,17 @@ export class ConversationService {
     await this.prisma.conversation.deleteMany({ where: { userId } });
   }
 
+  async updateProject(
+    conversationId: string,
+    userId: string,
+    projectId: string | null,
+  ) {
+    await this.prisma.conversation.updateMany({
+      where: { id: conversationId, userId },
+      data: { projectId },
+    });
+  }
+
   async updateTitle(conversationId: string, title: string) {
     await this.prisma.conversation.update({
       where: { id: conversationId },

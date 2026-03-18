@@ -4,11 +4,15 @@ import { Message } from '@/types/chat';
 interface ChatState {
   chatHistories: Record<string, Message[]>;
   newConversationId: string | null;
+  newConversationTitle: string | null;
+  newConversationProject: { id: string; name: string } | null;
 }
 
 const initialState: ChatState = {
   chatHistories: {},
   newConversationId: null,
+  newConversationTitle: null,
+  newConversationProject: null,
 };
 
 export const chatSlice = createSlice({
@@ -66,6 +70,21 @@ export const chatSlice = createSlice({
 
     setNewConversationId: (state, action: PayloadAction<string | null>) => {
       state.newConversationId = action.payload;
+      if (action.payload === null) {
+        state.newConversationTitle = null;
+        state.newConversationProject = null;
+      }
+    },
+
+    setNewConversationTitle: (state, action: PayloadAction<string | null>) => {
+      state.newConversationTitle = action.payload;
+    },
+
+    setNewConversationProject: (
+      state,
+      action: PayloadAction<{ id: string; name: string } | null>,
+    ) => {
+      state.newConversationProject = action.payload;
     },
 
     removeConversation: (state, action: PayloadAction<string>) => {
@@ -83,6 +102,8 @@ export const {
   updateLastMessage,
   loadChatHistory,
   setNewConversationId,
+  setNewConversationTitle,
+  setNewConversationProject,
   removeConversation,
 } = chatSlice.actions;
 export default chatSlice.reducer;

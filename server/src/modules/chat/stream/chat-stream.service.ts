@@ -58,7 +58,11 @@ export class ChatStreamService {
         ? await this.projectService.getProjectInstructions(String(projectId))
         : null;
 
-    const systemPrompt = this.buildSystemPrompt(userPrefs, projectInstructions);
+    const systemPrompt = this.buildSystemPrompt(
+      userPrefs,
+      projectInstructions,
+      dto.responseStyle,
+    );
 
     const { messages: chatHistory } =
       await this.messageService.getMessagesByConversationId(conversationId);
@@ -168,6 +172,7 @@ export class ChatStreamService {
       customInstructions: string | null;
     },
     projectInstructions: string | null,
+    responseStyle?: string,
   ): string | undefined {
     const parts: string[] = [];
 
@@ -188,6 +193,19 @@ export class ChatStreamService {
 
     if (projectInstructions) {
       parts.push(`[Project instructions]\n${projectInstructions}`);
+    }
+
+    const styleInstructions: Record<string, string> = {
+      Learning:
+        'Explain concepts clearly and build understanding step by step.',
+      Concise: 'Be concise. Keep responses brief and to the point.',
+      Explanatory:
+        'Provide thorough, detailed explanations with examples where helpful.',
+      Formal: 'Use a professional, formal tone in your responses.',
+    };
+    const styleInstruction = responseStyle && styleInstructions[responseStyle];
+    if (styleInstruction) {
+      parts.push(`[Response style]\n${styleInstruction}`);
     }
 
     return parts.length > 0 ? parts.join('\n\n') : undefined;

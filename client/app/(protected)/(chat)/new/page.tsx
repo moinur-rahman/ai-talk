@@ -31,8 +31,6 @@ const NewChat = () => {
   const firstName = (user?.displayName || user?.name || '').split(' ')[0];
 
   const heading = useMemo(() => {
-    // ~50% chance of a time-based greeting (with name if available),
-    // ~50% chance of a generic message
     const useGreeting = Math.random() < 0.5;
     if (useGreeting) {
       const greeting = getTimeGreeting();
@@ -56,7 +54,10 @@ const NewChat = () => {
       />
 
       <div className="relative z-10 w-full max-w-[52rem] flex flex-col items-center gap-6">
-        <h1 className="text-3xl font-bold text-primary tracking-tight">
+        <h1
+          className="text-3xl font-bold text-primary tracking-tight"
+          suppressHydrationWarning
+        >
           {heading}
         </h1>
 
