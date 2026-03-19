@@ -9,8 +9,6 @@ import {
 } from '../llm.prompts.js';
 import { fetchBase64FromPresignedUrl } from '../llm.utils.js';
 
-const REASONING_MODEL_PATTERNS = [/thinking/i, /flash-thinking/i];
-
 @Injectable()
 export class GeminiService {
   private readonly logger = new Logger(GeminiService.name);
@@ -64,22 +62,12 @@ export class GeminiService {
     }
   }
 
-  async listModels(): Promise<
-    { name: string; description: string; hasReasoning: boolean }[]
-  > {
+  async listModels(): Promise<{ name: string; description: string }[]> {
     try {
-      const models: {
-        name: string;
-        description: string;
-        hasReasoning: boolean;
-      }[] = [];
+      const models: { name: string; description: string }[] = [];
       for await (const model of await this.client.models.list()) {
         const id = (model.name ?? '').replace(/^models\//, '');
-        models.push({
-          name: id,
-          description: model.displayName ?? '',
-          hasReasoning: REASONING_MODEL_PATTERNS.some((p) => p.test(id)),
-        });
+        models.push({ name: id, description: model.displayName ?? '' });
       }
       return models;
     } catch (error) {

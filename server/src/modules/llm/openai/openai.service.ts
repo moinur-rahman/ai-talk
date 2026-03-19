@@ -84,23 +84,11 @@ export class OpenAIService {
     }
   }
 
-  async listModels(): Promise<
-    { name: string; description: string; hasReasoning: boolean }[]
-  > {
+  async listModels(): Promise<{ name: string; description: string }[]> {
     try {
-      const models: {
-        name: string;
-        description: string;
-        hasReasoning: boolean;
-      }[] = [];
+      const models: { name: string; description: string }[] = [];
       for await (const model of this.client.models.list()) {
-        if (model.owned_by === 'openai' && /^(gpt-|o\d)/.test(model.id)) {
-          models.push({
-            name: model.id,
-            description: '',
-            hasReasoning: /^o\d(-|$)/.test(model.id),
-          });
-        }
+        models.push({ name: model.id, description: '' });
       }
       return models;
     } catch (error) {

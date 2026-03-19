@@ -13,13 +13,6 @@ import {
 } from '../llm.prompts.js';
 import { fetchBase64FromPresignedUrl } from '../llm.utils.js';
 
-const REASONING_MODEL_PATTERNS = [
-  /deepseek\/deepseek-r/i,
-  /qwen\/qwq/i,
-  /google\/gemini.*thinking/i,
-  /anthropic\/claude.*3-7/i,
-];
-
 @Injectable()
 export class OpenRouterService {
   private readonly logger = new Logger(OpenRouterService.name);
@@ -87,21 +80,11 @@ export class OpenRouterService {
     }
   }
 
-  async listModels(): Promise<
-    { name: string; description: string; hasReasoning: boolean }[]
-  > {
+  async listModels(): Promise<{ name: string; description: string }[]> {
     try {
-      const models: {
-        name: string;
-        description: string;
-        hasReasoning: boolean;
-      }[] = [];
+      const models: { name: string; description: string }[] = [];
       for await (const model of this.client.models.list()) {
-        models.push({
-          name: model.id,
-          description: '',
-          hasReasoning: REASONING_MODEL_PATTERNS.some((p) => p.test(model.id)),
-        });
+        models.push({ name: model.id, description: '' });
       }
       return models;
     } catch (error) {

@@ -4,10 +4,12 @@ import { FiPlus, FiRefreshCw, FiSearch } from 'react-icons/fi';
 import {
   useGetAdminOverviewQuery,
   useSyncModelsMutation,
+  type AdminModel,
   type SyncResult,
 } from '@/services/modelApi';
 import ProviderCard from '@/components/admin/ProviderCard';
 import CreateModelModal from '@/components/admin/CreateModelModal';
+import EditModelDrawer from '@/components/admin/EditModelDrawer';
 
 const ModelsPage = () => {
   const { data: providers, isLoading } = useGetAdminOverviewQuery();
@@ -15,6 +17,7 @@ const ModelsPage = () => {
   const [syncResults, setSyncResults] = useState<SyncResult[] | null>(null);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [showCreate, setShowCreate] = useState(false);
+  const [editingModel, setEditingModel] = useState<AdminModel | null>(null);
   const [search, setSearch] = useState('');
 
   const filteredProviders = useMemo(() => {
@@ -139,6 +142,7 @@ const ModelsPage = () => {
               provider={provider}
               isExpanded={!!search.trim() || expanded.has(provider.id)}
               onToggle={() => toggleExpand(provider.id)}
+              onEditModel={setEditingModel}
             />
           ))}
         </div>
@@ -148,6 +152,13 @@ const ModelsPage = () => {
         <CreateModelModal
           providers={providers}
           onClose={() => setShowCreate(false)}
+        />
+      )}
+
+      {editingModel && (
+        <EditModelDrawer
+          model={editingModel}
+          onClose={() => setEditingModel(null)}
         />
       )}
     </div>

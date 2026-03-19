@@ -21,7 +21,6 @@ import {
 type SyncModelData = {
   name: string;
   description: string;
-  hasReasoning: boolean;
 };
 
 type ProviderSyncResult =
@@ -261,7 +260,6 @@ export class ModelService implements OnApplicationBootstrap {
             data: {
               name: model.name,
               description: model.description,
-              hasReasoning: model.hasReasoning,
               isDeprecated: false,
               providerId,
             },

@@ -1,16 +1,18 @@
 'use client';
 import { FiChevronDown, FiChevronUp, FiCpu } from 'react-icons/fi';
-import { type AdminProvider } from '@/services/modelApi';
+import { type AdminProvider, type AdminModel } from '@/services/modelApi';
 import ModelRow from './ModelRow';
 
 const ProviderCard = ({
   provider,
   isExpanded,
   onToggle,
+  onEditModel,
 }: {
   provider: AdminProvider;
   isExpanded: boolean;
   onToggle: () => void;
+  onEditModel: (model: AdminModel) => void;
 }) => {
   const enabledCount = provider.models.filter((m) => m.isEnabled).length;
   const deprecatedCount = provider.models.filter((m) => m.isDeprecated).length;
@@ -54,7 +56,7 @@ const ProviderCard = ({
           ) : (
             <div className="divide-y divide-[#1e2d3d]">
               {provider.models.map((model) => (
-                <ModelRow key={model.id} model={model} />
+                <ModelRow key={model.id} model={model} onEdit={onEditModel} />
               ))}
             </div>
           )}

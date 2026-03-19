@@ -13,8 +13,6 @@ import {
 } from '../llm.prompts.js';
 import { fetchBase64FromPresignedUrl } from '../llm.utils.js';
 
-const REASONING_MODEL_PATTERNS = [/glm-z1/i, /glm.*think/i];
-
 @Injectable()
 export class ZaiService {
   private readonly logger = new Logger(ZaiService.name);
@@ -73,21 +71,11 @@ export class ZaiService {
     }
   }
 
-  async listModels(): Promise<
-    { name: string; description: string; hasReasoning: boolean }[]
-  > {
+  async listModels(): Promise<{ name: string; description: string }[]> {
     try {
-      const models: {
-        name: string;
-        description: string;
-        hasReasoning: boolean;
-      }[] = [];
+      const models: { name: string; description: string }[] = [];
       for await (const model of this.client.models.list()) {
-        models.push({
-          name: model.id,
-          description: '',
-          hasReasoning: REASONING_MODEL_PATTERNS.some((p) => p.test(model.id)),
-        });
+        models.push({ name: model.id, description: '' });
       }
       return models;
     } catch (error) {
