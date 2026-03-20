@@ -13,6 +13,7 @@ import {
   FiType,
 } from 'react-icons/fi';
 import { FaStop } from 'react-icons/fa';
+import { toast } from 'sonner';
 import { useChat } from '@/contexts/ChatContext';
 import { useUpdateConversationProjectMutation } from '@/services/chatApi';
 import { useGetProjectsQuery } from '@/services/projectApi';
@@ -119,17 +120,29 @@ const SendMessage = ({
     setIsMenuOpen(false);
     setShowProjectSubmenu(false);
     if (conversationId) {
-      await updateProject({ conversationId, projectId: project.id });
+      const result = await updateProject({ conversationId, projectId: project.id });
+      if ('error' in result) {
+        toast.error('Failed to add to project');
+      } else {
+        toast.success(`Added to ${project.name}`);
+      }
     } else {
       setPendingProject(project);
+      toast.success(`Added to ${project.name}`);
     }
   };
 
   const handleRemoveProject = async () => {
     if (conversationId) {
-      await updateProject({ conversationId, projectId: null });
+      const result = await updateProject({ conversationId, projectId: null });
+      if ('error' in result) {
+        toast.error('Failed to remove from project');
+      } else {
+        toast.success('Removed from project');
+      }
     } else {
       setPendingProject(null);
+      toast.success('Removed from project');
     }
   };
 

@@ -2,6 +2,7 @@
 import { FC, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { FiArrowLeft, FiEdit2, FiFolder, FiTrash2, FiX } from 'react-icons/fi';
+import { toast } from 'sonner';
 import { useUpdateConversationProjectMutation } from '@/services/chatApi';
 import { useGetProjectsQuery } from '@/services/projectApi';
 
@@ -43,7 +44,15 @@ const ConversationContextMenu: FC<ContextMenuProps> = ({
   const adjustedX = Math.min(pos.x, window.innerWidth - menuWidth - 8);
 
   const handleProjectSelect = async (newProjectId: string | null) => {
-    await updateProject({ conversationId, projectId: newProjectId });
+    const result = await updateProject({ conversationId, projectId: newProjectId });
+    if ('error' in result) {
+      toast.error('Failed to update project');
+    } else if (newProjectId === null) {
+      toast.success('Removed from project');
+    } else {
+      const project = projects?.find((p) => p.id === newProjectId);
+      toast.success(`Added to ${project?.name ?? 'project'}`);
+    }
     onClose();
   };
 
