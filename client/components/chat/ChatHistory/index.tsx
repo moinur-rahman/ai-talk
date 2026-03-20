@@ -5,7 +5,7 @@ import { UserMessage, AssistantMessage } from './MessageComponents';
 import { Message } from '@/types/chat';
 
 const ChatHistory = () => {
-  const { conversationId, reasoningStreaming } = useChat();
+  const { conversationId, reasoningStreaming, imageGenerating } = useChat();
   const { chatHistories } = useChatData(conversationId ?? '');
 
   if (!conversationId) {
@@ -40,7 +40,9 @@ const ChatHistory = () => {
                   mainContent={chat.mainContent}
                   reasoningContent={chat.reasoningContent}
                   attachments={chat.attachments}
+                  generatedImage={chat.generatedImage}
                   isProcessing={reasoningStreaming[conversationId]}
+                  isGeneratingImage={imageGenerating[conversationId] ?? false}
                 />
               );
             default:

@@ -78,6 +78,32 @@ export class FileService {
     }
   }
 
+  async uploadBuffer(
+    buffer: Buffer,
+    userId: string,
+    fileName: string,
+    mimeType: string,
+  ): Promise<string> {
+    const bucketName = DEFAULT_BUCKET;
+    await this.ensureBucketExists(bucketName);
+
+    const objectName = `${uuidv4()}-${fileName}`;
+    await this.seaweedfs.uploadFile(bucketName, objectName, buffer, mimeType);
+
+    const fileRecord = await this.prisma.file.create({
+      data: {
+        userId,
+        bucketName,
+        fileName,
+        objectName,
+        mimeType,
+        fileSize: BigInt(buffer.length),
+      },
+    });
+
+    return fileRecord.id;
+  }
+
   async downloadFileById(id: string): Promise<{
     stream: Readable;
     size: number;

@@ -97,7 +97,7 @@ export class OllamaService {
     }
   }
 
-async generateTitle(text: string, model: string): Promise<string> {
+  async generateTitle(text: string, model: string): Promise<string> {
     const response = await this.client.chat({
       model,
       messages: [

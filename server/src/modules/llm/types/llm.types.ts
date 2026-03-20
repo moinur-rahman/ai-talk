@@ -21,10 +21,10 @@ export interface LLMRequest {
   systemPrompt?: string;
 }
 
-export type TokenType = 'mainContent' | 'reasoningContent';
+export type TokenType = 'mainContent' | 'reasoningContent' | 'partialImage';
 
 export type TokenCallback = (
   token: string,
   tokenType: TokenType,
   isEnd: boolean,
-) => Promise<void>;
+) => void | Promise<void>;

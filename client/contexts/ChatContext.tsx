@@ -10,6 +10,7 @@ import {
 import { useDispatch, useSelector } from 'react-redux';
 import {
   updateLastMessage,
+  setLastMessageGeneratedImage,
   addMessage,
   setNewConversationId,
   setNewConversationTitle,
@@ -32,6 +33,7 @@ interface ISendMessageParams {
 interface IChatContext {
   streaming: Record<string, boolean>;
   reasoningStreaming: Record<string, boolean>;
+  imageGenerating: Record<string, boolean>;
   error: Record<string, string | null>;
   setError: (
     error: React.SetStateAction<Record<string, string | null>>,
@@ -66,6 +68,9 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
   const [streaming, setStreaming] = useState<Record<string, boolean>>({});
   const [error, setError] = useState<Record<string, string | null>>({});
   const [reasoningStreaming, setReasoningStreaming] = useState<
+    Record<string, boolean>
+  >({});
+  const [imageGenerating, setImageGenerating] = useState<
     Record<string, boolean>
   >({});
 
@@ -124,6 +129,8 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
       isEnd?: boolean;
       title?: string;
       message?: string;
+      imageData?: string;
+      presignedUrl?: string;
       conversationId?: string;
     },
     currentConversationId: string,
@@ -137,6 +144,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
         if (tokenType === 'mainContent') {
           setStreaming((prev) => ({ ...prev, [convId]: false }));
           setReasoningStreaming((prev) => ({ ...prev, [convId]: false }));
+          setImageGenerating((prev) => ({ ...prev, [convId]: false }));
 
           if (
             pendingCleanupRef.current.has(convId) &&
@@ -193,12 +201,29 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
         },
       );
       dispatch(result);
+    } else if (event.type === 'partial-image' && event.imageData) {
+      setImageGenerating((prev) => ({ ...prev, [convId]: true }));
+      dispatch(
+        setLastMessageGeneratedImage({
+          conversationId: convId,
+          imageData: `data:image/png;base64,${event.imageData}`,
+        }),
+      );
+    } else if (event.type === 'generated-image' && event.presignedUrl) {
+      setImageGenerating((prev) => ({ ...prev, [convId]: false }));
+      dispatch(
+        setLastMessageGeneratedImage({
+          conversationId: convId,
+          imageData: event.presignedUrl,
+        }),
+      );
     } else if (event.type === 'error') {
       const message = event.message ?? 'An error occurred';
       console.error(`Error for conversation ${convId}:`, message);
       setError((prev) => ({ ...prev, [convId]: message }));
       setStreaming((prev) => ({ ...prev, [convId]: false }));
       setReasoningStreaming((prev) => ({ ...prev, [convId]: false }));
+      setImageGenerating((prev) => ({ ...prev, [convId]: false }));
 
       if (
         pendingCleanupRef.current.has(convId) &&
@@ -405,6 +430,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
   const value = {
     streaming,
     reasoningStreaming,
+    imageGenerating,
     error,
     setError,
     sendMessage,

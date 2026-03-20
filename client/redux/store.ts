@@ -6,6 +6,7 @@ import { modelApi } from '@/services/modelApi';
 import { fileApi } from '@/services/fileApi';
 import { userApi } from '@/services/userApi';
 import { projectApi } from '@/services/projectApi';
+import { imageGenerationApi } from '@/services/imageGenerationApi';
 
 export const store = configureStore({
   reducer: {
@@ -16,6 +17,7 @@ export const store = configureStore({
     [fileApi.reducerPath]: fileApi.reducer,
     [userApi.reducerPath]: userApi.reducer,
     [projectApi.reducerPath]: projectApi.reducer,
+    [imageGenerationApi.reducerPath]: imageGenerationApi.reducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware()
@@ -23,7 +25,8 @@ export const store = configureStore({
       .concat(modelApi.middleware)
       .concat(fileApi.middleware)
       .concat(userApi.middleware)
-      .concat(projectApi.middleware),
+      .concat(projectApi.middleware)
+      .concat(imageGenerationApi.middleware),
 });
 
 export type RootState = ReturnType<typeof store.getState>;

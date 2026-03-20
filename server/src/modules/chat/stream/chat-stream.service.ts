@@ -130,6 +130,7 @@ export class ChatStreamService {
 
     let mainContentBuffer = '';
     let reasoningContentBuffer = '';
+    let finalImageBase64 = '';
 
     const streamPromise = this.llmService.streamResponse(
       providerName,
@@ -140,21 +141,20 @@ export class ChatStreamService {
         enableReasoning,
         systemPrompt,
       },
-      async (token: string, tokenType: TokenType, isEnd: boolean) => {
+      (token: string, tokenType: TokenType, isEnd: boolean) => {
         if (tokenType === 'mainContent') {
-          mainContentBuffer += token;
+          if (!isEnd) mainContentBuffer += token;
+          sendEvent({ type: 'token', token, tokenType, isEnd, conversationId });
         } else if (tokenType === 'reasoningContent') {
-          reasoningContentBuffer += token;
-        }
-
-        sendEvent({ type: 'token', token, tokenType, isEnd, conversationId });
-
-        if (tokenType === 'mainContent' && isEnd) {
-          if (mainContentBuffer || reasoningContentBuffer) {
-            await this.messageService.saveMessage({
-              mainContent: mainContentBuffer,
-              reasoningContent: reasoningContentBuffer || undefined,
-              senderType: SenderType.assistant,
+          if (!isEnd) reasoningContentBuffer += token;
+          sendEvent({ type: 'token', token, tokenType, isEnd, conversationId });
+        } else if (tokenType === 'partialImage') {
+          if (isEnd) {
+            finalImageBase64 = token;
+          } else {
+            sendEvent({
+              type: 'partial-image',
+              imageData: token,
               conversationId,
             });
           }
@@ -163,6 +163,43 @@ export class ChatStreamService {
     );
 
     await Promise.all([streamPromise, titlePromise]);
+
+    let generatedFileId: string | undefined;
+    if (finalImageBase64) {
+      try {
+        const imageBuffer = Buffer.from(finalImageBase64, 'base64');
+        generatedFileId = await this.fileService.uploadBuffer(
+          imageBuffer,
+          userId,
+          `generated-${Date.now()}.png`,
+          'image/png',
+        );
+        const [fileMeta] = await this.fileService.getMultipleFilesMetadata([
+          generatedFileId,
+        ]);
+        if (fileMeta?.presignedUrl) {
+          sendEvent({
+            type: 'generated-image',
+            presignedUrl: fileMeta.presignedUrl,
+            conversationId,
+          });
+        }
+      } catch (err: unknown) {
+        this.logger.error(
+          `Failed to upload generated image: ${err instanceof Error ? err.message : String(err)}`,
+        );
+      }
+    }
+
+    if (mainContentBuffer || reasoningContentBuffer || generatedFileId) {
+      await this.messageService.saveMessage({
+        mainContent: mainContentBuffer || undefined,
+        reasoningContent: reasoningContentBuffer || undefined,
+        senderType: SenderType.assistant,
+        conversationId,
+        fileIds: generatedFileId ? [generatedFileId] : undefined,
+      });
+    }
   }
 
   private buildSystemPrompt(

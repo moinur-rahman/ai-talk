@@ -79,7 +79,9 @@ export const chatApi = createApi({
       ) => {
         const applyTitlePatch = (draft: { pages: ConversationsPage[] }) => {
           for (const page of draft.pages) {
-            const conv = page.conversations.find((c) => c.id === conversationId);
+            const conv = page.conversations.find(
+              (c) => c.id === conversationId,
+            );
             if (conv) {
               conv.title = title;
               break;
@@ -88,13 +90,21 @@ export const chatApi = createApi({
         };
 
         const chatHistoryPatch = dispatch(
-          chatApi.util.updateQueryData('getChatHistory', conversationId, (draft) => {
-            draft.title = title;
-          }),
+          chatApi.util.updateQueryData(
+            'getChatHistory',
+            conversationId,
+            (draft) => {
+              draft.title = title;
+            },
+          ),
         );
 
         const conversationsPatch = dispatch(
-          chatApi.util.updateQueryData('getConversations', undefined, applyTitlePatch),
+          chatApi.util.updateQueryData(
+            'getConversations',
+            undefined,
+            applyTitlePatch,
+          ),
         );
 
         const projectIds = chatApi.util.selectCachedArgsForQuery(

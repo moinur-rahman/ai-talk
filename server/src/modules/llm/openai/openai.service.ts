@@ -48,12 +48,25 @@ export class OpenAIService {
           ? ({ effort: 'low', summary: 'auto' } as Reasoning)
           : null;
 
+      const tools: Parameters<typeof this.client.responses.create>[0]['tools'] =
+        [
+          {
+            type: 'image_generation',
+            model: 'gpt-image-1-mini',
+            size: '1024x1024',
+            quality: 'low',
+            partial_images: 2,
+          },
+        ];
+
       const stream = await this.client.responses.create(
-        { model: request.model, input, stream: true, reasoning },
+        { model: request.model, input, stream: true, reasoning, tools },
         { signal: abortController.signal },
       );
 
       let mainContentEnded = false;
+      let lastImageB64 = '';
+      let hasImageOutput = false;
 
       for await (const event of stream) {
         if (abortController.signal.aborted) break;
@@ -67,10 +80,26 @@ export class OpenAIService {
           await onToken(event.delta, 'reasoningContent', false);
         } else if (event.type === 'response.reasoning_summary_text.done') {
           await onToken('', 'reasoningContent', true);
+        } else if (
+          (event as { type: string }).type ===
+          'response.image_generation_call.partial_image'
+        ) {
+          const imageEvent = event as {
+            type: string;
+            partial_image_b64: string;
+            partial_image_index: number;
+          };
+          hasImageOutput = true;
+          lastImageB64 = imageEvent.partial_image_b64;
+          await onToken(lastImageB64, 'partialImage', false);
         }
       }
 
-      if (abortController.signal.aborted && !mainContentEnded) {
+      if (hasImageOutput && lastImageB64) {
+        await onToken(lastImageB64, 'partialImage', true);
+      }
+
+      if (!mainContentEnded) {
         await onToken('', 'mainContent', true);
       }
     } catch (error) {
@@ -110,6 +139,27 @@ export class OpenAIService {
     return response.choices[0]?.message?.content?.trim() ?? '';
   }
 
+  async generateImage(
+    prompt: string,
+    model: 'gpt-image-1' | 'gpt-image-1-mini',
+    size: '1024x1024' | '1536x1024' | '1024x1536',
+    quality: 'low' | 'medium' | 'high',
+  ): Promise<{ imageDataUrl: string }> {
+    const response = (await this.client.images.generate({
+      model,
+      prompt,
+      n: 1,
+      size,
+      quality,
+      stream: false,
+    } as Parameters<typeof this.client.images.generate>[0])) as {
+      data: { b64_json?: string }[];
+    };
+
+    const b64 = response.data[0]?.b64_json ?? '';
+    return { imageDataUrl: `data:image/png;base64,${b64}` };
+  }
+
   stopStream(conversationId: string): void {
     const abortController = this.activeStreams.get(conversationId);
     if (abortController) {
@@ -133,7 +183,7 @@ export class OpenAIService {
 
     const processedMessages = await Promise.all(
       messages.map(async (message) => {
-        if (message.attachments.length > 0) {
+        if (message.senderType === 'user' && message.attachments.length > 0) {
           const content = await this.processMessageWithFiles(message);
           return { role: message.senderType, content };
         }

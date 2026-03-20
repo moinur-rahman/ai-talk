@@ -44,7 +44,10 @@ const ConversationContextMenu: FC<ContextMenuProps> = ({
   const adjustedX = Math.min(pos.x, window.innerWidth - menuWidth - 8);
 
   const handleProjectSelect = async (newProjectId: string | null) => {
-    const result = await updateProject({ conversationId, projectId: newProjectId });
+    const result = await updateProject({
+      conversationId,
+      projectId: newProjectId,
+    });
     if ('error' in result) {
       toast.error('Failed to update project');
     } else if (newProjectId === null) {

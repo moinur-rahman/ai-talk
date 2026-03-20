@@ -10,6 +10,7 @@ import {
   FiChevronDown,
   FiChevronUp,
   FiCpu,
+  FiDownload,
 } from 'react-icons/fi';
 
 interface MessageProps {
@@ -236,14 +237,29 @@ export const UserMessage = ({ mainContent, attachments }: MessageProps) => {
   );
 };
 
+interface AssistantMessageProps extends MessageProps {
+  generatedImage?: string;
+  isGeneratingImage?: boolean;
+}
+
 export const AssistantMessage = ({
   mainContent,
   reasoningContent,
   attachments,
+  generatedImage,
   isProcessing = false,
-}: MessageProps) => {
+  isGeneratingImage = false,
+}: AssistantMessageProps) => {
+  const effectiveGeneratedImage =
+    generatedImage ??
+    attachments?.find((a) => a.mimeType?.startsWith('image/') && a.presignedUrl)
+      ?.presignedUrl;
+
   const imageFiles = attachments?.filter(
-    (file) => file.mimeType.startsWith('image/') && file.presignedUrl,
+    (file) =>
+      file.mimeType.startsWith('image/') &&
+      file.presignedUrl &&
+      file.presignedUrl !== effectiveGeneratedImage,
   );
 
   const documentFiles = attachments?.filter(
@@ -251,6 +267,7 @@ export const AssistantMessage = ({
   );
 
   const [copyStatus, setCopyStatus] = useState<string>('');
+  const [imageCopyStatus, setImageCopyStatus] = useState<string>('');
 
   const handleCopy = () => {
     if (!mainContent) return;
@@ -258,6 +275,32 @@ export const AssistantMessage = ({
       setCopyStatus('Copied!');
       setTimeout(() => setCopyStatus(''), 2000);
     });
+  };
+
+  const handleCopyImage = async (imageUrl: string) => {
+    try {
+      const response = await fetch(imageUrl);
+      const blob = await response.blob();
+      await navigator.clipboard.write([
+        new ClipboardItem({ [blob.type]: blob }),
+      ]);
+      setImageCopyStatus('Copied!');
+      setTimeout(() => setImageCopyStatus(''), 2000);
+    } catch {
+      setImageCopyStatus('Failed');
+      setTimeout(() => setImageCopyStatus(''), 2000);
+    }
+  };
+
+  const handleDownloadImage = async (imageUrl: string) => {
+    const response = await fetch(imageUrl);
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `generated-image-${Date.now()}.png`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   return (
@@ -280,28 +323,70 @@ export const AssistantMessage = ({
               isProcessing={isProcessing}
             />
           )}
+          {effectiveGeneratedImage && (
+            <div className="mb-3">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={effectiveGeneratedImage}
+                alt="Generated image"
+                className="rounded-xl w-80 h-80 object-contain bg-surface-elevated"
+              />
+              <div className="flex items-center gap-1 mt-2">
+                <button
+                  onClick={() => handleCopyImage(effectiveGeneratedImage)}
+                  className="flex items-center gap-1.5 px-2 py-1 text-muted hover:text-body transition-colors duration-150 rounded-md hover:bg-surface-elevated text-xs"
+                  title="Copy image"
+                >
+                  {imageCopyStatus ? (
+                    <span className="text-accent">✓ {imageCopyStatus}</span>
+                  ) : (
+                    <>
+                      <FiCopy size={12} />
+                      <span>Copy image</span>
+                    </>
+                  )}
+                </button>
+                <button
+                  onClick={() => handleDownloadImage(effectiveGeneratedImage)}
+                  className="flex items-center gap-1.5 px-2 py-1 text-muted hover:text-body transition-colors duration-150 rounded-md hover:bg-surface-elevated text-xs"
+                  title="Download image"
+                >
+                  <FiDownload size={12} />
+                  <span>Download</span>
+                </button>
+              </div>
+            </div>
+          )}
+          {!effectiveGeneratedImage && isGeneratingImage && (
+            <div className="flex items-center gap-2 text-muted text-sm py-1">
+              <div className="w-4 h-4 rounded border border-accent/40 bg-accent/10 animate-pulse" />
+              <span className="animate-pulse">Generating image...</span>
+            </div>
+          )}
           <div className="prose prose-invert max-w-none">
             <MarkdownRenderer content={mainContent || ''} />
           </div>
         </div>
       </div>
-      <div className="flex items-center mt-1 ml-9 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-        <button
-          onClick={handleCopy}
-          className="flex items-center gap-1.5 px-2 py-1 text-muted hover:text-body transition-colors duration-150 rounded-md hover:bg-surface-elevated"
-          aria-label="Copy message"
-          title={copyStatus || 'Copy message'}
-        >
-          {copyStatus ? (
-            <span className="text-xs text-accent">✓ Copied</span>
-          ) : (
-            <>
-              <FiCopy size={12} />
-              <span className="text-xs">Copy</span>
-            </>
-          )}
-        </button>
-      </div>
+      {mainContent && (
+        <div className="flex items-center mt-1 ml-9 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+          <button
+            onClick={handleCopy}
+            className="flex items-center gap-1.5 px-2 py-1 text-muted hover:text-body transition-colors duration-150 rounded-md hover:bg-surface-elevated"
+            aria-label="Copy message"
+            title={copyStatus || 'Copy message'}
+          >
+            {copyStatus ? (
+              <span className="text-xs text-accent">✓ Copied</span>
+            ) : (
+              <>
+                <FiCopy size={12} />
+                <span className="text-xs">Copy</span>
+              </>
+            )}
+          </button>
+        </div>
+      )}
     </div>
   );
 };

@@ -62,7 +62,9 @@ const EditModelDrawer = ({
         className={`fixed inset-0 z-40 bg-black/40 transition-opacity duration-250 ${visible ? 'opacity-100' : 'opacity-0'}`}
         onClick={handleClose}
       />
-      <div className={`fixed right-0 top-0 h-full w-80 z-50 bg-surface-raised border-l border-border flex flex-col shadow-2xl transition-transform duration-250 ease-in-out ${visible ? 'translate-x-0' : 'translate-x-full'}`}>
+      <div
+        className={`fixed right-0 top-0 h-full w-80 z-50 bg-surface-raised border-l border-border flex flex-col shadow-2xl transition-transform duration-250 ease-in-out ${visible ? 'translate-x-0' : 'translate-x-full'}`}
+      >
         <div className="flex items-center justify-between px-5 py-4 border-b border-border flex-shrink-0">
           <h3 className="text-primary font-semibold text-sm">Edit Model</h3>
           <button

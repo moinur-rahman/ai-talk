@@ -120,7 +120,10 @@ const SendMessage = ({
     setIsMenuOpen(false);
     setShowProjectSubmenu(false);
     if (conversationId) {
-      const result = await updateProject({ conversationId, projectId: project.id });
+      const result = await updateProject({
+        conversationId,
+        projectId: project.id,
+      });
       if ('error' in result) {
         toast.error('Failed to add to project');
       } else {

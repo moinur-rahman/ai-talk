@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import {
   FiChevronUp,
   FiFolder,
+  FiImage,
   FiLogOut,
   FiPlus,
   FiSearch,
@@ -76,6 +77,7 @@ const Sidebar: FC = () => {
   }, []);
 
   const isOnProjects = pathname.startsWith('/projects');
+  const isOnImageGeneration = pathname.startsWith('/image-generation');
 
   return (
     <>
@@ -107,6 +109,17 @@ const Sidebar: FC = () => {
             >
               <FiFolder size={14} />
               <span>Projects</span>
+            </Link>
+            <Link
+              href="/image-generation"
+              className={`flex items-center gap-2 w-full px-3 py-2 rounded-lg border transition-all duration-200 text-sm ${
+                isOnImageGeneration
+                  ? 'border-accent/30 bg-accent/5 text-accent'
+                  : 'border-border text-body hover:text-accent hover:border-accent/30 hover:bg-accent/5'
+              }`}
+            >
+              <FiImage size={14} />
+              <span>Image Generation</span>
             </Link>
             <button
               onClick={() => setSearchOpen(true)}
