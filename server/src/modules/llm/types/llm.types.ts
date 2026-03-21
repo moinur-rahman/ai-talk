@@ -11,6 +11,7 @@ export interface LLMMessage {
   content: string;
   senderType: 'user' | 'assistant';
   attachments: FileMetadata[];
+  openaiImageCallId?: string | null;
 }
 
 export interface LLMRequest {
@@ -28,3 +29,7 @@ export type TokenCallback = (
   tokenType: TokenType,
   isEnd: boolean,
 ) => void | Promise<void>;
+
+export interface StreamResult {
+  openaiImageCallId?: string;
+}

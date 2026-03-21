@@ -32,4 +32,8 @@ export class SaveMessageDto {
   @IsArray()
   @IsUUID(undefined, { each: true })
   fileIds?: string[];
+
+  @IsOptional()
+  @IsString()
+  openaiImageCallId?: string;
 }

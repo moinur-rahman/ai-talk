@@ -111,14 +111,15 @@ model Conversation {
 }
 
 model Message {
-  id               String              @id @default(uuid()) @db.Uuid
-  mainContent      String?             @map("main_content")
-  reasoningContent String?             @map("reasoning_content")
-  senderType       SenderType          @map("sender_type")
-  conversationId   String              @map("conversation_id") @db.Uuid
-  conversation     Conversation        @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-  attachments      MessageAttachment[]
-  createdAt        DateTime            @default(now()) @map("created_at") @db.Timestamptz
+  id                  String              @id @default(uuid()) @db.Uuid
+  mainContent         String?             @map("main_content")
+  reasoningContent    String?             @map("reasoning_content")
+  openaiImageCallId   String?             @map("openai_image_call_id") @db.VarChar(255)
+  senderType          SenderType          @map("sender_type")
+  conversationId      String              @map("conversation_id") @db.Uuid
+  conversation        Conversation        @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  attachments         MessageAttachment[]
+  createdAt           DateTime            @default(now()) @map("created_at") @db.Timestamptz
 
   @@index([conversationId], name: "idx_conversation_id")
   @@map("messages")

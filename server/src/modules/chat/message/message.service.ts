@@ -27,6 +27,7 @@ export class MessageService {
         data: {
           mainContent: dto.mainContent,
           reasoningContent: dto.reasoningContent,
+          openaiImageCallId: dto.openaiImageCallId,
           senderType: dto.senderType,
           conversation: { connect: { id: dto.conversationId } },
         },
@@ -50,6 +51,7 @@ export class MessageService {
         id: true,
         mainContent: true,
         reasoningContent: true,
+        openaiImageCallId: true,
         senderType: true,
         attachments: {
           select: { fileId: true },
@@ -90,6 +92,7 @@ export class MessageService {
     const messagesWithFiles = messages.map((msg) => ({
       mainContent: msg.mainContent,
       reasoningContent: msg.reasoningContent,
+      openaiImageCallId: msg.openaiImageCallId,
       senderType: msg.senderType,
       attachments: msg.attachments
         .map((a) => filesMetadataMap[a.fileId])

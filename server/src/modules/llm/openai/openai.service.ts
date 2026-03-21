@@ -11,6 +11,7 @@ import {
   FileMetadata,
   LLMMessage,
   LLMRequest,
+  StreamResult,
   TokenCallback,
 } from '../types/llm.types.js';
 import {
@@ -33,7 +34,7 @@ export class OpenAIService {
   async streamResponse(
     request: LLMRequest,
     onToken: TokenCallback,
-  ): Promise<void> {
+  ): Promise<StreamResult> {
     const abortController = new AbortController();
     this.activeStreams.set(request.conversationId, abortController);
 
@@ -66,6 +67,7 @@ export class OpenAIService {
       let mainContentEnded = false;
       let lastImageB64 = '';
       let hasImageOutput = false;
+      let openaiImageCallId: string | undefined;
 
       for await (const event of stream) {
         if (abortController.signal.aborted) break;
@@ -80,16 +82,11 @@ export class OpenAIService {
         } else if (event.type === 'response.reasoning_summary_text.done') {
           await onToken('', 'reasoningContent', true);
         } else if (
-          (event as { type: string }).type ===
-          'response.image_generation_call.partial_image'
+          event.type === 'response.image_generation_call.partial_image'
         ) {
-          const imageEvent = event as {
-            type: string;
-            partial_image_b64: string;
-            partial_image_index: number;
-          };
           hasImageOutput = true;
-          lastImageB64 = imageEvent.partial_image_b64;
+          openaiImageCallId = event.item_id;
+          lastImageB64 = event.partial_image_b64;
           await onToken(lastImageB64, 'partialImage', false);
         }
       }
@@ -101,9 +98,12 @@ export class OpenAIService {
       if (!mainContentEnded) {
         await onToken('', 'mainContent', true);
       }
+
+      return { openaiImageCallId };
     } catch (error) {
       if (abortController.signal.aborted) {
         await onToken('', 'mainContent', true);
+        return {};
       } else {
         throw error;
       }
@@ -180,17 +180,42 @@ export class OpenAIService {
       content: buildSystemInstruction(systemPrompt),
     };
 
-    const processedMessages = await Promise.all(
-      messages.map(async (message) => {
-        if (message.senderType === 'user' && message.attachments.length > 0) {
-          const content = await this.processMessageWithFiles(message);
-          return { role: message.senderType, content };
-        }
-        return { role: message.senderType, content: message.content };
-      }),
-    );
+    // Each message maps to one or more input items (image_generation_call is a
+    // top-level sibling in the input array, not nested inside an assistant message).
+    const processedItems = (
+      await Promise.all(
+        messages.map(async (message) => {
+          if (message.senderType === 'assistant') {
+            if (message.openaiImageCallId) {
+              const items: unknown[] = [];
+              // Include any text the assistant produced alongside the image
+              if (message.content) {
+                items.push({ role: 'assistant', content: message.content });
+              }
+              // The image_generation_call reference must be a top-level input item
+              items.push({
+                type: 'image_generation_call',
+                id: message.openaiImageCallId,
+              });
+              return items;
+            }
+            // Skip image-only assistant messages whose call ID has gone (fallback)
+            if (!message.content) return null;
+            return [{ role: 'assistant', content: message.content }];
+          }
 
-    return [systemInstruction, ...processedMessages] as ResponseInput;
+          if (message.senderType === 'user' && message.attachments.length > 0) {
+            const content = await this.processMessageWithFiles(message);
+            return [{ role: 'user', content }];
+          }
+          return [{ role: 'user', content: message.content }];
+        }),
+      )
+    )
+      .filter((items): items is unknown[] => items !== null)
+      .flat();
+
+    return [systemInstruction, ...processedItems] as ResponseInput;
   }
 
   private async processMessageWithFiles(

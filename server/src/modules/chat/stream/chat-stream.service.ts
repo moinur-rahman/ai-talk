@@ -80,6 +80,7 @@ export class ChatStreamService {
       ...chatHistory.map((msg) => ({
         content: msg.mainContent || '',
         senderType: msg.senderType as 'user' | 'assistant',
+        openaiImageCallId: msg.openaiImageCallId,
         attachments: msg.attachments
           .filter((a) => !a.error && a.fileName && a.mimeType)
           .map((a) => ({
@@ -163,7 +164,7 @@ export class ChatStreamService {
       },
     );
 
-    await Promise.all([streamPromise, titlePromise]);
+    const [streamResult] = await Promise.all([streamPromise, titlePromise]);
 
     let generatedFileId: string | undefined;
     if (finalImageBase64) {
@@ -199,6 +200,7 @@ export class ChatStreamService {
         senderType: SenderType.assistant,
         conversationId,
         fileIds: generatedFileId ? [generatedFileId] : undefined,
+        openaiImageCallId: streamResult?.openaiImageCallId,
       });
     }
   }

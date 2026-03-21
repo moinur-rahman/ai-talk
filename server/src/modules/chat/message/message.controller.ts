@@ -20,7 +20,7 @@ export class MessageController {
       await this.messageService.getMessagesByConversationId(conversationId);
     const sanitized = {
       ...result,
-      messages: result.messages.map((msg) => ({
+      messages: result.messages.map(({ openaiImageCallId: _, ...msg }) => ({
         ...msg,
         attachments: msg.attachments.map(({ storageUrl: _, ...rest }) => rest),
       })),

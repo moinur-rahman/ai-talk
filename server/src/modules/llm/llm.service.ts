@@ -4,7 +4,7 @@ import { OpenAIService } from './openai/openai.service.js';
 import { OpenRouterService } from './openrouter/openrouter.service.js';
 import { ZaiService } from './zai/zai.service.js';
 import { GeminiService } from './gemini/gemini.service.js';
-import { LLMRequest, TokenCallback } from './types/llm.types.js';
+import { LLMRequest, StreamResult, TokenCallback } from './types/llm.types.js';
 import config from '../../common/config/config.js';
 import { PROVIDER } from '../../common/constants/providers.js';
 
@@ -24,11 +24,10 @@ export class LlmService {
     providerName: string,
     request: LLMRequest,
     onToken: TokenCallback,
-  ): Promise<void> {
+  ): Promise<StreamResult> {
     switch (providerName.toLowerCase()) {
       case PROVIDER.OPENAI:
-        await this.openAIService.streamResponse(request, onToken);
-        break;
+        return this.openAIService.streamResponse(request, onToken);
       case PROVIDER.OLLAMA:
         await this.ollamaService.streamResponse(request, onToken);
         break;
@@ -44,6 +43,7 @@ export class LlmService {
       default:
         throw new Error(`Unknown provider: ${providerName}`);
     }
+    return {};
   }
 
   stopStream(providerName: string, conversationId: string): void {
