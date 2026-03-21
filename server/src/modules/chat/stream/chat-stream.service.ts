@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { LlmService } from '../../llm/llm.service.js';
 import { ModelService } from '../../model/model.service.js';
 import { MessageService } from '../message/message.service.js';
@@ -42,9 +42,10 @@ export class ChatStreamService {
       dto.lastModelId,
     );
     const providerName = modelDetails.provider.name.toLowerCase();
-    const enableReasoning = Boolean(
-      dto.enableReasoning && modelDetails.hasReasoning,
-    );
+    if (dto.enableReasoning && !modelDetails.hasReasoning) {
+      throw new BadRequestException('This model does not support reasoning');
+    }
+    const enableReasoning = Boolean(dto.enableReasoning);
 
     onProviderResolved(providerName);
 

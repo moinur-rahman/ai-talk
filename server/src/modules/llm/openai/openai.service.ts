@@ -43,10 +43,9 @@ export class OpenAIService {
         request.systemPrompt,
       );
 
-      const reasoning =
-        request.enableReasoning && /^o\d(-|$)/.test(request.model)
-          ? ({ effort: 'low', summary: 'auto' } as Reasoning)
-          : null;
+      const reasoning = request.enableReasoning
+        ? ({ effort: 'low', summary: 'auto' } as Reasoning)
+        : null;
 
       const tools: Parameters<typeof this.client.responses.create>[0]['tools'] =
         [

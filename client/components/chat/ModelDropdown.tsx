@@ -211,6 +211,7 @@ const ModelDropdown: FC = () => {
       options={options}
       value={selectedOption}
       isSearchable
+      menuPlacement="auto"
       placeholder="Choose a model..."
       className="w-full"
       styles={customStyles}

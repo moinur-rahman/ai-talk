@@ -64,6 +64,7 @@ const ProviderDropdown: FC = () => {
       options={options}
       value={selectedOption}
       isSearchable
+      menuPlacement="auto"
       placeholder="Choose a provider..."
       className="w-full"
       styles={customStyles}

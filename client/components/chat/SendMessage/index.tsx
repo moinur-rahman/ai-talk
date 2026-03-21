@@ -278,7 +278,7 @@ const SendMessage = ({
                     </button>
 
                     {showProjectSubmenu && (
-                      <div className="absolute left-full top-0 ml-1 bg-surface-elevated border border-border rounded-xl shadow-xl py-1 w-56 z-50 max-h-60 overflow-y-auto">
+                      <div className="absolute left-full bottom-0 ml-1 bg-surface-elevated border border-border rounded-xl shadow-xl py-1 w-56 z-50 max-h-60 overflow-y-auto">
                         {isLoadingProjects ? (
                           <p className="text-xs text-muted px-3 py-2">
                             Loading...
@@ -344,7 +344,7 @@ const SendMessage = ({
                   </button>
 
                   {showStyleSubmenu && (
-                    <div className="absolute left-full top-0 ml-1 bg-surface-elevated border border-border rounded-xl shadow-xl py-1 w-44 z-50">
+                    <div className="absolute left-full bottom-0 ml-1 bg-surface-elevated border border-border rounded-xl shadow-xl py-1 w-44 z-50">
                       {RESPONSE_STYLES.map((style) => (
                         <button
                           key={style}
@@ -406,6 +406,8 @@ const SendMessage = ({
             </div>
           )}
 
+          <ReasoningToggle />
+
           <div className="flex-1" />
 
           <div className="w-[9rem] flex-shrink-0">
@@ -415,8 +417,6 @@ const SendMessage = ({
           <div className="w-[11rem] flex-shrink-0">
             <ModelDropdown />
           </div>
-
-          <ReasoningToggle />
 
           <button
             type="button"
