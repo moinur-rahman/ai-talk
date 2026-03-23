@@ -5,6 +5,7 @@ import {
   FiCheck,
   FiChevronRight,
   FiFolder,
+  FiGlobe,
   FiMic,
   FiMicOff,
   FiPaperclip,
@@ -18,7 +19,7 @@ import { useChat } from '@/contexts/ChatContext';
 import { useUpdateConversationProjectMutation } from '@/services/chatApi';
 import { useGetProjectsQuery } from '@/services/projectApi';
 import { useAppDispatch, useAppSelector } from '@/redux/hooks';
-import { setResponseStyle } from '@/redux/slices/modelSlice';
+import { setResponseStyle, setWebSearchEnabled } from '@/redux/slices/modelSlice';
 import type { Project } from '@/types/chat';
 import ProviderDropdown from '../ProviderDropdown';
 import ModelDropdown from '../ModelDropdown';
@@ -52,6 +53,9 @@ const SendMessage = ({
 
   const dispatch = useAppDispatch();
   const responseStyle = useAppSelector((state) => state.model.responseStyle);
+  const webSearchEnabled = useAppSelector((state) => state.model.webSearchEnabled);
+  const selectedProvider = useAppSelector((state) => state.model.selectedProvider);
+  const isOpenAI = selectedProvider?.name.toLowerCase() === 'openai';
 
   const [prompt, setPrompt] = useState('');
   const [pendingProject, setPendingProject] = useState<{
@@ -247,6 +251,26 @@ const SendMessage = ({
                   Add files or photos
                 </button>
 
+                {isOpenAI && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      dispatch(setWebSearchEnabled(!webSearchEnabled));
+                      setIsMenuOpen(false);
+                    }}
+                    className="flex items-center gap-3 w-full px-3 py-2 text-sm text-body hover:bg-surface-overlay transition-colors"
+                  >
+                    <FiGlobe
+                      size={14}
+                      className={`flex-shrink-0 ${webSearchEnabled ? 'text-blue-400' : 'text-muted'}`}
+                    />
+                    <span className="flex-1 text-left">Web search</span>
+                    {webSearchEnabled && (
+                      <FiCheck size={13} className="text-blue-400 flex-shrink-0" />
+                    )}
+                  </button>
+                )}
+
                 {!disableProjectPicker && (
                   <div
                     className="relative"
@@ -387,6 +411,22 @@ const SendMessage = ({
                   ×
                 </button>
               )}
+            </div>
+          )}
+
+          {/* Active web search badge */}
+          {webSearchEnabled && (
+            <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-400 flex-shrink-0">
+              <FiGlobe size={12} />
+              <span className="text-xs">Search</span>
+              <button
+                type="button"
+                onClick={() => dispatch(setWebSearchEnabled(false))}
+                className="text-xs leading-none hover:text-blue-300 ml-0.5"
+                aria-label="Disable web search"
+              >
+                ×
+              </button>
             </div>
           )}
 

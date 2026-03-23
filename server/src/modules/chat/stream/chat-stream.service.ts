@@ -46,6 +46,7 @@ export class ChatStreamService {
       throw new BadRequestException('This model does not support reasoning');
     }
     const enableReasoning = Boolean(dto.enableReasoning);
+    const webSearchEnabled = Boolean(dto.webSearchEnabled);
 
     onProviderResolved(providerName);
 
@@ -141,6 +142,7 @@ export class ChatStreamService {
         conversationId,
         messages,
         enableReasoning,
+        webSearchEnabled,
         systemPrompt,
       },
       (token: string, tokenType: TokenType, isEnd: boolean) => {
@@ -150,6 +152,12 @@ export class ChatStreamService {
         } else if (tokenType === 'reasoningContent') {
           if (!isEnd) reasoningContentBuffer += token;
           sendEvent({ type: 'token', token, tokenType, isEnd, conversationId });
+        } else if (tokenType === 'webSearch') {
+          sendEvent({
+            type: 'web-search-status',
+            status: isEnd ? 'done' : 'searching',
+            conversationId,
+          });
         } else if (tokenType === 'partialImage') {
           if (isEnd) {
             finalImageBase64 = token;

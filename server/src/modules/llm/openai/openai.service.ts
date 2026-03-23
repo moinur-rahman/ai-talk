@@ -57,10 +57,24 @@ export class OpenAIService {
             quality: 'low',
             partial_images: 2,
           },
+          { type: 'web_search' as const },
         ];
 
+      const toolChoice = request.webSearchEnabled
+        ? ({ type: 'web_search' } as unknown as Parameters<
+            typeof this.client.responses.create
+          >[0]['tool_choice'])
+        : undefined;
+
       const stream = await this.client.responses.create(
-        { model: request.model, input, stream: true, reasoning, tools },
+        {
+          model: request.model,
+          input,
+          stream: true,
+          reasoning,
+          tools,
+          ...(toolChoice ? { tool_choice: toolChoice } : {}),
+        },
         { signal: abortController.signal },
       );
 
@@ -81,6 +95,16 @@ export class OpenAIService {
           await onToken(event.delta, 'reasoningContent', false);
         } else if (event.type === 'response.reasoning_summary_text.done') {
           await onToken('', 'reasoningContent', true);
+        } else if (
+          (event as { type: string }).type ===
+          'response.web_search_call.in_progress'
+        ) {
+          await onToken('', 'webSearch', false);
+        } else if (
+          (event as { type: string }).type ===
+          'response.web_search_call.completed'
+        ) {
+          await onToken('', 'webSearch', true);
         } else if (
           event.type === 'response.image_generation_call.partial_image'
         ) {

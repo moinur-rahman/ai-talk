@@ -5,7 +5,7 @@ import { UserMessage, AssistantMessage } from './MessageComponents';
 import { Message } from '@/types/chat';
 
 const ChatHistory = () => {
-  const { conversationId, streaming, reasoningStreaming, imageGenerating } = useChat();
+  const { conversationId, streaming, reasoningStreaming, imageGenerating, webSearching } = useChat();
   const { chatHistories } = useChatData(conversationId ?? '');
 
   if (!conversationId) {
@@ -44,6 +44,7 @@ const ChatHistory = () => {
                   generatedImage={chat.generatedImage}
                   isProcessing={reasoningStreaming[conversationId]}
                   isGeneratingImage={imageGenerating[conversationId] ?? false}
+                  isSearching={webSearching[conversationId] ?? false}
                   isStreaming={isLast && (streaming[conversationId] ?? false)}
                 />
               );

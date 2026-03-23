@@ -16,6 +16,10 @@ export class StreamChatDto {
   @IsOptional()
   fileIds?: string[];
 
+  @IsBoolean()
+  @IsOptional()
+  webSearchEnabled?: boolean;
+
   @IsString()
   @IsOptional()
   responseStyle?: string;

@@ -34,6 +34,7 @@ interface IChatContext {
   streaming: Record<string, boolean>;
   reasoningStreaming: Record<string, boolean>;
   imageGenerating: Record<string, boolean>;
+  webSearching: Record<string, boolean>;
   error: Record<string, string | null>;
   setError: (
     error: React.SetStateAction<Record<string, string | null>>,
@@ -73,6 +74,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
   const [imageGenerating, setImageGenerating] = useState<
     Record<string, boolean>
   >({});
+  const [webSearching, setWebSearching] = useState<Record<string, boolean>>({});
 
   const previousConversationIdRef = useRef<string | undefined>(undefined);
   const pendingCleanupRef = useRef<Set<string>>(new Set());
@@ -91,6 +93,10 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
 
   const reasoningEnabled = useSelector(
     (state: RootState) => state.model.reasoningEnabled,
+  );
+
+  const webSearchEnabled = useSelector(
+    (state: RootState) => state.model.webSearchEnabled,
   );
 
   const responseStyle = useSelector(
@@ -132,6 +138,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
       imageData?: string;
       presignedUrl?: string;
       conversationId?: string;
+      status?: 'searching' | 'done';
     },
     currentConversationId: string,
   ) => {
@@ -145,6 +152,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
           setStreaming((prev) => ({ ...prev, [convId]: false }));
           setReasoningStreaming((prev) => ({ ...prev, [convId]: false }));
           setImageGenerating((prev) => ({ ...prev, [convId]: false }));
+          setWebSearching((prev) => ({ ...prev, [convId]: false }));
 
           if (
             pendingCleanupRef.current.has(convId) &&
@@ -217,6 +225,11 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
           imageData: event.presignedUrl,
         }),
       );
+    } else if (event.type === 'web-search-status') {
+      setWebSearching((prev) => ({
+        ...prev,
+        [convId]: event.status === 'searching',
+      }));
     } else if (event.type === 'error') {
       const message = event.message ?? 'An error occurred';
       console.error(`Error for conversation ${convId}:`, message);
@@ -224,6 +237,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
       setStreaming((prev) => ({ ...prev, [convId]: false }));
       setReasoningStreaming((prev) => ({ ...prev, [convId]: false }));
       setImageGenerating((prev) => ({ ...prev, [convId]: false }));
+      setWebSearching((prev) => ({ ...prev, [convId]: false }));
 
       if (
         pendingCleanupRef.current.has(convId) &&
@@ -240,6 +254,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
     params: ISendMessageParams,
     modelId: string,
     enableReasoning: boolean,
+    webSearchEnabled: boolean,
     style: string,
   ) => {
     try {
@@ -257,6 +272,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
             prompt: params.prompt,
             lastModelId: modelId,
             enableReasoning,
+            webSearchEnabled,
             fileIds: params.attachments
               ? params.attachments.map((f) => f.id)
               : [],
@@ -399,6 +415,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
         params,
         selectedModel.id,
         selectedModel.hasReasoning && reasoningEnabled,
+        webSearchEnabled,
         responseStyle,
       );
 
@@ -431,6 +448,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
     streaming,
     reasoningStreaming,
     imageGenerating,
+    webSearching,
     error,
     setError,
     sendMessage,

@@ -11,6 +11,7 @@ import {
   FiChevronUp,
   FiCpu,
   FiDownload,
+  FiGlobe,
 } from 'react-icons/fi';
 
 interface MessageProps {
@@ -240,6 +241,7 @@ export const UserMessage = ({ mainContent, attachments }: MessageProps) => {
 interface AssistantMessageProps extends MessageProps {
   generatedImage?: string;
   isGeneratingImage?: boolean;
+  isSearching?: boolean;
   isStreaming?: boolean;
 }
 
@@ -250,6 +252,7 @@ export const AssistantMessage = ({
   generatedImage,
   isProcessing = false,
   isGeneratingImage = false,
+  isSearching = false,
   isStreaming = false,
 }: AssistantMessageProps) => {
   const effectiveGeneratedImage =
@@ -325,6 +328,12 @@ export const AssistantMessage = ({
               content={reasoningContent}
               isProcessing={isProcessing}
             />
+          )}
+          {isSearching && (
+            <div className="flex items-center gap-2 text-blue-400 text-sm py-1">
+              <FiGlobe size={14} className="animate-spin" />
+              <span className="animate-pulse">Searching the web...</span>
+            </div>
           )}
           {isGeneratingImage && (
             <div className="flex items-center gap-2 text-muted text-sm py-1">

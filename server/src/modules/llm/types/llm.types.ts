@@ -19,10 +19,11 @@ export interface LLMRequest {
   conversationId: string;
   messages: LLMMessage[];
   enableReasoning: boolean;
+  webSearchEnabled?: boolean;
   systemPrompt?: string;
 }
 
-export type TokenType = 'mainContent' | 'reasoningContent' | 'partialImage';
+export type TokenType = 'mainContent' | 'reasoningContent' | 'partialImage' | 'webSearch';
 
 export type TokenCallback = (
   token: string,

@@ -5,6 +5,7 @@ interface ModelState {
   selectedModel: Model | null;
   selectedProvider: Provider | null;
   reasoningEnabled: boolean;
+  webSearchEnabled: boolean;
   responseStyle: string;
 }
 
@@ -12,6 +13,7 @@ const initialState: ModelState = {
   selectedModel: null,
   selectedProvider: null,
   reasoningEnabled: false,
+  webSearchEnabled: false,
   responseStyle: 'Normal',
 };
 
@@ -28,6 +30,9 @@ export const modelSlice = createSlice({
     setReasoningEnabled: (state, action: PayloadAction<boolean>) => {
       state.reasoningEnabled = action.payload;
     },
+    setWebSearchEnabled: (state, action: PayloadAction<boolean>) => {
+      state.webSearchEnabled = action.payload;
+    },
     setResponseStyle: (state, action: PayloadAction<string>) => {
       state.responseStyle = action.payload;
     },
@@ -38,6 +43,7 @@ export const {
   setSelectedModel,
   setSelectedProvider,
   setReasoningEnabled,
+  setWebSearchEnabled,
   setResponseStyle,
 } = modelSlice.actions;
 export default modelSlice.reducer;
