@@ -6,6 +6,7 @@ import {
   FiChevronRight,
   FiFolder,
   FiGlobe,
+  FiImage,
   FiMic,
   FiMicOff,
   FiPaperclip,
@@ -19,7 +20,11 @@ import { useChat } from '@/contexts/ChatContext';
 import { useUpdateConversationProjectMutation } from '@/services/chatApi';
 import { useGetProjectsQuery } from '@/services/projectApi';
 import { useAppDispatch, useAppSelector } from '@/redux/hooks';
-import { setResponseStyle, setWebSearchEnabled } from '@/redux/slices/modelSlice';
+import {
+  setImageGenerationEnabled,
+  setResponseStyle,
+  setWebSearchEnabled,
+} from '@/redux/slices/modelSlice';
 import type { Project } from '@/types/chat';
 import ProviderDropdown from '../ProviderDropdown';
 import ModelDropdown from '../ModelDropdown';
@@ -53,8 +58,15 @@ const SendMessage = ({
 
   const dispatch = useAppDispatch();
   const responseStyle = useAppSelector((state) => state.model.responseStyle);
-  const webSearchEnabled = useAppSelector((state) => state.model.webSearchEnabled);
-  const selectedProvider = useAppSelector((state) => state.model.selectedProvider);
+  const webSearchEnabled = useAppSelector(
+    (state) => state.model.webSearchEnabled,
+  );
+  const imageGenerationEnabled = useAppSelector(
+    (state) => state.model.imageGenerationEnabled,
+  );
+  const selectedProvider = useAppSelector(
+    (state) => state.model.selectedProvider,
+  );
   const isOpenAI = selectedProvider?.name.toLowerCase() === 'openai';
 
   const [prompt, setPrompt] = useState('');
@@ -266,7 +278,35 @@ const SendMessage = ({
                     />
                     <span className="flex-1 text-left">Web search</span>
                     {webSearchEnabled && (
-                      <FiCheck size={13} className="text-blue-400 flex-shrink-0" />
+                      <FiCheck
+                        size={13}
+                        className="text-blue-400 flex-shrink-0"
+                      />
+                    )}
+                  </button>
+                )}
+
+                {isOpenAI && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      dispatch(
+                        setImageGenerationEnabled(!imageGenerationEnabled),
+                      );
+                      setIsMenuOpen(false);
+                    }}
+                    className="flex items-center gap-3 w-full px-3 py-2 text-sm text-body hover:bg-surface-overlay transition-colors"
+                  >
+                    <FiImage
+                      size={14}
+                      className={`flex-shrink-0 ${imageGenerationEnabled ? 'text-purple-400' : 'text-muted'}`}
+                    />
+                    <span className="flex-1 text-left">Generate image</span>
+                    {imageGenerationEnabled && (
+                      <FiCheck
+                        size={13}
+                        className="text-purple-400 flex-shrink-0"
+                      />
                     )}
                   </button>
                 )}
@@ -411,6 +451,22 @@ const SendMessage = ({
                   ×
                 </button>
               )}
+            </div>
+          )}
+
+          {/* Active image generation badge */}
+          {imageGenerationEnabled && (
+            <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-purple-500/10 border border-purple-500/20 text-purple-400 flex-shrink-0">
+              <FiImage size={12} />
+              <span className="text-xs">Image</span>
+              <button
+                type="button"
+                onClick={() => dispatch(setImageGenerationEnabled(false))}
+                className="text-xs leading-none hover:text-purple-300 ml-0.5"
+                aria-label="Disable image generation"
+              >
+                ×
+              </button>
             </div>
           )}
 

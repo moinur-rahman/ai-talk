@@ -5,7 +5,13 @@ import { UserMessage, AssistantMessage } from './MessageComponents';
 import { Message } from '@/types/chat';
 
 const ChatHistory = () => {
-  const { conversationId, streaming, reasoningStreaming, imageGenerating, webSearching } = useChat();
+  const {
+    conversationId,
+    streaming,
+    reasoningStreaming,
+    imageGenerating,
+    webSearching,
+  } = useChat();
   const { chatHistories } = useChatData(conversationId ?? '');
 
   if (!conversationId) {

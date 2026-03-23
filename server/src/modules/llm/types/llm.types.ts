@@ -20,10 +20,15 @@ export interface LLMRequest {
   messages: LLMMessage[];
   enableReasoning: boolean;
   webSearchEnabled?: boolean;
+  imageGenerationEnabled?: boolean;
   systemPrompt?: string;
 }
 
-export type TokenType = 'mainContent' | 'reasoningContent' | 'partialImage' | 'webSearch';
+export type TokenType =
+  | 'mainContent'
+  | 'reasoningContent'
+  | 'partialImage'
+  | 'webSearch';
 
 export type TokenCallback = (
   token: string,

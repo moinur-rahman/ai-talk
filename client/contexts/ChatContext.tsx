@@ -99,6 +99,10 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
     (state: RootState) => state.model.webSearchEnabled,
   );
 
+  const imageGenerationEnabled = useSelector(
+    (state: RootState) => state.model.imageGenerationEnabled,
+  );
+
   const responseStyle = useSelector(
     (state: RootState) => state.model.responseStyle,
   );
@@ -255,6 +259,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
     modelId: string,
     enableReasoning: boolean,
     webSearchEnabled: boolean,
+    imageGenerationEnabled: boolean,
     style: string,
   ) => {
     try {
@@ -276,6 +281,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
             fileIds: params.attachments
               ? params.attachments.map((f) => f.id)
               : [],
+            imageGenerationEnabled,
             responseStyle: style,
           }),
           signal: activeStreamsRef.current[currentId]?.signal,
@@ -416,6 +422,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
         selectedModel.id,
         selectedModel.hasReasoning && reasoningEnabled,
         webSearchEnabled,
+        imageGenerationEnabled,
         responseStyle,
       );
 

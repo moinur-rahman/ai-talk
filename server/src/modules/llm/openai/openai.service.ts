@@ -60,10 +60,17 @@ export class OpenAIService {
           { type: 'web_search' as const },
         ];
 
-      const toolChoice = request.webSearchEnabled
-        ? ({ type: 'web_search' } as unknown as Parameters<
-            typeof this.client.responses.create
-          >[0]['tool_choice'])
+      type ToolChoice = Parameters<
+        typeof this.client.responses.create
+      >[0]['tool_choice'];
+      let forcedTool: string | null = null;
+      if (request.webSearchEnabled) {
+        forcedTool = 'web_search';
+      } else if (request.imageGenerationEnabled) {
+        forcedTool = 'image_generation';
+      }
+      const toolChoice = forcedTool
+        ? ({ type: forcedTool } as unknown as ToolChoice)
         : undefined;
 
       const stream = await this.client.responses.create(
@@ -86,32 +93,33 @@ export class OpenAIService {
       for await (const event of stream) {
         if (abortController.signal.aborted) break;
 
-        if (event.type === 'response.output_text.delta') {
-          await onToken(event.delta, 'mainContent', false);
-        } else if (event.type === 'response.output_text.done') {
-          mainContentEnded = true;
-          await onToken('', 'mainContent', true);
-        } else if (event.type === 'response.reasoning_summary_text.delta') {
-          await onToken(event.delta, 'reasoningContent', false);
-        } else if (event.type === 'response.reasoning_summary_text.done') {
-          await onToken('', 'reasoningContent', true);
-        } else if (
-          (event as { type: string }).type ===
-          'response.web_search_call.in_progress'
-        ) {
-          await onToken('', 'webSearch', false);
-        } else if (
-          (event as { type: string }).type ===
-          'response.web_search_call.completed'
-        ) {
-          await onToken('', 'webSearch', true);
-        } else if (
-          event.type === 'response.image_generation_call.partial_image'
-        ) {
-          hasImageOutput = true;
-          openaiImageCallId = event.item_id;
-          lastImageB64 = event.partial_image_b64;
-          await onToken(lastImageB64, 'partialImage', false);
+        const ev = event as unknown as Record<string, string>;
+        switch (ev['type']) {
+          case 'response.output_text.delta':
+            await onToken(ev['delta'], 'mainContent', false);
+            break;
+          case 'response.output_text.done':
+            mainContentEnded = true;
+            await onToken('', 'mainContent', true);
+            break;
+          case 'response.reasoning_summary_text.delta':
+            await onToken(ev['delta'], 'reasoningContent', false);
+            break;
+          case 'response.reasoning_summary_text.done':
+            await onToken('', 'reasoningContent', true);
+            break;
+          case 'response.web_search_call.in_progress':
+            await onToken('', 'webSearch', false);
+            break;
+          case 'response.web_search_call.completed':
+            await onToken('', 'webSearch', true);
+            break;
+          case 'response.image_generation_call.partial_image':
+            hasImageOutput = true;
+            openaiImageCallId = ev['item_id'];
+            lastImageB64 = ev['partial_image_b64'];
+            await onToken(lastImageB64, 'partialImage', false);
+            break;
         }
       }
 

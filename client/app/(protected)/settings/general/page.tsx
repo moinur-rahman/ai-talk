@@ -1,7 +1,11 @@
 'use client';
 import { useState } from 'react';
 import { FiUser, FiSave } from 'react-icons/fi';
-import { useGetMeQuery, useUpdateMeMutation, type User } from '@/services/userApi';
+import {
+  useGetMeQuery,
+  useUpdateMeMutation,
+  type User,
+} from '@/services/userApi';
 
 const WORK_OPTIONS = [
   'Engineering',
@@ -23,8 +27,12 @@ const GeneralSettingsForm = ({ user }: { user: User }) => {
 
   const [name, setName] = useState(user.name ?? '');
   const [displayName, setDisplayName] = useState(user.displayName ?? '');
-  const [workDescription, setWorkDescription] = useState(user.workDescription ?? '');
-  const [customInstructions, setCustomInstructions] = useState(user.customInstructions ?? '');
+  const [workDescription, setWorkDescription] = useState(
+    user.workDescription ?? '',
+  );
+  const [customInstructions, setCustomInstructions] = useState(
+    user.customInstructions ?? '',
+  );
   const [saved, setSaved] = useState(false);
 
   const handleSave = async () => {

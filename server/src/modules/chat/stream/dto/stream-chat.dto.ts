@@ -20,6 +20,10 @@ export class StreamChatDto {
   @IsOptional()
   webSearchEnabled?: boolean;
 
+  @IsBoolean()
+  @IsOptional()
+  imageGenerationEnabled?: boolean;
+
   @IsString()
   @IsOptional()
   responseStyle?: string;

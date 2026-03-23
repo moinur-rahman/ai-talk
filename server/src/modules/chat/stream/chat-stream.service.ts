@@ -47,6 +47,7 @@ export class ChatStreamService {
     }
     const enableReasoning = Boolean(dto.enableReasoning);
     const webSearchEnabled = Boolean(dto.webSearchEnabled);
+    const imageGenerationEnabled = Boolean(dto.imageGenerationEnabled);
 
     onProviderResolved(providerName);
 
@@ -143,6 +144,7 @@ export class ChatStreamService {
         messages,
         enableReasoning,
         webSearchEnabled,
+        imageGenerationEnabled,
         systemPrompt,
       },
       (token: string, tokenType: TokenType, isEnd: boolean) => {

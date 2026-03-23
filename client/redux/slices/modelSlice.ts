@@ -6,6 +6,7 @@ interface ModelState {
   selectedProvider: Provider | null;
   reasoningEnabled: boolean;
   webSearchEnabled: boolean;
+  imageGenerationEnabled: boolean;
   responseStyle: string;
 }
 
@@ -14,6 +15,7 @@ const initialState: ModelState = {
   selectedProvider: null,
   reasoningEnabled: false,
   webSearchEnabled: false,
+  imageGenerationEnabled: false,
   responseStyle: 'Normal',
 };
 
@@ -32,6 +34,11 @@ export const modelSlice = createSlice({
     },
     setWebSearchEnabled: (state, action: PayloadAction<boolean>) => {
       state.webSearchEnabled = action.payload;
+      if (action.payload) state.imageGenerationEnabled = false;
+    },
+    setImageGenerationEnabled: (state, action: PayloadAction<boolean>) => {
+      state.imageGenerationEnabled = action.payload;
+      if (action.payload) state.webSearchEnabled = false;
     },
     setResponseStyle: (state, action: PayloadAction<string>) => {
       state.responseStyle = action.payload;
@@ -44,6 +51,7 @@ export const {
   setSelectedProvider,
   setReasoningEnabled,
   setWebSearchEnabled,
+  setImageGenerationEnabled,
   setResponseStyle,
 } = modelSlice.actions;
 export default modelSlice.reducer;

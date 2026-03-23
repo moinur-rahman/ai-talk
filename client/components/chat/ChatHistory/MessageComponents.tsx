@@ -388,12 +388,15 @@ export const AssistantMessage = ({
               imageAlt="Generated image"
             />
           )}
-          {isStreaming && !isGeneratingImage && !effectiveGeneratedImage && !mainContent && (
-            <div className="flex items-center gap-2 text-muted text-sm py-1">
-              <div className="w-4 h-4 rounded-full bg-muted/30 animate-pulse" />
-              <div className="w-24 h-3 rounded bg-muted/20 animate-pulse" />
-            </div>
-          )}
+          {isStreaming &&
+            !isGeneratingImage &&
+            !effectiveGeneratedImage &&
+            !mainContent && (
+              <div className="flex items-center gap-2 text-muted text-sm py-1">
+                <div className="w-4 h-4 rounded-full bg-muted/30 animate-pulse" />
+                <div className="w-24 h-3 rounded bg-muted/20 animate-pulse" />
+              </div>
+            )}
           <div className="prose prose-invert max-w-none">
             <MarkdownRenderer content={mainContent || ''} />
           </div>
