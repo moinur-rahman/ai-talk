@@ -268,6 +268,7 @@ export const AssistantMessage = ({
 
   const [copyStatus, setCopyStatus] = useState<string>('');
   const [imageCopyStatus, setImageCopyStatus] = useState<string>('');
+  const [modalImage, setModalImage] = useState<string | null>(null);
 
   const handleCopy = () => {
     if (!mainContent) return;
@@ -325,12 +326,17 @@ export const AssistantMessage = ({
           )}
           {effectiveGeneratedImage && (
             <div className="mb-3">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={effectiveGeneratedImage}
-                alt="Generated image"
-                className="rounded-xl w-80 h-80 object-contain bg-surface-elevated"
-              />
+              <button
+                onClick={() => setModalImage(effectiveGeneratedImage)}
+                className="block cursor-pointer hover:opacity-90 transition-opacity duration-200"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={effectiveGeneratedImage}
+                  alt="Generated image"
+                  className="rounded-xl w-80 h-80 object-contain bg-surface-elevated"
+                />
+              </button>
               <div className="flex items-center gap-1 mt-2">
                 <button
                   onClick={() => handleCopyImage(effectiveGeneratedImage)}
@@ -356,6 +362,14 @@ export const AssistantMessage = ({
                 </button>
               </div>
             </div>
+          )}
+          {modalImage && (
+            <ImageModal
+              isOpen={!!modalImage}
+              onClose={() => setModalImage(null)}
+              imageSrc={modalImage}
+              imageAlt="Generated image"
+            />
           )}
           {!effectiveGeneratedImage && isGeneratingImage && (
             <div className="flex items-center gap-2 text-muted text-sm py-1">
