@@ -5,7 +5,7 @@ import { UserMessage, AssistantMessage } from './MessageComponents';
 import { Message } from '@/types/chat';
 
 const ChatHistory = () => {
-  const { conversationId, reasoningStreaming, imageGenerating } = useChat();
+  const { conversationId, streaming, reasoningStreaming, imageGenerating } = useChat();
   const { chatHistories } = useChatData(conversationId ?? '');
 
   if (!conversationId) {
@@ -24,6 +24,7 @@ const ChatHistory = () => {
     <div className="h-full w-full overflow-y-auto px-4 flex flex-col items-center">
       <div className="w-full max-w-[52rem] flex flex-col space-y-6 py-6">
         {chatHistories.map((chat: Message, index: number) => {
+          const isLast = index === chatHistories.length - 1;
           switch (chat.senderType) {
             case 'user':
               return (
@@ -43,6 +44,7 @@ const ChatHistory = () => {
                   generatedImage={chat.generatedImage}
                   isProcessing={reasoningStreaming[conversationId]}
                   isGeneratingImage={imageGenerating[conversationId] ?? false}
+                  isStreaming={isLast && (streaming[conversationId] ?? false)}
                 />
               );
             default:

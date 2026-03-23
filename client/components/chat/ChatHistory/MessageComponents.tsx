@@ -240,6 +240,7 @@ export const UserMessage = ({ mainContent, attachments }: MessageProps) => {
 interface AssistantMessageProps extends MessageProps {
   generatedImage?: string;
   isGeneratingImage?: boolean;
+  isStreaming?: boolean;
 }
 
 export const AssistantMessage = ({
@@ -249,6 +250,7 @@ export const AssistantMessage = ({
   generatedImage,
   isProcessing = false,
   isGeneratingImage = false,
+  isStreaming = false,
 }: AssistantMessageProps) => {
   const effectiveGeneratedImage =
     generatedImage ??
@@ -324,6 +326,12 @@ export const AssistantMessage = ({
               isProcessing={isProcessing}
             />
           )}
+          {isGeneratingImage && (
+            <div className="flex items-center gap-2 text-muted text-sm py-1">
+              <div className="w-4 h-4 rounded border border-accent/40 bg-accent/10 animate-pulse" />
+              <span className="animate-pulse">Generating image...</span>
+            </div>
+          )}
           {effectiveGeneratedImage && (
             <div className="mb-3">
               <button
@@ -371,10 +379,10 @@ export const AssistantMessage = ({
               imageAlt="Generated image"
             />
           )}
-          {!effectiveGeneratedImage && isGeneratingImage && (
+          {isStreaming && !isGeneratingImage && !effectiveGeneratedImage && !mainContent && (
             <div className="flex items-center gap-2 text-muted text-sm py-1">
-              <div className="w-4 h-4 rounded border border-accent/40 bg-accent/10 animate-pulse" />
-              <span className="animate-pulse">Generating image...</span>
+              <div className="w-4 h-4 rounded-full bg-muted/30 animate-pulse" />
+              <div className="w-24 h-3 rounded bg-muted/20 animate-pulse" />
             </div>
           )}
           <div className="prose prose-invert max-w-none">
