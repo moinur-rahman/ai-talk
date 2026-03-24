@@ -11,6 +11,7 @@ import { FileModule } from './modules/file/file.module.js';
 import { ChatModule } from './modules/chat/chat.module.js';
 import { ProjectModule } from './modules/project/project.module.js';
 import { ImageGenerationModule } from './modules/image-generation/image-generation.module.js';
+import { AudioModule } from './modules/audio/audio.module.js';
 import { AuthenticatedGuard } from './modules/auth/guards/authenticated.guard.js';
 
 @Module({
@@ -29,6 +30,7 @@ import { AuthenticatedGuard } from './modules/auth/guards/authenticated.guard.js
     ChatModule,
     ProjectModule,
     ImageGenerationModule,
+    AudioModule,
   ],
   providers: [
     {

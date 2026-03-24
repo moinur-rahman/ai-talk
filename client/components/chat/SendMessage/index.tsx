@@ -8,7 +8,6 @@ import {
   FiGlobe,
   FiImage,
   FiMic,
-  FiMicOff,
   FiPaperclip,
   FiPlus,
   FiSend,
@@ -30,6 +29,7 @@ import ProviderDropdown from '../ProviderDropdown';
 import ModelDropdown from '../ModelDropdown';
 import ReasoningToggle from '../ReasoningToggle';
 import FilePreviews from './FilePreviews';
+import VoiceRecorderOverlay from './VoiceRecorderOverlay';
 import useVoiceInput from './useVoiceInput';
 import useFileUpload from './useFileUpload';
 
@@ -106,8 +106,15 @@ const SendMessage = ({
     (text: string) => setPrompt((prev) => (prev ? `${prev} ${text}` : text)),
     [],
   );
-  const { isListening, toggleListening, stopIfListening } =
-    useVoiceInput(handleTranscript);
+  const {
+    isListening,
+    isTranscribing,
+    mediaStreamRef,
+    startRecording,
+    confirmRecording,
+    cancelRecording,
+    stopIfListening,
+  } = useVoiceInput(handleTranscript);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -219,23 +226,26 @@ const SendMessage = ({
           multiple
         />
 
-        <textarea
-          ref={textAreaRef}
-          className="w-full px-2 py-1.5 bg-transparent text-primary placeholder-muted resize-none outline-none overflow-y-auto text-sm leading-relaxed"
-          placeholder="Message..."
-          value={prompt}
-          onChange={(e) => {
-            stopIfListening();
-            setPrompt(e.target.value);
-          }}
-          onKeyDown={(e) => {
-            stopIfListening();
-            handleKeyDown(e);
-          }}
-          onPaste={handlePaste}
-          rows={defaultRows}
-          style={{ maxHeight: '150px' }}
-        />
+        {isListening || isTranscribing ? (
+          <VoiceRecorderOverlay
+            mediaStreamRef={mediaStreamRef}
+            isTranscribing={isTranscribing}
+            onConfirm={confirmRecording}
+            onCancel={cancelRecording}
+          />
+        ) : (
+          <textarea
+            ref={textAreaRef}
+            className="w-full px-2 py-1.5 bg-transparent text-primary placeholder-muted resize-none outline-none overflow-y-auto text-sm leading-relaxed"
+            placeholder="Message..."
+            value={prompt}
+            onChange={(e) => setPrompt(e.target.value)}
+            onKeyDown={handleKeyDown}
+            onPaste={handlePaste}
+            rows={defaultRows}
+            style={{ maxHeight: '150px' }}
+          />
+        )}
 
         <div className="flex items-center gap-1 mt-1 pt-1 border-t border-border/50">
           {/* + button with menu */}
@@ -514,18 +524,16 @@ const SendMessage = ({
             <ModelDropdown />
           </div>
 
-          <button
-            type="button"
-            onClick={toggleListening}
-            aria-label={isListening ? 'Stop recording' : 'Start voice input'}
-            className={`p-2 rounded-lg transition-all duration-150 flex-shrink-0 ${
-              isListening
-                ? 'text-red-400 hover:text-red-300 hover:bg-red-400/10 animate-pulse'
-                : 'text-muted hover:text-accent hover:bg-accent/10'
-            }`}
-          >
-            {isListening ? <FiMicOff size={17} /> : <FiMic size={17} />}
-          </button>
+          {!isListening && !isTranscribing && (
+            <button
+              type="button"
+              onClick={startRecording}
+              aria-label="Start voice input"
+              className="p-2 rounded-lg transition-all duration-150 flex-shrink-0 text-muted hover:text-accent hover:bg-accent/10"
+            >
+              <FiMic size={17} />
+            </button>
+          )}
 
           {conversationId && streaming[conversationId] ? (
             <button
