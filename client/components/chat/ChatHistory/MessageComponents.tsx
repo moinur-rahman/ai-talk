@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { FileMetadata } from '@/types/chat';
 import { MarkdownRenderer } from './MarkdownRenderer';
 import Image from 'next/image';
@@ -12,7 +12,75 @@ import {
   FiCpu,
   FiDownload,
   FiGlobe,
+  FiLoader,
+  FiSquare,
+  FiVolume2,
 } from 'react-icons/fi';
+import { speakText } from '@/services/audioApi';
+
+const stripMarkdown = (text: string): string =>
+  text
+    .replace(/```[\s\S]*?```/g, '')
+    .replace(/`[^`]+`/g, '')
+    .replace(/#{1,6}\s/g, '')
+    .replace(/\*{1,3}([^*]+)\*{1,3}/g, '$1')
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+    .replace(/^\s*[-*+]\s/gm, '')
+    .replace(/^\s*\d+\.\s/gm, '')
+    .replace(/>\s/g, '')
+    .trim();
+
+const useTTS = () => {
+  const [isLoadingTTS, setIsLoadingTTS] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const blobUrlRef = useRef<string | null>(null);
+
+  const speak = useCallback(async (text: string) => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current = null;
+      setIsPlaying(false);
+    }
+    if (blobUrlRef.current) {
+      URL.revokeObjectURL(blobUrlRef.current);
+      blobUrlRef.current = null;
+    }
+
+    setIsLoadingTTS(true);
+    try {
+      const blobUrl = await speakText(stripMarkdown(text));
+      blobUrlRef.current = blobUrl;
+      const audio = new Audio(blobUrl);
+      audioRef.current = audio;
+      audio.onended = () => {
+        setIsPlaying(false);
+        URL.revokeObjectURL(blobUrl);
+        blobUrlRef.current = null;
+      };
+      await audio.play();
+      setIsPlaying(true);
+    } catch {
+      // failed silently
+    } finally {
+      setIsLoadingTTS(false);
+    }
+  }, []);
+
+  const stop = useCallback(() => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current = null;
+    }
+    if (blobUrlRef.current) {
+      URL.revokeObjectURL(blobUrlRef.current);
+      blobUrlRef.current = null;
+    }
+    setIsPlaying(false);
+  }, []);
+
+  return { isLoadingTTS, isPlaying, speak, stop };
+};
 
 interface MessageProps {
   mainContent?: string;
@@ -274,6 +342,7 @@ export const AssistantMessage = ({
   const [copyStatus, setCopyStatus] = useState<string>('');
   const [imageCopyStatus, setImageCopyStatus] = useState<string>('');
   const [modalImage, setModalImage] = useState<string | null>(null);
+  const { isLoadingTTS, isPlaying, speak, stop } = useTTS();
 
   const handleCopy = () => {
     if (!mainContent) return;
@@ -416,6 +485,28 @@ export const AssistantMessage = ({
               <>
                 <FiCopy size={12} />
                 <span className="text-xs">Copy</span>
+              </>
+            )}
+          </button>
+
+          <button
+            onClick={() => (isPlaying ? stop() : speak(mainContent))}
+            disabled={isLoadingTTS}
+            className="flex items-center gap-1.5 px-2 py-1 text-muted hover:text-body transition-colors duration-150 rounded-md hover:bg-surface-elevated disabled:cursor-not-allowed"
+            aria-label={isPlaying ? 'Stop speaking' : 'Speak message'}
+            title={isPlaying ? 'Stop' : 'Speak'}
+          >
+            {isLoadingTTS ? (
+              <FiLoader size={12} className="animate-spin" />
+            ) : isPlaying ? (
+              <>
+                <FiSquare size={12} className="text-accent" />
+                <span className="text-xs text-accent">Stop</span>
+              </>
+            ) : (
+              <>
+                <FiVolume2 size={12} />
+                <span className="text-xs">Speak</span>
               </>
             )}
           </button>

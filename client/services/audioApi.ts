@@ -1,4 +1,5 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
+import axiosInstance from '@/apis/axiosInstance';
 
 interface TranscribeResponse {
   data: { transcript: string };
@@ -25,3 +26,12 @@ export const audioApi = createApi({
 });
 
 export const { useTranscribeAudioMutation } = audioApi;
+
+export const speakText = async (text: string): Promise<string> => {
+  const response = await axiosInstance.post<Blob>(
+    '/audio/speech',
+    { text },
+    { responseType: 'blob' },
+  );
+  return URL.createObjectURL(response.data);
+};

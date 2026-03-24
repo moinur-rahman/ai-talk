@@ -22,4 +22,16 @@ export class AudioService {
 
     return transcription.text;
   }
+
+  async textToSpeech(text: string): Promise<Buffer> {
+    const response = await this.client.audio.speech.create({
+      model: 'gpt-4o-mini-tts',
+      voice: 'alloy',
+      input: text,
+      response_format: 'mp3',
+    });
+
+    const arrayBuffer = await response.arrayBuffer();
+    return Buffer.from(arrayBuffer);
+  }
 }
