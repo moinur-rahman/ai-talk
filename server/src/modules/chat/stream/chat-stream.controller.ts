@@ -1,12 +1,4 @@
-import {
-  Body,
-  Controller,
-  Logger,
-  Param,
-  Post,
-  Req,
-  Res,
-} from '@nestjs/common';
+import { Body, Controller, Logger, Post, Req, Res } from '@nestjs/common';
 import type { Request, Response } from 'express';
 import { StreamChatDto } from './dto/stream-chat.dto.js';
 import { ChatStreamService } from './chat-stream.service.js';
@@ -21,9 +13,8 @@ export class ChatStreamController {
 
   constructor(private readonly chatStreamService: ChatStreamService) {}
 
-  @Post(':conversationId/stream')
+  @Post('stream')
   async streamChat(
-    @Param('conversationId') conversationId: string,
     @Body() dto: StreamChatDto,
     @CurrentUser() user: SessionUser,
     @Req() req: Request,
@@ -39,21 +30,26 @@ export class ChatStreamController {
     };
 
     let providerName: string | null = null;
+    let resolvedConversationId: string | null = dto.conversationId ?? null;
 
     req.on('close', () => {
-      if (providerName) {
-        this.chatStreamService.stopStream(providerName, conversationId);
+      if (providerName && resolvedConversationId) {
+        this.chatStreamService.stopStream(providerName, resolvedConversationId);
       }
     });
 
     try {
       await this.chatStreamService.stream(
-        conversationId,
+        dto.conversationId,
+        dto.projectId,
         user.id,
         dto,
         sendEvent,
         (resolved) => {
           providerName = resolved;
+        },
+        (resolved) => {
+          resolvedConversationId = resolved;
         },
       );
     } catch (error: unknown) {
@@ -63,7 +59,7 @@ export class ChatStreamController {
       sendEvent({
         type: 'error',
         message: 'Error fetching provider response',
-        conversationId,
+        conversationId: resolvedConversationId,
       });
     } finally {
       res.end();

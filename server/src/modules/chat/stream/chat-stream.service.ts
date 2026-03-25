@@ -32,11 +32,13 @@ export class ChatStreamService {
   }
 
   async stream(
-    conversationId: string,
+    conversationId: string | undefined,
+    projectId: string | undefined,
     userId: string,
     dto: StreamChatDto,
     sendEvent: SendEvent,
     onProviderResolved: (providerName: string) => void,
+    onConversationResolved: (conversationId: string) => void,
   ): Promise<void> {
     const modelDetails = await this.modelService.getModelDetails(
       dto.lastModelId,
@@ -51,14 +53,33 @@ export class ChatStreamService {
 
     onProviderResolved(providerName);
 
-    const [projectId, userPrefs] = await Promise.all([
-      this.conversationService.getProjectId(conversationId),
+    let currentConversationId = conversationId;
+
+    if (!currentConversationId) {
+      currentConversationId = await this.conversationService.createConversation(
+        userId,
+        projectId,
+      );
+      sendEvent({
+        type: 'conversation-created',
+        conversationId: currentConversationId,
+      });
+    }
+
+    onConversationResolved(currentConversationId);
+
+    const [resolvedProjectId, userPrefs] = await Promise.all([
+      conversationId !== undefined
+        ? this.conversationService.getProjectId(currentConversationId)
+        : Promise.resolve(projectId ?? null),
       this.userService.getUserPreferences(userId),
     ]);
 
     const projectInstructions =
-      projectId != null
-        ? await this.projectService.getProjectInstructions(String(projectId))
+      resolvedProjectId != null
+        ? await this.projectService.getProjectInstructions(
+            String(resolvedProjectId),
+          )
         : null;
 
     const systemPrompt = this.buildSystemPrompt(
@@ -68,7 +89,9 @@ export class ChatStreamService {
     );
 
     const { messages: chatHistory } =
-      await this.messageService.getMessagesByConversationId(conversationId);
+      await this.messageService.getMessagesByConversationId(
+        currentConversationId,
+      );
 
     let attachments: FileMetadataResponseDto[] = [];
     if (dto.fileIds && dto.fileIds.length > 0) {
@@ -113,7 +136,7 @@ export class ChatStreamService {
     await this.messageService.saveMessage({
       mainContent: dto.prompt,
       senderType: SenderType.user,
-      conversationId,
+      conversationId: currentConversationId,
       lastProviderId: modelDetails.provider.id,
       lastModelId: dto.lastModelId,
       fileIds: dto.fileIds,
@@ -122,7 +145,7 @@ export class ChatStreamService {
     const titlePromise =
       chatHistory.length === 0
         ? this.generateAndSendTitle(
-            conversationId,
+            currentConversationId,
             dto.prompt,
             sendEvent,
           ).catch((err: unknown) =>
@@ -140,7 +163,7 @@ export class ChatStreamService {
       providerName,
       {
         model: modelDetails.name,
-        conversationId,
+        conversationId: currentConversationId,
         messages,
         enableReasoning,
         webSearchEnabled,
@@ -150,15 +173,27 @@ export class ChatStreamService {
       (token: string, tokenType: TokenType, isEnd: boolean) => {
         if (tokenType === 'mainContent') {
           if (!isEnd) mainContentBuffer += token;
-          sendEvent({ type: 'token', token, tokenType, isEnd, conversationId });
+          sendEvent({
+            type: 'token',
+            token,
+            tokenType,
+            isEnd,
+            conversationId: currentConversationId,
+          });
         } else if (tokenType === 'reasoningContent') {
           if (!isEnd) reasoningContentBuffer += token;
-          sendEvent({ type: 'token', token, tokenType, isEnd, conversationId });
+          sendEvent({
+            type: 'token',
+            token,
+            tokenType,
+            isEnd,
+            conversationId: currentConversationId,
+          });
         } else if (tokenType === 'webSearch') {
           sendEvent({
             type: 'web-search-status',
             status: isEnd ? 'done' : 'searching',
-            conversationId,
+            conversationId: currentConversationId,
           });
         } else if (tokenType === 'partialImage') {
           if (isEnd) {
@@ -167,7 +202,7 @@ export class ChatStreamService {
             sendEvent({
               type: 'partial-image',
               imageData: token,
-              conversationId,
+              conversationId: currentConversationId,
             });
           }
         }
@@ -193,7 +228,7 @@ export class ChatStreamService {
           sendEvent({
             type: 'generated-image',
             presignedUrl: fileMeta.presignedUrl,
-            conversationId,
+            conversationId: currentConversationId,
           });
         }
       } catch (err: unknown) {
@@ -208,7 +243,7 @@ export class ChatStreamService {
         mainContent: mainContentBuffer || undefined,
         reasoningContent: reasoningContentBuffer || undefined,
         senderType: SenderType.assistant,
-        conversationId,
+        conversationId: currentConversationId,
         fileIds: generatedFileId ? [generatedFileId] : undefined,
         openaiImageCallId: streamResult?.openaiImageCallId,
       });

@@ -1,6 +1,20 @@
-import { IsString, IsBoolean, IsOptional, IsArray } from 'class-validator';
+import {
+  IsString,
+  IsBoolean,
+  IsOptional,
+  IsArray,
+  IsUUID,
+} from 'class-validator';
 
 export class StreamChatDto {
+  @IsUUID()
+  @IsOptional()
+  conversationId?: string;
+
+  @IsUUID()
+  @IsOptional()
+  projectId?: string;
+
   @IsString()
   prompt: string;
 

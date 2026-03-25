@@ -19,7 +19,6 @@ import {
 } from '@/redux/slices/chatSlice';
 import { chatApi } from '@/services/chatApi';
 import { AppDispatch, RootState } from '@/redux/store';
-import { createConversation } from '@/services/createConversation';
 import { useParams } from 'next/navigation';
 import { FileMetadata } from '@/types/chat';
 import { getCsrfTokenFromCookie } from '@/utils/getCsrfTokenFromCookie';
@@ -80,6 +79,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
   const pendingCleanupRef = useRef<Set<string>>(new Set());
   const activeStreamsRef = useRef<Record<string, AbortController>>({});
   const effectiveProjectIdRef = useRef<string | undefined>(undefined);
+  const pendingConvResolverRef = useRef<((id: string) => void) | null>(null);
 
   const dispatch = useDispatch<AppDispatch>();
 
@@ -146,6 +146,11 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
     },
     currentConversationId: string,
   ) => {
+    if (event.type === 'conversation-created' && event.conversationId) {
+      pendingConvResolverRef.current?.(event.conversationId);
+      pendingConvResolverRef.current = null;
+      return;
+    }
     const convId = event.conversationId ?? currentConversationId;
 
     if (event.type === 'token') {
@@ -254,7 +259,8 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const runStream = async (
-    currentId: string,
+    currentId: string | undefined,
+    streamKey: string,
     params: ISendMessageParams,
     modelId: string,
     enableReasoning: boolean,
@@ -265,7 +271,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
     try {
       const csrfToken = getCsrfTokenFromCookie();
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/chats/${currentId}/stream`,
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/chats/stream`,
         {
           method: 'POST',
           headers: {
@@ -274,6 +280,9 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
           },
           credentials: 'include',
           body: JSON.stringify({
+            ...(currentId
+              ? { conversationId: currentId }
+              : { projectId: params.project?.id }),
             prompt: params.prompt,
             lastModelId: modelId,
             enableReasoning,
@@ -284,7 +293,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
             imageGenerationEnabled,
             responseStyle: style,
           }),
-          signal: activeStreamsRef.current[currentId]?.signal,
+          signal: activeStreamsRef.current[streamKey]?.signal,
         },
       );
 
@@ -310,26 +319,28 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
           if (!jsonStr) continue;
           try {
             const event = JSON.parse(jsonStr);
-            handleStreamEvent(event, currentId);
+            handleStreamEvent(event, currentId ?? '');
           } catch {
             // ignore malformed events
           }
         }
       }
 
-      delete activeStreamsRef.current[currentId];
+      delete activeStreamsRef.current[streamKey];
     } catch (err) {
       if (err instanceof DOMException && err.name === 'AbortError') {
         return;
       }
       console.error('Error in stream:', err);
-      setError((prev) => ({
-        ...prev,
-        [currentId]: 'Failed to send message. Please try again.',
-      }));
-      setStreaming((prev) => ({ ...prev, [currentId]: false }));
-      setReasoningStreaming((prev) => ({ ...prev, [currentId]: false }));
-      delete activeStreamsRef.current[currentId];
+      if (currentId) {
+        setError((prev) => ({
+          ...prev,
+          [currentId]: 'Failed to send message. Please try again.',
+        }));
+        setStreaming((prev) => ({ ...prev, [currentId]: false }));
+        setReasoningStreaming((prev) => ({ ...prev, [currentId]: false }));
+      }
+      delete activeStreamsRef.current[streamKey];
     }
   };
 
@@ -351,20 +362,38 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
 
     try {
       if (!currentId) {
-        currentId = await createConversation(effectiveProjId);
-        if (!currentId) {
-          setError((prev) => ({
-            ...prev,
-            [currentId || 'global']:
-              'Failed to create conversation. Please try again.',
-          }));
-          return undefined;
-        }
+        // New conversation: fire the stream immediately and wait for the
+        // server to create the conversation and return its ID via SSE.
+        const abortController = new AbortController();
+        activeStreamsRef.current['pending'] = abortController;
+
+        const convIdPromise = new Promise<string>((resolve) => {
+          pendingConvResolverRef.current = resolve;
+        });
+
+        void runStream(
+          undefined,
+          'pending',
+          params,
+          selectedModel.id,
+          selectedModel.hasReasoning && reasoningEnabled,
+          webSearchEnabled,
+          imageGenerationEnabled,
+          responseStyle,
+        );
+
+        // Wait for the conversation-created SSE event to get the real ID.
+        currentId = await convIdPromise;
+
+        // Migrate the abort controller from the 'pending' key to the real ID.
+        activeStreamsRef.current[currentId] = abortController;
+        delete activeStreamsRef.current['pending'];
+
         dispatch(setNewConversationId(currentId));
         dispatch(setNewConversationProject(params.project ?? null));
 
-        // Optimistically add to sidebar immediately using the user's message
-        // as the initial title. It will be replaced once the AI title arrives.
+        // Optimistically add to sidebar using the user's message as the
+        // initial title. It will be replaced once the AI title arrives.
         const prompt = params.prompt.trim();
         const initialTitle =
           prompt.length > 60 ? `${prompt.slice(0, 60)}…` : prompt;
@@ -384,8 +413,36 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
             },
           ),
         );
+
+        dispatch(
+          addMessage({
+            conversationId: currentId,
+            message: {
+              mainContent: params.prompt,
+              senderType: 'user',
+              attachments: params.attachments,
+            },
+          }),
+        );
+
+        dispatch(
+          addMessage({
+            conversationId: currentId,
+            message: {
+              mainContent: '',
+              reasoningContent: '',
+              senderType: 'assistant',
+            },
+          }),
+        );
+
+        setStreaming((prev) => ({ ...prev, [currentId!]: true }));
+        setReasoningStreaming((prev) => ({ ...prev, [currentId!]: true }));
+
+        return currentId;
       }
 
+      // Existing conversation: optimistic UI updates then fire the stream.
       dispatch(
         addMessage({
           conversationId: currentId,
@@ -414,9 +471,8 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
       const abortController = new AbortController();
       activeStreamsRef.current[currentId] = abortController;
 
-      // Fire-and-forget: don't await the stream so the caller gets the ID
-      // immediately and can navigate to the chat page while streaming runs.
       void runStream(
+        currentId,
         currentId,
         params,
         selectedModel.id,
