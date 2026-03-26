@@ -34,7 +34,7 @@ const useTTS = () => {
   const [isLoadingTTS, setIsLoadingTTS] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const blobUrlRef = useRef<string | null>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   const speak = useCallback(async (text: string) => {
     if (audioRef.current) {
@@ -42,26 +42,27 @@ const useTTS = () => {
       audioRef.current = null;
       setIsPlaying(false);
     }
-    if (blobUrlRef.current) {
-      URL.revokeObjectURL(blobUrlRef.current);
-      blobUrlRef.current = null;
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
     }
 
     setIsLoadingTTS(true);
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
     try {
-      const blobUrl = await speakText(stripMarkdown(text));
-      blobUrlRef.current = blobUrl;
-      const audio = new Audio(blobUrl);
+      const audio = await speakText(stripMarkdown(text), controller.signal);
       audioRef.current = audio;
+      setIsPlaying(true);
       audio.onended = () => {
         setIsPlaying(false);
-        URL.revokeObjectURL(blobUrl);
-        blobUrlRef.current = null;
+        abortControllerRef.current = null;
       };
-      await audio.play();
-      setIsPlaying(true);
-    } catch {
-      // failed silently
+    } catch (err) {
+      if (err instanceof DOMException && err.name === 'AbortError') {
+        return;
+      }
     } finally {
       setIsLoadingTTS(false);
     }
@@ -72,9 +73,9 @@ const useTTS = () => {
       audioRef.current.pause();
       audioRef.current = null;
     }
-    if (blobUrlRef.current) {
-      URL.revokeObjectURL(blobUrlRef.current);
-      blobUrlRef.current = null;
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
     }
     setIsPlaying(false);
   }, []);

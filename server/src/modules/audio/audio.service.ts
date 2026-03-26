@@ -1,5 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import OpenAI, { toFile } from 'openai';
+import { Readable } from 'stream';
+import type { ReadableStream } from 'stream/web';
 import config from '../../common/config/config.js';
 
 @Injectable()
@@ -23,7 +25,7 @@ export class AudioService {
     return transcription.text;
   }
 
-  async textToSpeech(text: string): Promise<Buffer> {
+  async textToSpeech(text: string): Promise<Readable> {
     const response = await this.client.audio.speech.create({
       model: 'gpt-4o-mini-tts',
       voice: 'alloy',
@@ -31,7 +33,6 @@ export class AudioService {
       response_format: 'mp3',
     });
 
-    const arrayBuffer = await response.arrayBuffer();
-    return Buffer.from(arrayBuffer);
+    return Readable.fromWeb(response.body as ReadableStream);
   }
 }

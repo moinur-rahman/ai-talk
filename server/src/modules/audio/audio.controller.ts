@@ -28,18 +28,14 @@ export class AudioController {
   }
 
   @Post('speech')
-  async textToSpeech(
-    @Body('text') text: string,
-    @Res() res: Response,
-  ) {
+  async textToSpeech(@Body('text') text: string, @Res() res: Response) {
     if (!text?.trim()) {
       throw new BadRequestException('Text is required');
     }
 
-    const audioBuffer = await this.audioService.textToSpeech(text);
+    const stream = await this.audioService.textToSpeech(text);
 
     res.setHeader('Content-Type', 'audio/mpeg');
-    res.setHeader('Content-Length', audioBuffer.length);
-    res.send(audioBuffer);
+    stream.pipe(res);
   }
 }

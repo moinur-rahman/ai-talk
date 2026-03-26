@@ -1,5 +1,5 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
-import axiosInstance from '@/apis/axiosInstance';
+import { getCsrfTokenFromCookie } from '@/utils/getCsrfTokenFromCookie';
 
 interface TranscribeResponse {
   data: { transcript: string };
@@ -27,11 +27,86 @@ export const audioApi = createApi({
 
 export const { useTranscribeAudioMutation } = audioApi;
 
-export const speakText = async (text: string): Promise<string> => {
-  const response = await axiosInstance.post<Blob>(
-    '/audio/speech',
-    { text },
-    { responseType: 'blob' },
+export const speakText = async (
+  text: string,
+  signal?: AbortSignal,
+): Promise<HTMLAudioElement> => {
+  const csrfToken = getCsrfTokenFromCookie();
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+  if (csrfToken) {
+    headers['X-CSRFToken'] = csrfToken;
+  }
+
+  const response = await fetch(
+    `${process.env.NEXT_PUBLIC_BACKEND_URL}/audio/speech`,
+    {
+      method: 'POST',
+      headers,
+      credentials: 'include',
+      body: JSON.stringify({ text }),
+      signal,
+    },
   );
-  return URL.createObjectURL(response.data);
+
+  if (!response.ok || !response.body) {
+    throw new Error('TTS request failed');
+  }
+
+  const reader = response.body.getReader();
+  const mediaSource = new MediaSource();
+  const objectUrl = URL.createObjectURL(mediaSource);
+  const audio = new Audio(objectUrl);
+
+  return new Promise<HTMLAudioElement>((resolve, reject) => {
+    let resolved = false;
+
+    audio.addEventListener('canplay', () => {
+      if (!resolved) {
+        resolved = true;
+        URL.revokeObjectURL(objectUrl);
+        audio.play().then(() => resolve(audio)).catch(reject);
+      }
+    });
+
+    mediaSource.addEventListener('sourceopen', () => {
+      const sourceBuffer = mediaSource.addSourceBuffer('audio/mpeg');
+
+      signal?.addEventListener('abort', () => reader.cancel(), { once: true });
+
+      const waitForUpdate = () =>
+        new Promise<void>((r) =>
+          sourceBuffer.addEventListener('updateend', () => r(), { once: true }),
+        );
+
+      const pump = async () => {
+        try {
+          while (true) {
+            if (signal?.aborted) {
+              break;
+            }
+            const { done, value } = await reader.read();
+            if (signal?.aborted) {
+              break;
+            }
+            if (sourceBuffer.updating) {
+              await waitForUpdate();
+            }
+            if (done) {
+              mediaSource.endOfStream();
+              break;
+            }
+            sourceBuffer.appendBuffer(value);
+          }
+        } catch (err) {
+          if (!resolved) {
+            reject(err);
+          }
+        }
+      };
+
+      pump();
+    });
+  });
 };
