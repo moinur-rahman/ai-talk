@@ -10,7 +10,6 @@
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,css,md}\""
   },
   "dependencies": {
-    "@openai/agents": "^0.8.1",
     "@reduxjs/toolkit": "^2.11.2",
     "axios": "^1.13.5",
     "katex": "^0.16.28",

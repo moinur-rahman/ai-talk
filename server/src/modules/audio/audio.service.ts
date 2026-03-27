@@ -36,18 +36,36 @@ export class AudioService {
     return Readable.fromWeb(response.body as ReadableStream);
   }
 
-  async createRealtimeSession(): Promise<string> {
-    const secret = await this.client.realtime.clientSecrets.create({
-      session: {
-        type: 'realtime' as const,
-        model: 'gpt-4o-mini-realtime-preview',
-        audio: {
-          input: { transcription: { model: 'gpt-4o-mini-transcribe' } },
-          output: { voice: 'alloy' as const },
-        },
+  async createRealtimeCall(
+    sdp: string,
+  ): Promise<{ sdpAnswer: string; callId: string }> {
+    const sessionConfig = JSON.stringify({
+      type: 'realtime',
+      model: 'gpt-4o-mini-realtime-preview',
+      audio: {
+        input: { transcription: { model: 'gpt-4o-mini-transcribe' } },
+        output: { voice: 'alloy' },
       },
     });
 
-    return secret.value;
+    const fd = new FormData();
+    fd.set('sdp', sdp);
+    fd.set('session', sessionConfig);
+
+    const response = await fetch('https://api.openai.com/v1/realtime/calls', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${config.openaiApiKey}` },
+      body: fd,
+    });
+
+    if (!response.ok) {
+      throw new Error(`OpenAI realtime call failed: ${response.status}`);
+    }
+
+    const sdpAnswer = await response.text();
+    const location = response.headers.get('Location') ?? '';
+    const callId = location.split('/').pop() ?? '';
+
+    return { sdpAnswer, callId };
   }
 }

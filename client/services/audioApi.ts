@@ -6,8 +6,8 @@ interface TranscribeResponse {
   message: string;
 }
 
-interface RealtimeSessionResponse {
-  data: { clientSecret: string };
+interface RealtimeCallResponse {
+  data: { sdpAnswer: string; callId: string };
   message: string;
 }
 
@@ -27,15 +27,21 @@ export const audioApi = createApi({
       transformResponse: (response: TranscribeResponse) =>
         response.data.transcript,
     }),
-    createRealtimeSession: builder.query<string, void>({
-      query: () => '/realtime/session',
-      transformResponse: (response: RealtimeSessionResponse) =>
-        response.data.clientSecret,
+    createRealtimeCall: builder.mutation<
+      { sdpAnswer: string; callId: string },
+      string
+    >({
+      query: (sdp) => ({
+        url: '/realtime/session',
+        method: 'POST',
+        body: { sdp },
+      }),
+      transformResponse: (response: RealtimeCallResponse) => response.data,
     }),
   }),
 });
 
-export const { useTranscribeAudioMutation, useLazyCreateRealtimeSessionQuery } =
+export const { useTranscribeAudioMutation, useCreateRealtimeCallMutation } =
   audioApi;
 
 export const speakText = async (
