@@ -6,6 +6,11 @@ interface TranscribeResponse {
   message: string;
 }
 
+interface RealtimeSessionResponse {
+  data: { clientSecret: string };
+  message: string;
+}
+
 export const audioApi = createApi({
   reducerPath: 'audioApi',
   baseQuery: fetchBaseQuery({
@@ -22,10 +27,16 @@ export const audioApi = createApi({
       transformResponse: (response: TranscribeResponse) =>
         response.data.transcript,
     }),
+    createRealtimeSession: builder.query<string, void>({
+      query: () => '/realtime/session',
+      transformResponse: (response: RealtimeSessionResponse) =>
+        response.data.clientSecret,
+    }),
   }),
 });
 
-export const { useTranscribeAudioMutation } = audioApi;
+export const { useTranscribeAudioMutation, useLazyCreateRealtimeSessionQuery } =
+  audioApi;
 
 export const speakText = async (
   text: string,

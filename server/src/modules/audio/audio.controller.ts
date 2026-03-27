@@ -6,6 +6,7 @@ import {
   Res,
   UploadedFile,
   UseInterceptors,
+  Get,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import type { Response } from 'express';
@@ -25,6 +26,12 @@ export class AudioController {
     const transcript = await this.audioService.transcribe(file);
 
     return { data: { transcript }, message: 'Audio transcribed successfully' };
+  }
+
+  @Get('realtime/session')
+  async createRealtimeSession() {
+    const clientSecret = await this.audioService.createRealtimeSession();
+    return { data: { clientSecret }, message: 'Realtime session created' };
   }
 
   @Post('speech')

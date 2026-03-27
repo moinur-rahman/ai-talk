@@ -6,6 +6,7 @@ import {
   FiChevronRight,
   FiFolder,
   FiGlobe,
+  FiHeadphones,
   FiImage,
   FiMic,
   FiPaperclip,
@@ -32,6 +33,8 @@ import FilePreviews from './FilePreviews';
 import VoiceRecorderOverlay from './VoiceRecorderOverlay';
 import useVoiceInput from './useVoiceInput';
 import useFileUpload from './useFileUpload';
+import VoiceAgentPanel from '../VoiceAgentPanel';
+import useVoiceAgent from '@/hooks/useVoiceAgent';
 
 const RESPONSE_STYLES = [
   'Normal',
@@ -101,6 +104,35 @@ const SendMessage = ({
     removeFile,
     reset: resetFiles,
   } = useFileUpload();
+
+  const [isVoiceAgentOpen, setIsVoiceAgentOpen] = useState(false);
+
+  const {
+    status: voiceStatus,
+    isSpeaking,
+    isAssistantSpeaking,
+    liveUserText,
+    liveAssistantText,
+    turns,
+    error: voiceError,
+    start: startVoiceAgent,
+    stop: stopVoiceAgent,
+  } = useVoiceAgent();
+
+  const handleVoiceAgentToggle = useCallback(async () => {
+    if (isVoiceAgentOpen) {
+      stopVoiceAgent();
+      setIsVoiceAgentOpen(false);
+    } else {
+      setIsVoiceAgentOpen(true);
+      await startVoiceAgent();
+    }
+  }, [isVoiceAgentOpen, startVoiceAgent, stopVoiceAgent]);
+
+  const handleVoiceAgentStop = useCallback(() => {
+    stopVoiceAgent();
+    setIsVoiceAgentOpen(false);
+  }, [stopVoiceAgent]);
 
   const handleTranscript = useCallback(
     (text: string) => setPrompt((prev) => (prev ? `${prev} ${text}` : text)),
@@ -210,6 +242,19 @@ const SendMessage = ({
         <div className="text-red-400 text-xs mb-2 px-1">
           {error?.global || (conversationId && error?.[conversationId])}
         </div>
+      )}
+
+      {isVoiceAgentOpen && (
+        <VoiceAgentPanel
+          status={voiceStatus}
+          isSpeaking={isSpeaking}
+          isAssistantSpeaking={isAssistantSpeaking}
+          liveUserText={liveUserText}
+          liveAssistantText={liveAssistantText}
+          turns={turns}
+          error={voiceError}
+          onStop={handleVoiceAgentStop}
+        />
       )}
 
       <FilePreviews filePreviews={filePreviews} onRemove={removeFile} />
@@ -532,6 +577,23 @@ const SendMessage = ({
               className="p-2 rounded-lg transition-all duration-150 flex-shrink-0 text-muted hover:text-accent hover:bg-accent/10"
             >
               <FiMic size={17} />
+            </button>
+          )}
+
+          {isOpenAI && !isListening && !isTranscribing && (
+            <button
+              type="button"
+              onClick={handleVoiceAgentToggle}
+              aria-label={
+                isVoiceAgentOpen ? 'End voice conversation' : 'Start voice conversation'
+              }
+              className={`p-2 rounded-lg transition-all duration-150 shrink-0 ${
+                isVoiceAgentOpen
+                  ? 'text-green-400 bg-green-400/10 hover:bg-green-400/20'
+                  : 'text-muted hover:text-accent hover:bg-accent/10'
+              }`}
+            >
+              <FiHeadphones size={17} />
             </button>
           )}
 

@@ -35,4 +35,19 @@ export class AudioService {
 
     return Readable.fromWeb(response.body as ReadableStream);
   }
+
+  async createRealtimeSession(): Promise<string> {
+    const secret = await this.client.realtime.clientSecrets.create({
+      session: {
+        type: 'realtime' as const,
+        model: 'gpt-4o-mini-realtime-preview',
+        audio: {
+          input: { transcription: { model: 'gpt-4o-mini-transcribe' } },
+          output: { voice: 'alloy' as const },
+        },
+      },
+    });
+
+    return secret.value;
+  }
 }
