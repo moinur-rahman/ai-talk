@@ -34,7 +34,7 @@ import VoiceRecorderOverlay from './VoiceRecorderOverlay';
 import useVoiceInput from './useVoiceInput';
 import useFileUpload from './useFileUpload';
 import VoiceAgentPanel from '../VoiceAgentPanel';
-import useVoiceAgent from '@/hooks/useVoiceAgent';
+import { useVoiceAgentContext } from '@/contexts/VoiceAgentContext';
 
 const RESPONSE_STYLES = [
   'Normal',
@@ -105,34 +105,15 @@ const SendMessage = ({
     reset: resetFiles,
   } = useFileUpload();
 
-  const [isVoiceAgentOpen, setIsVoiceAgentOpen] = useState(false);
-
   const {
     status: voiceStatus,
     isSpeaking,
     isAssistantSpeaking,
-    liveUserText,
-    liveAssistantText,
-    turns,
     error: voiceError,
-    start: startVoiceAgent,
-    stop: stopVoiceAgent,
-  } = useVoiceAgent();
-
-  const handleVoiceAgentToggle = useCallback(async () => {
-    if (isVoiceAgentOpen) {
-      stopVoiceAgent();
-      setIsVoiceAgentOpen(false);
-    } else {
-      setIsVoiceAgentOpen(true);
-      await startVoiceAgent();
-    }
-  }, [isVoiceAgentOpen, startVoiceAgent, stopVoiceAgent]);
-
-  const handleVoiceAgentStop = useCallback(() => {
-    stopVoiceAgent();
-    setIsVoiceAgentOpen(false);
-  }, [stopVoiceAgent]);
+    isOpen: isVoiceAgentOpen,
+    toggle: handleVoiceAgentToggle,
+    close: handleVoiceAgentStop,
+  } = useVoiceAgentContext();
 
   const handleTranscript = useCallback(
     (text: string) => setPrompt((prev) => (prev ? `${prev} ${text}` : text)),
@@ -249,9 +230,6 @@ const SendMessage = ({
           status={voiceStatus}
           isSpeaking={isSpeaking}
           isAssistantSpeaking={isAssistantSpeaking}
-          liveUserText={liveUserText}
-          liveAssistantText={liveAssistantText}
-          turns={turns}
           error={voiceError}
           onStop={handleVoiceAgentStop}
         />
@@ -585,7 +563,9 @@ const SendMessage = ({
               type="button"
               onClick={handleVoiceAgentToggle}
               aria-label={
-                isVoiceAgentOpen ? 'End voice conversation' : 'Start voice conversation'
+                isVoiceAgentOpen
+                  ? 'End voice conversation'
+                  : 'Start voice conversation'
               }
               className={`p-2 rounded-lg transition-all duration-150 shrink-0 ${
                 isVoiceAgentOpen

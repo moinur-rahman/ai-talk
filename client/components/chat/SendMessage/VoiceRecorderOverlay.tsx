@@ -76,7 +76,8 @@ const VoiceRecorderOverlay = ({
 
         // Taper bars toward edges for a natural waveform look
         const edgeFactor =
-          1 - Math.pow((Math.abs(i - BAR_COUNT / 2) / (BAR_COUNT / 2)) * 0.6, 2);
+          1 -
+          Math.pow((Math.abs(i - BAR_COUNT / 2) / (BAR_COUNT / 2)) * 0.6, 2);
         const barHeight = Math.max(
           MIN_BAR_HEIGHT,
           value * centerY * 1.6 * edgeFactor,

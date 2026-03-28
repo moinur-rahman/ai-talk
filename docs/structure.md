@@ -13,8 +13,9 @@ ai-talk/
 
 ## Server (`server/src/`)
 
-- `common/` — config, constants, decorators, guards
+- `common/` — config, constants, decorators
 - `modules/` — feature modules:
+  - `audio/` — transcription, TTS, WebRTC realtime sessions
   - `auth/` — authentication (strategies, guards, DTOs)
   - `chat/` — conversation, message, stream sub-modules
   - `file/` — file upload/management
@@ -24,11 +25,13 @@ ai-talk/
   - `project/` — projects CRUD
   - `user/` — user management
 - `providers/` — infrastructure: `prisma/`, `redis/`, `seaweedfs/`
-- `generated/prisma/` — Prisma client output
+- `generated/prisma/` — Prisma client output (at `server/generated/prisma/`)
 
 ## Client (`client/`)
 
-- `app/` — Next.js App Router: `(protected)/`, `(public)/`
+- `app/` — Next.js App Router
+  - `(protected)/` — `(chat)/`, `(projects)/`, `admin/`, `image-generation/`, `settings/`
+  - `(public)/` — `(auth)/`
 - `components/`
   - `admin/` — admin UI
   - `auth/` — login/register forms
@@ -37,8 +40,8 @@ ai-talk/
   - `ui/` — shadcn/ui primitives
 - `apis/` — API call definitions
 - `services/` — client-side service layer
+- `hooks/` — React hooks
 - `redux/slices/` — Redux state slices
 - `contexts/` — React contexts
 - `types/` — TypeScript types
 - `utils/` — utility helpers
-- `lib/` — library setup

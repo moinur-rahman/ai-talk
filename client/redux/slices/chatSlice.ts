@@ -87,6 +87,20 @@ export const chatSlice = createSlice({
       state.newConversationProject = action.payload;
     },
 
+    setLastAssistantContent: (
+      state,
+      action: PayloadAction<{ conversationId: string; content: string }>,
+    ) => {
+      const { conversationId, content } = action.payload;
+      const messages = state.chatHistories[conversationId];
+      if (messages && messages.length > 0) {
+        const last = messages[messages.length - 1];
+        if (last.senderType === 'assistant') {
+          last.mainContent = content;
+        }
+      }
+    },
+
     setLastMessageGeneratedImage: (
       state,
       action: PayloadAction<{ conversationId: string; imageData: string }>,
@@ -114,6 +128,7 @@ export const chatSlice = createSlice({
 export const {
   addMessage,
   updateLastMessage,
+  setLastAssistantContent,
   setLastMessageGeneratedImage,
   loadChatHistory,
   setNewConversationId,

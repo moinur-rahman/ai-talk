@@ -1,5 +1,6 @@
 'use client';
 import { useChat } from '@/contexts/ChatContext';
+import { useVoiceAgentContext } from '@/contexts/VoiceAgentContext';
 import { useChatData } from './useChatData';
 import { UserMessage, AssistantMessage } from './MessageComponents';
 import { Message } from '@/types/chat';
@@ -12,6 +13,7 @@ const ChatHistory = () => {
     imageGenerating,
     webSearching,
   } = useChat();
+  const { isAssistantSpeaking } = useVoiceAgentContext();
   const { chatHistories } = useChatData(conversationId ?? '');
 
   if (!conversationId) {
@@ -51,7 +53,11 @@ const ChatHistory = () => {
                   isProcessing={reasoningStreaming[conversationId]}
                   isGeneratingImage={imageGenerating[conversationId] ?? false}
                   isSearching={webSearching[conversationId] ?? false}
-                  isStreaming={isLast && (streaming[conversationId] ?? false)}
+                  isStreaming={
+                    isLast &&
+                    ((streaming[conversationId] ?? false) ||
+                      isAssistantSpeaking)
+                  }
                 />
               );
             default:
