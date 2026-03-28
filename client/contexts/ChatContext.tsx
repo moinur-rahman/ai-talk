@@ -420,6 +420,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
             message: {
               mainContent: params.prompt,
               senderType: 'user',
+              inputType: 'text',
               attachments: params.attachments,
             },
           }),
@@ -432,6 +433,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
               mainContent: '',
               reasoningContent: '',
               senderType: 'assistant',
+              inputType: 'text',
             },
           }),
         );
@@ -449,6 +451,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
           message: {
             mainContent: params.prompt,
             senderType: 'user',
+            inputType: 'text',
             attachments: params.attachments,
           },
         }),
@@ -461,6 +464,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
             mainContent: '',
             reasoningContent: '',
             senderType: 'assistant',
+            inputType: 'text',
           },
         }),
       );

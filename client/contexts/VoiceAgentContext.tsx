@@ -71,12 +71,14 @@ export const VoiceAgentProvider = ({ children }: { children: ReactNode }) => {
   const userTranscriptDispatchedRef = useRef(true);
   const pendingAssistantAddRef = useRef(false);
   const assistantDeltaBufferRef = useRef('');
+  const speechStartTimeRef = useRef<number | null>(null);
 
   // Barrier/join refs for new conversation first turn.
   // Both conversationId (from SSE) and user transcript (from WebRTC) must arrive
   // before we flush + navigate. Either can arrive first.
   const pendingUserTranscriptRef = useRef<string | null>(null);
   const pendingNavigationIdRef = useRef<string | null>(null);
+  const pendingAudioDurationRef = useRef<number | undefined>(undefined);
 
   const close = useCallback(() => {
     stop();
@@ -86,13 +88,15 @@ export const VoiceAgentProvider = ({ children }: { children: ReactNode }) => {
   // Dispatches user + pending assistant messages for the first turn of a new conversation,
   // then navigates. Called once both the conversationId and user transcript are available.
   const flushAndNavigate = useCallback(
-    (newId: string, transcript: string) => {
+    (newId: string, transcript: string, audioDurationMs?: number) => {
       dispatch(
         addMessage({
           conversationId: newId,
           message: {
             mainContent: transcript,
             senderType: 'user',
+            inputType: 'voice',
+            audioDurationMs,
             attachments: [],
           },
         }),
@@ -107,6 +111,7 @@ export const VoiceAgentProvider = ({ children }: { children: ReactNode }) => {
             message: {
               mainContent: assistantDeltaBufferRef.current,
               senderType: 'assistant',
+              inputType: 'text',
               attachments: [],
             },
           }),
@@ -155,8 +160,10 @@ export const VoiceAgentProvider = ({ children }: { children: ReactNode }) => {
         if (pendingUserTranscriptRef.current) {
           // User transcript already arrived — flush everything and navigate
           const transcript = pendingUserTranscriptRef.current;
+          const audioDurationMs = pendingAudioDurationRef.current;
           pendingUserTranscriptRef.current = null;
-          flushAndNavigate(newConversationId, transcript);
+          pendingAudioDurationRef.current = undefined;
+          flushAndNavigate(newConversationId, transcript, audioDurationMs);
         } else {
           // User transcript not yet arrived — store and wait
           pendingNavigationIdRef.current = newConversationId;
@@ -190,16 +197,25 @@ export const VoiceAgentProvider = ({ children }: { children: ReactNode }) => {
           assistantDeltaBufferRef.current = '';
           pendingUserTranscriptRef.current = null;
           pendingNavigationIdRef.current = null;
+          pendingAudioDurationRef.current = undefined;
+          speechStartTimeRef.current = Date.now();
         },
 
         onUserTranscriptCompleted: (transcript) => {
           if (userTranscriptDispatchedRef.current) {
             return;
           }
+          const audioDurationMs =
+            speechStartTimeRef.current !== null
+              ? Date.now() - speechStartTimeRef.current
+              : undefined;
+          speechStartTimeRef.current = null;
+
           const id = conversationIdRef.current;
           if (!id) {
-            // conversationId not known yet — buffer and wait
+            // conversationId not known yet — buffer transcript and duration, then wait
             pendingUserTranscriptRef.current = transcript;
+            pendingAudioDurationRef.current = audioDurationMs;
             userTranscriptDispatchedRef.current = true;
             return;
           }
@@ -208,7 +224,7 @@ export const VoiceAgentProvider = ({ children }: { children: ReactNode }) => {
             // transcript is now the missing piece; flush everything and navigate
             const newId = pendingNavigationIdRef.current;
             pendingNavigationIdRef.current = null;
-            flushAndNavigate(newId, transcript);
+            flushAndNavigate(newId, transcript, audioDurationMs);
             return;
           }
           // Existing conversation — normal dispatch
@@ -218,6 +234,8 @@ export const VoiceAgentProvider = ({ children }: { children: ReactNode }) => {
               message: {
                 mainContent: transcript,
                 senderType: 'user',
+                inputType: 'voice',
+                audioDurationMs,
                 attachments: [],
               },
             }),
@@ -232,6 +250,7 @@ export const VoiceAgentProvider = ({ children }: { children: ReactNode }) => {
                 message: {
                   mainContent: assistantDeltaBufferRef.current,
                   senderType: 'assistant',
+                  inputType: 'text',
                   attachments: [],
                 },
               }),
@@ -250,6 +269,7 @@ export const VoiceAgentProvider = ({ children }: { children: ReactNode }) => {
                 message: {
                   mainContent: '',
                   senderType: 'assistant',
+                  inputType: 'text',
                   attachments: [],
                 },
               }),
@@ -292,6 +312,7 @@ export const VoiceAgentProvider = ({ children }: { children: ReactNode }) => {
                   message: {
                     mainContent: trimmed,
                     senderType: 'assistant',
+                    inputType: 'text',
                     attachments: [],
                   },
                 }),

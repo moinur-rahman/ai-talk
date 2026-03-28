@@ -1,4 +1,5 @@
 'use client';
+import { useEffect, useRef } from 'react';
 import { useChat } from '@/contexts/ChatContext';
 import { useVoiceAgentContext } from '@/contexts/VoiceAgentContext';
 import { useChatData } from './useChatData';
@@ -15,6 +16,16 @@ const ChatHistory = () => {
   } = useChat();
   const { isAssistantSpeaking } = useVoiceAgentContext();
   const { chatHistories } = useChatData(conversationId ?? '');
+  const bottomRef = useRef<HTMLDivElement>(null);
+
+  const isStreaming =
+    (conversationId && streaming[conversationId]) ||
+    (conversationId && reasoningStreaming[conversationId]) ||
+    isAssistantSpeaking;
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [chatHistories.length, isStreaming]);
 
   if (!conversationId) {
     return (
@@ -40,6 +51,8 @@ const ChatHistory = () => {
                   key={`user-${index}`}
                   mainContent={chat.mainContent}
                   attachments={chat.attachments}
+                  inputType={chat.inputType}
+                  audioDurationMs={chat.audioDurationMs}
                 />
               );
             case 'assistant':
@@ -64,6 +77,7 @@ const ChatHistory = () => {
               return null;
           }
         })}
+        <div ref={bottomRef} />
       </div>
     </div>
   );

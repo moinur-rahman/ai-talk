@@ -1,8 +1,21 @@
-import { IsArray, IsEnum, IsOptional, IsString, IsUUID } from 'class-validator';
+import {
+  IsArray,
+  IsEnum,
+  IsInt,
+  IsOptional,
+  IsString,
+  IsUUID,
+  Min,
+} from 'class-validator';
 
 export enum SenderType {
   user = 'user',
   assistant = 'assistant',
+}
+
+export enum InputType {
+  text = 'text',
+  voice = 'voice',
 }
 
 export class SaveMessageDto {
@@ -16,6 +29,15 @@ export class SaveMessageDto {
 
   @IsEnum(SenderType)
   senderType: SenderType;
+
+  @IsOptional()
+  @IsEnum(InputType)
+  inputType?: InputType;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  audioDurationMs?: number;
 
   @IsUUID()
   conversationId: string;

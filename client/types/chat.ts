@@ -11,6 +11,8 @@ export interface Message {
   reasoningContent?: string;
   generatedImage?: string;
   senderType: 'user' | 'assistant';
+  inputType: 'text' | 'voice';
+  audioDurationMs?: number | null;
   attachments?: FileMetadata[];
 }
 

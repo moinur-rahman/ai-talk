@@ -13,6 +13,7 @@ import {
   FiDownload,
   FiGlobe,
   FiLoader,
+  FiMic,
   FiSquare,
   FiVolume2,
 } from 'react-icons/fi';
@@ -83,11 +84,20 @@ const useTTS = () => {
   return { isLoadingTTS, isPlaying, speak, stop };
 };
 
+const formatDuration = (ms: number): string => {
+  const totalSeconds = Math.round(ms / 1000);
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+};
+
 interface MessageProps {
   mainContent?: string;
   reasoningContent?: string;
   attachments?: FileMetadata[];
   isProcessing?: boolean;
+  inputType?: 'text' | 'voice';
+  audioDurationMs?: number | null;
 }
 
 const MessageImages = ({ attachments }: { attachments: FileMetadata[] }) => {
@@ -245,7 +255,12 @@ const ReasoningSection = ({
   );
 };
 
-export const UserMessage = ({ mainContent, attachments }: MessageProps) => {
+export const UserMessage = ({
+  mainContent,
+  attachments,
+  inputType,
+  audioDurationMs,
+}: MessageProps) => {
   const imageFiles = attachments?.filter(
     (file) => file.mimeType.startsWith('image/') && file.presignedUrl,
   );
@@ -266,6 +281,8 @@ export const UserMessage = ({ mainContent, attachments }: MessageProps) => {
     });
   };
 
+  const isVoice = inputType === 'voice';
+
   return (
     <div className="flex flex-col items-end w-full group">
       {imageFiles && imageFiles.length > 0 && (
@@ -274,18 +291,35 @@ export const UserMessage = ({ mainContent, attachments }: MessageProps) => {
       {documentFiles && documentFiles.length > 0 && (
         <MessageDocuments attachments={documentFiles} />
       )}
-      <div className="bg-[#1e2f44] border border-[#2a4560] text-primary px-4 py-3 rounded-2xl rounded-tr-sm max-w-[80%] shadow-sm mt-1">
-        <div className="text-sm leading-relaxed break-words">
-          {mainContent?.split('\n').map((line, lineIndex) => (
-            <p
-              key={`line-${line.slice(0, 10)}-${lineIndex}`}
-              className="text-[#C8D8E4] break-all"
-            >
-              {line}
-            </p>
-          )) || <p className="text-secondary italic text-sm">No content</p>}
+      {isVoice ? (
+        <div className="flex flex-col items-end gap-1 mt-1 max-w-[80%]">
+          <div className="flex items-center gap-2.5 bg-[#1e2f44] border border-[#2a4560] px-4 py-2.5 rounded-2xl rounded-tr-sm shadow-sm">
+            <FiMic size={14} className="text-accent shrink-0" />
+            <p className="text-[#C8D8E4] text-sm italic">{mainContent}</p>
+          </div>
+          {audioDurationMs != null && (
+            <div className="flex items-center gap-1 text-muted">
+              <FiMic size={11} />
+              <span className="text-xs tabular-nums">
+                {formatDuration(audioDurationMs)}
+              </span>
+            </div>
+          )}
         </div>
-      </div>
+      ) : (
+        <div className="bg-[#1e2f44] border border-[#2a4560] text-primary px-4 py-3 rounded-2xl rounded-tr-sm max-w-[80%] shadow-sm mt-1">
+          <div className="text-sm leading-relaxed break-words">
+            {mainContent?.split('\n').map((line, lineIndex) => (
+              <p
+                key={`line-${line.slice(0, 10)}-${lineIndex}`}
+                className="text-[#C8D8E4] break-all"
+              >
+                {line}
+              </p>
+            )) || <p className="text-secondary italic text-sm">No content</p>}
+          </div>
+        </div>
+      )}
       <div className="flex items-center mt-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
         <button
           onClick={handleCopy}

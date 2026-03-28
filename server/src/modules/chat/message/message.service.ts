@@ -29,6 +29,8 @@ export class MessageService {
           reasoningContent: dto.reasoningContent,
           openaiImageCallId: dto.openaiImageCallId,
           senderType: dto.senderType,
+          inputType: dto.inputType,
+          audioDurationMs: dto.audioDurationMs,
           conversation: { connect: { id: dto.conversationId } },
         },
       });
@@ -53,6 +55,8 @@ export class MessageService {
         reasoningContent: true,
         openaiImageCallId: true,
         senderType: true,
+        inputType: true,
+        audioDurationMs: true,
         attachments: {
           select: { fileId: true },
         },
@@ -94,6 +98,8 @@ export class MessageService {
       reasoningContent: msg.reasoningContent,
       openaiImageCallId: msg.openaiImageCallId,
       senderType: msg.senderType,
+      inputType: msg.inputType,
+      audioDurationMs: msg.audioDurationMs,
       attachments: msg.attachments
         .map((a) => filesMetadataMap[a.fileId])
         .filter(Boolean),

@@ -6,7 +6,10 @@ import WebSocket from 'ws';
 import config from '../../common/config/config.js';
 import { ConversationService } from '../chat/conversation/conversation.service.js';
 import { MessageService } from '../chat/message/message.service.js';
-import { SenderType } from '../chat/message/dto/save-message.dto.js';
+import {
+  InputType,
+  SenderType,
+} from '../chat/message/dto/save-message.dto.js';
 import { LlmService } from '../llm/llm.service.js';
 
 @Injectable()
@@ -113,6 +116,7 @@ export class AudioService {
 
     let resolvedConversationId = conversationId;
     let conversationNotified = resolvedConversationId !== undefined;
+    let speechStartMs: number | null = null;
 
     await new Promise<void>((resolve) => {
       ws.on('message', (data) => {
@@ -123,7 +127,16 @@ export class AudioService {
               unknown
             >;
 
-            if (
+            if (event.type === 'input_audio_buffer.speech_started') {
+              speechStartMs = (event.audio_start_ms as number) ?? null;
+            } else if (event.type === 'input_audio_buffer.speech_stopped') {
+              // audio_end_ms marks the end of the speech — keep speechStartMs until
+              // the transcript arrives so we can compute the duration then
+              const audioEndMs = (event.audio_end_ms as number) ?? null;
+              if (speechStartMs !== null && audioEndMs !== null) {
+                speechStartMs = audioEndMs - speechStartMs; // reuse as computed duration
+              }
+            } else if (
               event.type ===
               'conversation.item.input_audio_transcription.completed'
             ) {
@@ -131,6 +144,12 @@ export class AudioService {
               if (!transcript) {
                 return;
               }
+
+              const audioDurationMs =
+                typeof speechStartMs === 'number' && speechStartMs >= 0
+                  ? speechStartMs
+                  : undefined;
+              speechStartMs = null;
 
               if (!resolvedConversationId) {
                 resolvedConversationId =
@@ -164,6 +183,8 @@ export class AudioService {
               await this.messageService.saveMessage({
                 mainContent: transcript,
                 senderType: SenderType.user,
+                inputType: InputType.voice,
+                audioDurationMs,
                 conversationId: resolvedConversationId,
               });
             } else if (event.type === 'response.output_audio_transcript.done') {
