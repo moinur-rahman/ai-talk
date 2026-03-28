@@ -19,7 +19,7 @@ const SettingsLayout: FC<{ children: ReactNode }> = ({ children }) => {
         <Sidebar />
         <div className="flex flex-1 overflow-hidden justify-center">
           <div className="flex w-full max-w-4xl pt-10">
-            <nav className="w-44 flex-shrink-0 py-6 px-3">
+            <nav className="w-44 shrink-0 py-6 px-3">
               <p className="text-muted text-[10px] font-semibold uppercase tracking-widest px-3 mb-2">
                 Settings
               </p>

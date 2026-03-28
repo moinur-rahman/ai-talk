@@ -20,7 +20,7 @@ const ModelRow = ({
         </p>
       )}
     </div>
-    <div className="flex items-center gap-2 flex-shrink-0">
+    <div className="flex items-center gap-2 shrink-0">
       {model.hasReasoning && (
         <span className="px-2 py-0.5 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-400 text-[10px] font-medium">
           Reasoning

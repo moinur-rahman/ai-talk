@@ -44,7 +44,7 @@ const GeneralSettingsForm = ({ user }: { user: User }) => {
   return (
     <div className="bg-surface-dim border border-border rounded-xl overflow-hidden">
       <div className="px-5 py-4 border-b border-border flex items-center gap-3">
-        <div className="w-8 h-8 rounded-full bg-surface-elevated flex items-center justify-center flex-shrink-0">
+        <div className="w-8 h-8 rounded-full bg-surface-elevated flex items-center justify-center shrink-0">
           <FiUser size={14} className="text-muted" />
         </div>
         <p className="text-heading text-sm font-medium">{user.email ?? ''}</p>

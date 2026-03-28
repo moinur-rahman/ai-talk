@@ -118,7 +118,7 @@ export class AudioService {
       ws.on('message', (data) => {
         void (async () => {
           try {
-            const event = JSON.parse(data.toString()) as Record<
+            const event = JSON.parse((data as Buffer).toString()) as Record<
               string,
               unknown
             >;

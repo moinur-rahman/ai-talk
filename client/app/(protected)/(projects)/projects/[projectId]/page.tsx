@@ -129,7 +129,7 @@ const ProjectDetailPage: FC = () => {
                   </p>
                 )}
               </div>
-              <div className="relative flex-shrink-0">
+              <div className="relative shrink-0">
                 <button
                   onClick={() => setShowProjectMenu((v) => !v)}
                   className="p-2 rounded-lg text-muted hover:text-body hover:bg-surface-elevated transition-colors"
@@ -200,7 +200,7 @@ const ProjectDetailPage: FC = () => {
           </div>
 
           {/* Right panel */}
-          <div className="w-72 flex-shrink-0 space-y-3 pt-14">
+          <div className="w-72 shrink-0 space-y-3 pt-14">
             {/* Instructions */}
             <div className="bg-surface-raised border border-border rounded-xl overflow-hidden">
               <div className="flex items-center justify-between px-4 py-3 border-b border-border">

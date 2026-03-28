@@ -126,7 +126,6 @@ const SendMessage = ({
     startRecording,
     confirmRecording,
     cancelRecording,
-    stopIfListening,
   } = useVoiceInput(handleTranscript);
 
   useEffect(() => {
@@ -218,7 +217,7 @@ const SendMessage = ({
   };
 
   return (
-    <div className="w-full max-w-[52rem]">
+    <div className="w-full max-w-208">
       {(error?.global || (conversationId && error?.[conversationId])) && (
         <div className="text-red-400 text-xs mb-2 px-1">
           {error?.global || (conversationId && error?.[conversationId])}
@@ -272,7 +271,7 @@ const SendMessage = ({
 
         <div className="flex items-center gap-1 mt-1 pt-1 border-t border-border/50">
           {/* + button with menu */}
-          <div className="relative flex-shrink-0" ref={menuRef}>
+          <div className="relative shrink-0" ref={menuRef}>
             <button
               type="button"
               onClick={() => setIsMenuOpen((v) => !v)}
@@ -292,7 +291,7 @@ const SendMessage = ({
                   }}
                   className="flex items-center gap-3 w-full px-3 py-2 text-sm text-body hover:bg-surface-overlay transition-colors"
                 >
-                  <FiPaperclip size={14} className="text-muted flex-shrink-0" />
+                  <FiPaperclip size={14} className="text-muted shrink-0" />
                   Add files or photos
                 </button>
 
@@ -307,13 +306,13 @@ const SendMessage = ({
                   >
                     <FiGlobe
                       size={14}
-                      className={`flex-shrink-0 ${webSearchEnabled ? 'text-blue-400' : 'text-muted'}`}
+                      className={`shrink-0 ${webSearchEnabled ? 'text-blue-400' : 'text-muted'}`}
                     />
                     <span className="flex-1 text-left">Web search</span>
                     {webSearchEnabled && (
                       <FiCheck
                         size={13}
-                        className="text-blue-400 flex-shrink-0"
+                        className="text-blue-400 shrink-0"
                       />
                     )}
                   </button>
@@ -332,13 +331,13 @@ const SendMessage = ({
                   >
                     <FiImage
                       size={14}
-                      className={`flex-shrink-0 ${imageGenerationEnabled ? 'text-purple-400' : 'text-muted'}`}
+                      className={`shrink-0 ${imageGenerationEnabled ? 'text-purple-400' : 'text-muted'}`}
                     />
                     <span className="flex-1 text-left">Generate image</span>
                     {imageGenerationEnabled && (
                       <FiCheck
                         size={13}
-                        className="text-purple-400 flex-shrink-0"
+                        className="text-purple-400 shrink-0"
                       />
                     )}
                   </button>
@@ -365,12 +364,12 @@ const SendMessage = ({
                     >
                       <FiFolder
                         size={14}
-                        className="text-muted flex-shrink-0"
+                        className="text-muted shrink-0"
                       />
                       <span className="flex-1 text-left">Add to project</span>
                       <FiChevronRight
                         size={13}
-                        className="text-muted flex-shrink-0"
+                        className="text-muted shrink-0"
                       />
                     </button>
 
@@ -394,11 +393,11 @@ const SendMessage = ({
                             >
                               <FiCheck
                                 size={13}
-                                className={`flex-shrink-0 ${activeProject?.id === project.id ? 'text-accent' : 'opacity-0'}`}
+                                className={`shrink-0 ${activeProject?.id === project.id ? 'text-accent' : 'opacity-0'}`}
                               />
                               <FiFolder
                                 size={13}
-                                className="text-muted flex-shrink-0"
+                                className="text-muted shrink-0"
                               />
                               <span className="truncate">{project.name}</span>
                             </button>
@@ -427,7 +426,7 @@ const SendMessage = ({
                     type="button"
                     className="flex items-center gap-3 w-full px-3 py-2 text-sm text-body hover:bg-surface-overlay transition-colors"
                   >
-                    <FiType size={14} className="text-muted flex-shrink-0" />
+                    <FiType size={14} className="text-muted shrink-0" />
                     <span className="flex-1 text-left">Use style</span>
                     {responseStyle !== 'Normal' && (
                       <span className="text-xs text-accent mr-1">
@@ -436,7 +435,7 @@ const SendMessage = ({
                     )}
                     <FiChevronRight
                       size={13}
-                      className="text-muted flex-shrink-0"
+                      className="text-muted shrink-0"
                     />
                   </button>
 
@@ -455,7 +454,7 @@ const SendMessage = ({
                         >
                           <FiCheck
                             size={13}
-                            className={`flex-shrink-0 ${responseStyle === style ? 'text-accent' : 'opacity-0'}`}
+                            className={`shrink-0 ${responseStyle === style ? 'text-accent' : 'opacity-0'}`}
                           />
                           {style}
                         </button>
@@ -469,9 +468,9 @@ const SendMessage = ({
 
           {/* Active project badge */}
           {activeProject && (
-            <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-accent/10 border border-accent/20 text-accent flex-shrink-0">
+            <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-accent/10 border border-accent/20 text-accent shrink-0">
               <FiFolder size={12} />
-              <span className="text-xs max-w-[72px] truncate">
+              <span className="text-xs max-w-18 truncate">
                 {activeProject.name}
               </span>
               {!disableProjectPicker && (
@@ -489,7 +488,7 @@ const SendMessage = ({
 
           {/* Active image generation badge */}
           {imageGenerationEnabled && (
-            <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-purple-500/10 border border-purple-500/20 text-purple-400 flex-shrink-0">
+            <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-purple-500/10 border border-purple-500/20 text-purple-400 shrink-0">
               <FiImage size={12} />
               <span className="text-xs">Image</span>
               <button
@@ -505,7 +504,7 @@ const SendMessage = ({
 
           {/* Active web search badge */}
           {webSearchEnabled && (
-            <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-400 flex-shrink-0">
+            <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-400 shrink-0">
               <FiGlobe size={12} />
               <span className="text-xs">Search</span>
               <button
@@ -521,7 +520,7 @@ const SendMessage = ({
 
           {/* Active style badge */}
           {responseStyle !== 'Normal' && (
-            <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-accent/10 border border-accent/20 text-accent flex-shrink-0">
+            <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-accent/10 border border-accent/20 text-accent shrink-0">
               <FiType size={12} />
               <span className="text-xs">{responseStyle}</span>
               <button
@@ -539,11 +538,11 @@ const SendMessage = ({
 
           <div className="flex-1" />
 
-          <div className="w-[9rem] flex-shrink-0">
+          <div className="w-36 shrink-0">
             <ProviderDropdown />
           </div>
-          <div className="w-px h-4 bg-border flex-shrink-0" />
-          <div className="w-[11rem] flex-shrink-0">
+          <div className="w-px h-4 bg-border shrink-0" />
+          <div className="w-44 shrink-0">
             <ModelDropdown />
           </div>
 
@@ -552,7 +551,7 @@ const SendMessage = ({
               type="button"
               onClick={startRecording}
               aria-label="Start voice input"
-              className="p-2 rounded-lg transition-all duration-150 flex-shrink-0 text-muted hover:text-accent hover:bg-accent/10"
+              className="p-2 rounded-lg transition-all duration-150 shrink-0 text-muted hover:text-accent hover:bg-accent/10"
             >
               <FiMic size={17} />
             </button>
@@ -580,7 +579,7 @@ const SendMessage = ({
           {conversationId && streaming[conversationId] ? (
             <button
               type="button"
-              className="p-2 text-red-400 hover:text-red-300 hover:bg-red-400/10 rounded-lg transition-all duration-150 flex-shrink-0"
+              className="p-2 text-red-400 hover:text-red-300 hover:bg-red-400/10 rounded-lg transition-all duration-150 shrink-0"
               onClick={stopStream}
               aria-label="Stop"
             >
@@ -589,7 +588,7 @@ const SendMessage = ({
           ) : (
             <button
               type="submit"
-              className="p-2 text-accent hover:text-accent-hover hover:bg-accent/10 rounded-lg transition-all duration-150 flex-shrink-0 disabled:text-muted disabled:hover:bg-transparent disabled:cursor-not-allowed"
+              className="p-2 text-accent hover:text-accent-hover hover:bg-accent/10 rounded-lg transition-all duration-150 shrink-0 disabled:text-muted disabled:hover:bg-transparent disabled:cursor-not-allowed"
               disabled={!prompt.trim() && uploadedAttachments.length === 0}
               aria-label="Send Message"
             >

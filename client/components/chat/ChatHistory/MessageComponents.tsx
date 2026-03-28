@@ -148,7 +148,7 @@ const MessageDocuments = ({ attachments }: { attachments: FileMetadata[] }) => (
           rel="noopener noreferrer"
           className="flex items-center p-3 bg-surface-elevated border border-border rounded-xl text-primary hover:bg-surface-overlay hover:border-border-strong transition-all duration-200"
         >
-          <div className="bg-border p-2 rounded-lg mr-3 flex-shrink-0">
+          <div className="bg-border p-2 rounded-lg mr-3 shrink-0">
             <FiFileText size={22} className="text-accent" />
           </div>
           <div className="overflow-hidden flex-grow">
@@ -389,7 +389,7 @@ export const AssistantMessage = ({
       )}
       <div className="flex items-start gap-3 w-full">
         {/* Diamond indicator */}
-        <div className="flex-shrink-0 mt-1 w-6 h-6 rounded-md bg-surface-elevated border border-border flex items-center justify-center">
+        <div className="shrink-0 mt-1 w-6 h-6 rounded-md bg-surface-elevated border border-border flex items-center justify-center">
           <div className="w-2 h-2 rotate-45 rounded-sm bg-accent" />
         </div>
         <div className="flex-1 text-primary break-words overflow-hidden min-w-0">

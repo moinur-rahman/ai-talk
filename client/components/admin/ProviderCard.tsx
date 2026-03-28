@@ -23,7 +23,7 @@ const ProviderCard = ({
         onClick={onToggle}
         className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-surface-raised transition-colors duration-150"
       >
-        <div className="w-8 h-8 rounded-lg bg-surface-elevated border border-border flex items-center justify-center flex-shrink-0">
+        <div className="w-8 h-8 rounded-lg bg-surface-elevated border border-border flex items-center justify-center shrink-0">
           <FiCpu size={14} className="text-accent" />
         </div>
         <div className="flex-1 text-left">
@@ -41,9 +41,9 @@ const ProviderCard = ({
           </p>
         </div>
         {isExpanded ? (
-          <FiChevronUp size={14} className="text-muted flex-shrink-0" />
+          <FiChevronUp size={14} className="text-muted shrink-0" />
         ) : (
-          <FiChevronDown size={14} className="text-muted flex-shrink-0" />
+          <FiChevronDown size={14} className="text-muted shrink-0" />
         )}
       </button>
 

@@ -79,17 +79,17 @@ const Chat = () => {
   return (
     <main className="flex-1 flex flex-col h-full relative">
       <div className="absolute inset-0 flex flex-col">
-        <div className="flex-shrink-0 flex items-center px-5 py-3 border-b border-border bg-surface">
+        <div className="shrink-0 flex items-center px-5 py-3 border-b border-border bg-surface">
           <div className="flex items-center gap-1.5 min-w-0">
             {project && (
               <>
                 <Link
                   href={`/projects/${project.id}`}
-                  className="text-sm font-medium text-muted hover:text-body transition-colors truncate flex-shrink-0"
+                  className="text-sm font-medium text-muted hover:text-body transition-colors truncate shrink-0"
                 >
                   {project.name}
                 </Link>
-                <span className="text-muted text-sm flex-shrink-0">/</span>
+                <span className="text-muted text-sm shrink-0">/</span>
               </>
             )}
             {isRenaming ? (
@@ -117,7 +117,7 @@ const Chat = () => {
                 )}
                 <FiChevronDown
                   size={14}
-                  className="text-muted group-hover:text-body transition-colors flex-shrink-0"
+                  className="text-muted group-hover:text-body transition-colors shrink-0"
                 />
               </button>
             )}

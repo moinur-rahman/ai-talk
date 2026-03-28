@@ -52,7 +52,7 @@ const SearchModal: FC<SearchModalProps> = ({ onClose }) => {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center gap-3 px-4 py-3.5 border-b border-border">
-          <FiSearch size={15} className="text-muted flex-shrink-0" />
+          <FiSearch size={15} className="text-muted shrink-0" />
           <input
             ref={inputRef}
             type="text"
@@ -109,7 +109,7 @@ const SearchResult: FC<{
     onClick={() => onSelect(result.id)}
     className="w-full px-4 py-3 flex items-start gap-3 hover:bg-surface-elevated transition-colors text-left border-b border-border/40 last:border-0"
   >
-    <FiMessageSquare size={13} className="text-muted flex-shrink-0 mt-0.5" />
+    <FiMessageSquare size={13} className="text-muted shrink-0 mt-0.5" />
     <div className="min-w-0">
       <p className="text-heading text-sm truncate">
         <HighlightedText text={result.title ?? 'Untitled'} query={query} />

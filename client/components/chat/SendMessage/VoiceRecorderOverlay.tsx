@@ -117,13 +117,13 @@ const VoiceRecorderOverlay = ({
         onClick={onCancel}
         disabled={isTranscribing}
         aria-label="Cancel recording"
-        className="flex-shrink-0 w-7 h-7 flex items-center justify-center rounded-full bg-surface-overlay text-muted hover:text-primary hover:bg-border transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+        className="shrink-0 w-7 h-7 flex items-center justify-center rounded-full bg-surface-overlay text-muted hover:text-primary hover:bg-border transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
       >
         <FiX size={14} />
       </button>
 
       {isTranscribing ? (
-        <div className="flex-shrink-0 w-7 h-7 flex items-center justify-center">
+        <div className="shrink-0 w-7 h-7 flex items-center justify-center">
           <FiLoader size={15} className="text-accent animate-spin" />
         </div>
       ) : (
@@ -131,7 +131,7 @@ const VoiceRecorderOverlay = ({
           type="button"
           onClick={onConfirm}
           aria-label="Confirm recording"
-          className="flex-shrink-0 w-7 h-7 flex items-center justify-center rounded-full bg-accent/20 text-accent hover:bg-accent/30 transition-colors"
+          className="shrink-0 w-7 h-7 flex items-center justify-center rounded-full bg-accent/20 text-accent hover:bg-accent/30 transition-colors"
         >
           <FiCheck size={14} />
         </button>

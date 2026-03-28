@@ -28,10 +28,10 @@ const AdminLayout: FC<{ children: ReactNode }> = ({ children }) => {
   return (
     <div className="flex h-screen bg-surface">
       {/* Admin sidebar */}
-      <nav className="w-56 h-screen flex flex-col bg-surface-dim border-r border-border flex-shrink-0">
+      <nav className="w-56 h-screen flex flex-col bg-surface-dim border-r border-border shrink-0">
         <div className="px-4 pt-5 pb-4 border-b border-border">
           <div className="flex items-center gap-2.5 mb-1">
-            <div className="w-7 h-7 rounded-lg bg-accent flex items-center justify-center flex-shrink-0">
+            <div className="w-7 h-7 rounded-lg bg-accent flex items-center justify-center shrink-0">
               <div className="w-3 h-3 rotate-45 rounded-sm border-2 border-surface-dim" />
             </div>
             <span className="text-primary font-semibold text-sm tracking-wide">
@@ -65,7 +65,7 @@ const AdminLayout: FC<{ children: ReactNode }> = ({ children }) => {
 
       {/* Main content */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        <header className="h-14 flex items-center px-6 border-b border-border bg-surface-dim flex-shrink-0">
+        <header className="h-14 flex items-center px-6 border-b border-border bg-surface-dim shrink-0">
           <h1 className="text-primary font-semibold text-sm">Admin Panel</h1>
           <div className="ml-auto flex items-center gap-2">
             <div className="w-6 h-6 rounded-full bg-accent/20 border border-accent/30 flex items-center justify-center">

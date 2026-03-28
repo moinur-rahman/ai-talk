@@ -129,7 +129,7 @@ export default function AuthBrandPanel({
       {/* Logo */}
       <div className="relative z-10">
         <div className="flex items-center gap-3">
-          <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 shadow-lg shadow-indigo-500/40">
+          <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-linear-to-br from-indigo-500 to-violet-600 shadow-lg shadow-indigo-500/40">
             <FiMessageSquare className="text-white" size={18} />
           </div>
           <span className="text-white font-semibold text-lg tracking-tight">
@@ -153,7 +153,7 @@ export default function AuthBrandPanel({
         <div className="space-y-4">
           {features.map(({ icon: Icon, label, desc }) => (
             <div key={label} className="flex items-center gap-3.5">
-              <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex-shrink-0">
+              <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-white/5 border border-white/10 shrink-0">
                 <Icon size={14} className={iconColor} />
               </div>
               <div>

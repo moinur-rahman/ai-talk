@@ -80,9 +80,9 @@ const SidebarItem: FC<{
             }`}
           >
             {projectId ? (
-              <FiFolder size={13} className="flex-shrink-0 text-muted" />
+              <FiFolder size={13} className="shrink-0 text-muted" />
             ) : (
-              <FiMessageSquare size={13} className="flex-shrink-0 text-muted" />
+              <FiMessageSquare size={13} className="shrink-0 text-muted" />
             )}
             <input
               ref={renameInputRef}
@@ -106,12 +106,12 @@ const SidebarItem: FC<{
             {projectId ? (
               <FiFolder
                 size={13}
-                className={`flex-shrink-0 ${isSelected ? 'text-accent' : 'text-muted'}`}
+                className={`shrink-0 ${isSelected ? 'text-accent' : 'text-muted'}`}
               />
             ) : (
               <FiMessageSquare
                 size={13}
-                className={`flex-shrink-0 ${isSelected ? 'text-accent' : 'text-muted'}`}
+                className={`shrink-0 ${isSelected ? 'text-accent' : 'text-muted'}`}
               />
             )}
             <span className="truncate">{displayName}</span>

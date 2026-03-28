@@ -82,9 +82,9 @@ const Sidebar: FC = () => {
   return (
     <>
       <nav className="w-60 h-screen flex flex-col bg-surface-dim border-r border-border">
-        <div className="px-4 pt-5 pb-4 flex-shrink-0 border-b border-border">
+        <div className="px-4 pt-5 pb-4 shrink-0 border-b border-border">
           <div className="flex items-center gap-2.5 mb-5">
-            <div className="w-7 h-7 rounded-lg bg-accent flex items-center justify-center flex-shrink-0">
+            <div className="w-7 h-7 rounded-lg bg-accent flex items-center justify-center shrink-0">
               <div className="w-3 h-3 rotate-45 rounded-sm border-2 border-surface-dim" />
             </div>
             <span className="text-primary font-semibold text-sm tracking-wide">
@@ -158,13 +158,13 @@ const Sidebar: FC = () => {
         {/* User menu */}
         <div
           ref={menuRef}
-          className="flex-shrink-0 px-3 py-3 border-t border-border relative"
+          className="shrink-0 px-3 py-3 border-t border-border relative"
         >
           <button
             onClick={() => setMenuOpen((o) => !o)}
             className="flex items-center gap-2.5 w-full px-3 py-2 rounded-lg text-body hover:bg-surface-raised transition-all duration-200"
           >
-            <div className="w-7 h-7 rounded-full bg-accent/20 border border-accent/30 flex items-center justify-center flex-shrink-0">
+            <div className="w-7 h-7 rounded-full bg-accent/20 border border-accent/30 flex items-center justify-center shrink-0">
               <span className="text-accent text-[11px] font-semibold">
                 {user?.name.charAt(0).toUpperCase() ?? '?'}
               </span>
@@ -175,7 +175,7 @@ const Sidebar: FC = () => {
                   {user?.name ?? ''}
                 </p>
                 {user?.role === 'admin' && (
-                  <span className="flex-shrink-0 px-1.5 py-0.5 rounded bg-accent/15 border border-accent/25 text-accent text-[9px] font-semibold uppercase tracking-wide">
+                  <span className="shrink-0 px-1.5 py-0.5 rounded bg-accent/15 border border-accent/25 text-accent text-[9px] font-semibold uppercase tracking-wide">
                     Admin
                   </span>
                 )}
@@ -186,7 +186,7 @@ const Sidebar: FC = () => {
             </div>
             <FiChevronUp
               size={14}
-              className={`flex-shrink-0 transition-transform duration-200 ${menuOpen ? 'rotate-180' : ''}`}
+              className={`shrink-0 transition-transform duration-200 ${menuOpen ? 'rotate-180' : ''}`}
             />
           </button>
 

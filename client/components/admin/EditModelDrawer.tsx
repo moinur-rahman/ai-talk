@@ -13,7 +13,7 @@ const Toggle = ({
   <button
     type="button"
     onClick={() => onChange(!checked)}
-    className={`relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none ${
+    className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none ${
       checked ? 'bg-accent' : 'bg-border'
     }`}
   >
@@ -65,7 +65,7 @@ const EditModelDrawer = ({
       <div
         className={`fixed right-0 top-0 h-full w-80 z-50 bg-surface-raised border-l border-border flex flex-col shadow-2xl transition-transform duration-250 ease-in-out ${visible ? 'translate-x-0' : 'translate-x-full'}`}
       >
-        <div className="flex items-center justify-between px-5 py-4 border-b border-border flex-shrink-0">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-border shrink-0">
           <h3 className="text-primary font-semibold text-sm">Edit Model</h3>
           <button
             onClick={handleClose}
@@ -130,7 +130,7 @@ const EditModelDrawer = ({
           </div>
         </div>
 
-        <div className="flex gap-2 px-5 py-4 border-t border-border flex-shrink-0">
+        <div className="flex gap-2 px-5 py-4 border-t border-border shrink-0">
           <button
             type="button"
             onClick={handleClose}

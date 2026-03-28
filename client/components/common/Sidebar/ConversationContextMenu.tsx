@@ -81,7 +81,7 @@ const ConversationContextMenu: FC<ContextMenuProps> = ({
                     : 'text-body hover:bg-surface-elevated'
                 }`}
               >
-                <FiFolder size={12} className="flex-shrink-0" />
+                <FiFolder size={12} className="shrink-0" />
                 <span className="truncate">{p.name}</span>
               </button>
             ))

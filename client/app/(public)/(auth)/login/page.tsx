@@ -53,7 +53,7 @@ export default function LoginPage() {
           <>
             Conversations
             <br />
-            <span className="bg-gradient-to-r from-indigo-400 to-violet-400 bg-clip-text text-transparent">
+            <span className="bg-linear-to-r from-indigo-400 to-violet-400 bg-clip-text text-transparent">
               powered by
               <br />
               intelligence
@@ -67,7 +67,7 @@ export default function LoginPage() {
         <div className="w-full max-w-sm">
           {/* Mobile logo */}
           <div className="flex items-center justify-center gap-3 mb-10 lg:hidden">
-            <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 shadow-lg shadow-indigo-500/40">
+            <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-linear-to-br from-indigo-500 to-violet-600 shadow-lg shadow-indigo-500/40">
               <FiMessageSquare className="text-white" size={18} />
             </div>
             <span className="font-semibold text-lg tracking-tight text-slate-900">
@@ -89,7 +89,7 @@ export default function LoginPage() {
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
             {serverError && (
               <div className="flex items-start gap-2.5 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm">
-                <div className="w-1.5 h-1.5 rounded-full bg-red-500 mt-1.5 flex-shrink-0" />
+                <div className="w-1.5 h-1.5 rounded-full bg-red-500 mt-1.5 shrink-0" />
                 <span>{serverError}</span>
               </div>
             )}
@@ -159,7 +159,7 @@ export default function LoginPage() {
 
           {/* Google */}
           <AuthButton variant="secondary" type="button">
-            <svg className="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24">
+            <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
               <path
                 fill="#4285F4"
                 d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
