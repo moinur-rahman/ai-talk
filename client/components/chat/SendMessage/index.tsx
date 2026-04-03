@@ -26,7 +26,6 @@ import {
   setWebSearchEnabled,
 } from '@/redux/slices/modelSlice';
 import type { Project } from '@/types/chat';
-import ProviderDropdown from '../ProviderDropdown';
 import ModelDropdown from '../ModelDropdown';
 import ReasoningToggle from '../ReasoningToggle';
 import FilePreviews from './FilePreviews';
@@ -67,10 +66,8 @@ const SendMessage = ({
   const imageGenerationEnabled = useAppSelector(
     (state) => state.model.imageGenerationEnabled,
   );
-  const selectedProvider = useAppSelector(
-    (state) => state.model.selectedProvider,
-  );
-  const isOpenAI = selectedProvider?.name.toLowerCase() === 'openai';
+  const selectedModel = useAppSelector((state) => state.model.selectedModel);
+  const isOpenAI = selectedModel?.provider.name.toLowerCase() === 'openai';
 
   const [prompt, setPrompt] = useState('');
   const [pendingProject, setPendingProject] = useState<{
@@ -310,10 +307,7 @@ const SendMessage = ({
                     />
                     <span className="flex-1 text-left">Web search</span>
                     {webSearchEnabled && (
-                      <FiCheck
-                        size={13}
-                        className="text-blue-400 shrink-0"
-                      />
+                      <FiCheck size={13} className="text-blue-400 shrink-0" />
                     )}
                   </button>
                 )}
@@ -335,10 +329,7 @@ const SendMessage = ({
                     />
                     <span className="flex-1 text-left">Generate image</span>
                     {imageGenerationEnabled && (
-                      <FiCheck
-                        size={13}
-                        className="text-purple-400 shrink-0"
-                      />
+                      <FiCheck size={13} className="text-purple-400 shrink-0" />
                     )}
                   </button>
                 )}
@@ -362,10 +353,7 @@ const SendMessage = ({
                       type="button"
                       className="flex items-center gap-3 w-full px-3 py-2 text-sm text-body hover:bg-surface-overlay transition-colors"
                     >
-                      <FiFolder
-                        size={14}
-                        className="text-muted shrink-0"
-                      />
+                      <FiFolder size={14} className="text-muted shrink-0" />
                       <span className="flex-1 text-left">Add to project</span>
                       <FiChevronRight
                         size={13}
@@ -433,10 +421,7 @@ const SendMessage = ({
                         {responseStyle}
                       </span>
                     )}
-                    <FiChevronRight
-                      size={13}
-                      className="text-muted shrink-0"
-                    />
+                    <FiChevronRight size={13} className="text-muted shrink-0" />
                   </button>
 
                   {showStyleSubmenu && (
@@ -538,10 +523,6 @@ const SendMessage = ({
 
           <div className="flex-1" />
 
-          <div className="w-36 shrink-0">
-            <ProviderDropdown />
-          </div>
-          <div className="w-px h-4 bg-border shrink-0" />
           <div className="w-44 shrink-0">
             <ModelDropdown />
           </div>

@@ -44,11 +44,7 @@ export class SaveMessageDto {
 
   @IsOptional()
   @IsUUID()
-  lastProviderId?: string;
-
-  @IsOptional()
-  @IsUUID()
-  lastModelId?: string;
+  modelId?: string;
 
   @IsOptional()
   @IsArray()

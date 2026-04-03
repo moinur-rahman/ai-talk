@@ -153,27 +153,4 @@ export class ConversationService {
     });
     return conv?.projectId ?? null;
   }
-
-  async getLastModelAndProvider(conversationId: string) {
-    return await this.prisma.conversation.findUnique({
-      where: { id: conversationId },
-      select: {
-        lastProviderId: true,
-        lastModelId: true,
-      },
-    });
-  }
-
-  async updateModelProvider(
-    conversationId: string,
-    lastProviderId: string,
-    lastModelId: string,
-    tx?: Parameters<Parameters<PrismaService['$transaction']>[0]>[0],
-  ) {
-    const client = tx || this.prisma;
-    await client.conversation.update({
-      where: { id: conversationId },
-      data: { lastProviderId, lastModelId },
-    });
-  }
 }

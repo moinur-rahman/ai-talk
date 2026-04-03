@@ -1,28 +1,18 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../providers/prisma/prisma.service.js';
 import { FileService } from '../../file/file.service.js';
-import { ConversationService } from '../conversation/conversation.service.js';
-import { SaveMessageDto } from './dto/save-message.dto.js';
+import { FileMetadataResponseDto } from '../../file/dto/file-metadata-response.dto.js';
+import { SaveMessageDto, SenderType } from './dto/save-message.dto.js';
 
 @Injectable()
 export class MessageService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly conversationService: ConversationService,
     private readonly fileService: FileService,
   ) {}
 
   async saveMessage(dto: SaveMessageDto) {
     await this.prisma.$transaction(async (tx) => {
-      if (dto.lastModelId && dto.lastProviderId) {
-        await this.conversationService.updateModelProvider(
-          dto.conversationId,
-          dto.lastProviderId,
-          dto.lastModelId,
-          tx,
-        );
-      }
-
       const message = await tx.message.create({
         data: {
           mainContent: dto.mainContent,
@@ -31,7 +21,9 @@ export class MessageService {
           senderType: dto.senderType,
           inputType: dto.inputType,
           audioDurationMs: dto.audioDurationMs,
-          conversation: { connect: { id: dto.conversationId } },
+          modelId:
+            dto.senderType === SenderType.assistant ? dto.modelId : undefined,
+          conversationId: dto.conversationId,
         },
       });
 
@@ -47,7 +39,19 @@ export class MessageService {
   }
 
   async getMessagesByConversationId(conversationId: string) {
-    const messages = await this.prisma.message.findMany({
+    type MessageRow = {
+      id: string;
+      mainContent: string | null;
+      reasoningContent: string | null;
+      openaiImageCallId: string | null;
+      senderType: string;
+      inputType: string;
+      audioDurationMs: number | null;
+      modelId: string | null;
+      attachments: Array<{ fileId: string }>;
+    };
+
+    const messages = (await this.prisma.message.findMany({
       where: { conversationId },
       select: {
         id: true,
@@ -57,28 +61,21 @@ export class MessageService {
         senderType: true,
         inputType: true,
         audioDurationMs: true,
+        modelId: true,
         attachments: {
           select: { fileId: true },
         },
       },
       orderBy: { createdAt: 'asc' },
-    });
+    })) as MessageRow[];
 
     const conversation = await this.prisma.conversation.findUnique({
       where: { id: conversationId },
       select: {
         title: true,
-        lastProviderId: true,
-        lastModelId: true,
         project: { select: { id: true, name: true } },
       },
     });
-    const lastModelAndProvider = conversation
-      ? {
-          lastProviderId: conversation.lastProviderId,
-          lastModelId: conversation.lastModelId,
-        }
-      : null;
 
     const fileIds = messages.flatMap((msg) =>
       msg.attachments.map((a) => a.fileId),
@@ -89,9 +86,8 @@ export class MessageService {
         ? await this.fileService.getMultipleFilesMetadata(fileIds)
         : [];
 
-    const filesMetadataMap = Object.fromEntries(
-      filesMetadata.map((f) => [f.id, f]),
-    );
+    const filesMetadataMap: Record<string, FileMetadataResponseDto> =
+      Object.fromEntries(filesMetadata.map((f) => [f.id, f]));
 
     const messagesWithFiles = messages.map((msg) => ({
       mainContent: msg.mainContent,
@@ -100,14 +96,14 @@ export class MessageService {
       senderType: msg.senderType,
       inputType: msg.inputType,
       audioDurationMs: msg.audioDurationMs,
+      modelId: msg.modelId,
       attachments: msg.attachments
         .map((a) => filesMetadataMap[a.fileId])
-        .filter(Boolean),
+        .filter((f): f is FileMetadataResponseDto => f !== undefined),
     }));
 
     return {
       messages: messagesWithFiles,
-      lastModelAndProvider,
       title: conversation?.title ?? null,
       project: conversation?.project ?? null,
     };

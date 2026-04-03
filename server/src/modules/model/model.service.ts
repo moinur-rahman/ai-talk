@@ -55,35 +55,21 @@ export class ModelService implements OnApplicationBootstrap {
     this.logger.log('Providers seeded successfully');
   }
 
-  async getProviders() {
-    return await this.prisma.provider.findMany({
-      select: {
-        id: true,
-        name: true,
-      },
-    });
-  }
-
-  async getModelList(providerId: string) {
-    const provider = await this.prisma.provider.findUnique({
-      where: { id: providerId },
-    });
-
-    if (!provider) {
-      throw new NotFoundException('Provider not found');
-    }
-
+  async getAllModels() {
     return await this.prisma.model.findMany({
       select: {
         id: true,
         name: true,
         hasReasoning: true,
+        provider: {
+          select: { id: true, name: true },
+        },
       },
       where: {
-        providerId,
         isDeprecated: false,
         isEnabled: true,
       },
+      orderBy: [{ provider: { name: 'asc' } }, { name: 'asc' }],
     });
   }
 

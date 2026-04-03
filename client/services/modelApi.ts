@@ -4,6 +4,10 @@ export interface Model {
   id: string;
   name: string;
   hasReasoning: boolean;
+  provider: {
+    id: string;
+    name: string;
+  };
 }
 
 export interface AdminModel {
@@ -15,25 +19,15 @@ export interface AdminModel {
   isEnabled: boolean;
 }
 
-export interface Provider {
-  id: string;
-  name: string;
-}
-
 export interface AdminProvider {
   id: string;
   name: string;
   models: AdminModel[];
 }
 
-interface FetchModelsResponse {
+interface FetchAllModelsResponse {
   data: Model[];
-  messageCode: string;
-}
-
-interface FetchProvidersResponse {
-  data: Provider[];
-  messageCode: string;
+  message: string;
 }
 
 interface FetchAdminOverviewResponse {
@@ -83,13 +77,9 @@ export const modelApi = createApi({
   }),
   tagTypes: ['AdminOverview'],
   endpoints: (builder) => ({
-    getProviders: builder.query<Provider[], void>({
-      query: () => '/providers',
-      transformResponse: (response: FetchProvidersResponse) => response.data,
-    }),
-    getModels: builder.query<Model[], string>({
-      query: (providerId) => `/list/${providerId}`,
-      transformResponse: (response: FetchModelsResponse) => response.data,
+    getAllModels: builder.query<Model[], void>({
+      query: () => '/list',
+      transformResponse: (response: FetchAllModelsResponse) => response.data,
     }),
     getAdminOverview: builder.query<AdminProvider[], void>({
       query: () => '/admin/overview',
@@ -117,8 +107,7 @@ export const modelApi = createApi({
 });
 
 export const {
-  useGetProvidersQuery,
-  useGetModelsQuery,
+  useGetAllModelsQuery,
   useGetAdminOverviewQuery,
   useSyncModelsMutation,
   useCreateModelMutation,

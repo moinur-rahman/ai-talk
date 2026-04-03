@@ -1,9 +1,8 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { Model, Provider } from '@/services/modelApi';
+import { Model } from '@/services/modelApi';
 
 interface ModelState {
   selectedModel: Model | null;
-  selectedProvider: Provider | null;
   reasoningEnabled: boolean;
   webSearchEnabled: boolean;
   imageGenerationEnabled: boolean;
@@ -12,7 +11,6 @@ interface ModelState {
 
 const initialState: ModelState = {
   selectedModel: null,
-  selectedProvider: null,
   reasoningEnabled: false,
   webSearchEnabled: false,
   imageGenerationEnabled: false,
@@ -25,9 +23,6 @@ export const modelSlice = createSlice({
   reducers: {
     setSelectedModel: (state, action: PayloadAction<Model | null>) => {
       state.selectedModel = action.payload;
-    },
-    setSelectedProvider: (state, action: PayloadAction<Provider | null>) => {
-      state.selectedProvider = action.payload;
     },
     setReasoningEnabled: (state, action: PayloadAction<boolean>) => {
       state.reasoningEnabled = action.payload;
@@ -48,7 +43,6 @@ export const modelSlice = createSlice({
 
 export const {
   setSelectedModel,
-  setSelectedProvider,
   setReasoningEnabled,
   setWebSearchEnabled,
   setImageGenerationEnabled,

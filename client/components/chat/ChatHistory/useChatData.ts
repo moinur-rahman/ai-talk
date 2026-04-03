@@ -4,11 +4,8 @@ import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/redux/store';
 import { createSelector } from '@reduxjs/toolkit';
 import { loadChatHistory } from '@/redux/slices/chatSlice';
-import {
-  setSelectedModel,
-  setSelectedProvider,
-} from '@/redux/slices/modelSlice';
-import { useGetProvidersQuery, useGetModelsQuery } from '@/services/modelApi';
+import { setSelectedModel } from '@/redux/slices/modelSlice';
+import { useGetAllModelsQuery } from '@/services/modelApi';
 import { useGetChatHistoryQuery } from '@/services/chatApi';
 
 const selectChatHistories = createSelector(
@@ -24,17 +21,11 @@ export const useChatData = (conversationId: string) => {
   const chatHistories = useSelector((state: RootState) =>
     selectChatHistories(state, conversationId),
   );
-  const selectedProvider = useSelector(
-    (state: RootState) => state.model.selectedProvider,
-  );
   const newConversationId = useSelector(
     (state: RootState) => state.chat.newConversationId,
   );
 
-  const { data: providers = [] } = useGetProvidersQuery();
-  const { data: models = [] } = useGetModelsQuery(selectedProvider?.id ?? '', {
-    skip: !selectedProvider,
-  });
+  const { data: models = [] } = useGetAllModelsQuery();
   const { data: chatHistoryData } = useGetChatHistoryQuery(conversationId, {
     skip:
       newConversationId === conversationId ||
@@ -42,42 +33,31 @@ export const useChatData = (conversationId: string) => {
       chatHistories.length > 0,
   });
 
-  const lastModelAndProvider = chatHistoryData?.lastModelAndProvider ?? null;
-
   useEffect(() => {
     if (chatHistoryData) {
-      const { messages } = chatHistoryData;
       dispatch(
         loadChatHistory({
-          conversationId: conversationId,
-          messages: messages,
+          conversationId,
+          messages: chatHistoryData.messages,
         }),
       );
     }
   }, [chatHistoryData, dispatch, conversationId]);
 
   useEffect(() => {
-    if (lastModelAndProvider && providers.length > 0) {
-      const provider = providers.find(
-        (provider) => provider.id === lastModelAndProvider.lastProviderId,
-      );
+    if (!chatHistoryData || models.length === 0) return;
 
-      if (provider) {
-        dispatch(setSelectedProvider(provider));
-      }
-    }
-  }, [lastModelAndProvider, providers, dispatch]);
+    const lastModelId = [...chatHistoryData.messages]
+      .reverse()
+      .find((m) => m.modelId)?.modelId;
 
-  useEffect(() => {
-    if (lastModelAndProvider && models.length > 0) {
-      const model = models.find(
-        (model) => model.id === lastModelAndProvider.lastModelId,
-      );
-      if (model) {
-        dispatch(setSelectedModel(model));
-      }
+    if (!lastModelId) return;
+
+    const model = models.find((m) => m.id === lastModelId);
+    if (model) {
+      dispatch(setSelectedModel(model));
     }
-  }, [lastModelAndProvider, models, dispatch]);
+  }, [chatHistoryData, models, dispatch]);
 
   return { chatHistories };
 };

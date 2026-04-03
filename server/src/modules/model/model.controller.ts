@@ -10,7 +10,6 @@ import {
   ValidationPipe,
 } from '@nestjs/common';
 import { ModelService } from './model.service.js';
-import { ProviderParamsDto } from './dto/provider-params.dto.js';
 import { AdminGuard } from '../auth/guards/admin.guard.js';
 import { CreateModelDto } from './dto/create-model.dto.js';
 import { UpdateModelDto } from './dto/update-model.dto.js';
@@ -19,18 +18,9 @@ import { UpdateModelDto } from './dto/update-model.dto.js';
 export class ModelController {
   constructor(private readonly modelService: ModelService) {}
 
-  @Get('providers')
-  async getProviders() {
-    const providers = await this.modelService.getProviders();
-    return {
-      data: providers,
-      message: 'Providers fetched successfully',
-    };
-  }
-
-  @Get('list/:providerId')
-  async getModelList(@Param() params: ProviderParamsDto) {
-    const models = await this.modelService.getModelList(params.providerId);
+  @Get('list')
+  async getAllModels() {
+    const models = await this.modelService.getAllModels();
     return {
       data: models,
       message: 'Models fetched successfully',

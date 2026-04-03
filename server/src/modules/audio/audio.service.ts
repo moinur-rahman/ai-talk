@@ -6,10 +6,7 @@ import WebSocket from 'ws';
 import config from '../../common/config/config.js';
 import { ConversationService } from '../chat/conversation/conversation.service.js';
 import { MessageService } from '../chat/message/message.service.js';
-import {
-  InputType,
-  SenderType,
-} from '../chat/message/dto/save-message.dto.js';
+import { InputType, SenderType } from '../chat/message/dto/save-message.dto.js';
 import { LlmService } from '../llm/llm.service.js';
 
 @Injectable()

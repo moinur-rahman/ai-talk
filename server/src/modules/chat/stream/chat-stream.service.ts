@@ -137,8 +137,6 @@ export class ChatStreamService {
       mainContent: dto.prompt,
       senderType: SenderType.user,
       conversationId: currentConversationId,
-      lastProviderId: modelDetails.provider.id,
-      lastModelId: dto.lastModelId,
       fileIds: dto.fileIds,
     });
 
@@ -244,6 +242,7 @@ export class ChatStreamService {
         reasoningContent: reasoningContentBuffer || undefined,
         senderType: SenderType.assistant,
         conversationId: currentConversationId,
+        modelId: dto.lastModelId,
         fileIds: generatedFileId ? [generatedFileId] : undefined,
         openaiImageCallId: streamResult?.openaiImageCallId,
       });

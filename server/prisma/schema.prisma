@@ -71,16 +71,17 @@ model Provider {
 }
 
 model Model {
-  id           String   @id @default(uuid()) @db.Uuid
-  name         String   @db.VarChar(100)
-  description  String   @db.VarChar(500)
-  isDeprecated Boolean  @map("is_deprecated")
-  isEnabled    Boolean  @default(false) @map("is_enabled")
-  hasReasoning Boolean  @default(false) @map("has_reasoning")
-  providerId   String   @map("provider_id") @db.Uuid
-  provider     Provider @relation(fields: [providerId], references: [id], onDelete: Cascade)
-  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz
+  id           String    @id @default(uuid()) @db.Uuid
+  name         String    @db.VarChar(100)
+  description  String    @db.VarChar(500)
+  isDeprecated Boolean   @map("is_deprecated")
+  isEnabled    Boolean   @default(false) @map("is_enabled")
+  hasReasoning Boolean   @default(false) @map("has_reasoning")
+  providerId   String    @map("provider_id") @db.Uuid
+  provider     Provider  @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  messages     Message[]
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt    DateTime  @updatedAt @map("updated_at") @db.Timestamptz
 
   @@map("models")
 }
@@ -106,8 +107,6 @@ model Conversation {
   user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   projectId      String?   @map("project_id") @db.Uuid
   project        Project?  @relation(fields: [projectId], references: [id], onDelete: SetNull)
-  lastProviderId String?   @map("last_provider_id") @db.Uuid
-  lastModelId    String?   @map("last_model_id") @db.Uuid
   messages       Message[]
   createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz
   updatedAt      DateTime  @updatedAt @map("updated_at") @db.Timestamptz
@@ -123,6 +122,8 @@ model Message {
   senderType          SenderType          @map("sender_type")
   inputType           InputType           @default(text) @map("input_type")
   audioDurationMs     Int?                @map("audio_duration_ms")
+  modelId             String?             @map("model_id") @db.Uuid
+  model               Model?              @relation(fields: [modelId], references: [id])
   conversationId      String              @map("conversation_id") @db.Uuid
   conversation        Conversation        @relation(fields: [conversationId], references: [id], onDelete: Cascade)
   attachments         MessageAttachment[]

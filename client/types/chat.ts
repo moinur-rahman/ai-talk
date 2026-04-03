@@ -13,6 +13,7 @@ export interface Message {
   senderType: 'user' | 'assistant';
   inputType: 'text' | 'voice';
   audioDurationMs?: number | null;
+  modelId?: string | null;
   attachments?: FileMetadata[];
 }
 
@@ -55,10 +56,6 @@ export interface SearchConversationsResponse {
 export interface ChatHistoryResponse {
   data: {
     messages: Message[];
-    lastModelAndProvider: {
-      lastModelId: string | null;
-      lastProviderId: string | null;
-    } | null;
     title: string | null;
     project: { id: string; name: string } | null;
     messageCode: string;

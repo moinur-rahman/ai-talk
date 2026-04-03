@@ -1,12 +1,11 @@
 'use client';
 import { FC, useEffect, useMemo } from 'react';
-import Select, { StylesConfig } from 'react-select';
+import Select, { GroupBase, StylesConfig } from 'react-select';
 import {
   setSelectedModel,
-  setSelectedProvider,
   setReasoningEnabled,
 } from '@/redux/slices/modelSlice';
-import { useGetProvidersQuery, useGetModelsQuery } from '@/services/modelApi';
+import { useGetAllModelsQuery } from '@/services/modelApi';
 import { useAppDispatch, useAppSelector } from '@/redux/hooks';
 import { useChat } from '@/contexts/ChatContext';
 
@@ -15,7 +14,11 @@ interface ModelOption {
   value: string;
 }
 
-export const customStyles: StylesConfig<ModelOption> = {
+export const customStyles: StylesConfig<
+  ModelOption,
+  false,
+  GroupBase<ModelOption>
+> = {
   control: (styles) => ({
     ...styles,
     backgroundColor: 'transparent',
@@ -41,6 +44,19 @@ export const customStyles: StylesConfig<ModelOption> = {
   menuList: (styles) => ({
     ...styles,
     padding: '4px',
+  }),
+  group: (styles) => ({
+    ...styles,
+    padding: 0,
+  }),
+  groupHeading: (styles) => ({
+    ...styles,
+    color: 'var(--color-muted)',
+    fontSize: '10px',
+    fontWeight: 600,
+    textTransform: 'uppercase',
+    letterSpacing: '0.05em',
+    padding: '6px 10px 2px',
   }),
   option: (styles, { isFocused, isSelected }) => ({
     ...styles,
@@ -85,7 +101,7 @@ export const customStyles: StylesConfig<ModelOption> = {
 
 const DEFAULT_MODEL_KEY = 'defaultModel';
 
-function getStoredDefault(): { modelId: string; providerId: string } | null {
+function getStoredDefaultModelId(): string | null {
   try {
     const raw = localStorage.getItem(DEFAULT_MODEL_KEY);
     return raw ? JSON.parse(raw) : null;
@@ -98,96 +114,64 @@ const ModelDropdown: FC = () => {
   const { conversationId } = useChat();
 
   const dispatch = useAppDispatch();
-  const selectedProvider = useAppSelector(
-    (state) => state.model.selectedProvider,
-  );
   const selectedModel = useAppSelector((state) => state.model.selectedModel);
 
-  const defaultModel = useMemo(() => getStoredDefault(), []);
-  const { data: providers } = useGetProvidersQuery();
-
-  const { data: models = [], isLoading } = useGetModelsQuery(
-    selectedProvider?.id ?? '',
-    {
-      skip: !selectedProvider,
-    },
-  );
+  const defaultModelId = useMemo(() => getStoredDefaultModelId(), []);
+  const { data: models = [], isLoading } = useGetAllModelsQuery();
 
   useEffect(() => {
     if (!conversationId) {
       dispatch(setSelectedModel(null));
-      dispatch(setSelectedProvider(null));
     }
   }, [conversationId, dispatch]);
 
   useEffect(() => {
     if (
       !conversationId &&
-      defaultModel &&
-      providers &&
-      !selectedModel &&
-      !selectedProvider
-    ) {
-      const provider = providers.find((p) => p.id === defaultModel.providerId);
-      if (provider) {
-        dispatch(setSelectedProvider(provider));
-      }
-    }
-  }, [
-    defaultModel,
-    providers,
-    selectedModel,
-    selectedProvider,
-    dispatch,
-    conversationId,
-  ]);
-
-  useEffect(() => {
-    if (
-      !conversationId &&
-      defaultModel &&
+      defaultModelId &&
       models.length > 0 &&
-      !selectedModel &&
-      selectedProvider &&
-      defaultModel.providerId === selectedProvider.id
+      !selectedModel
     ) {
-      const model = models.find((m) => m.id === defaultModel.modelId);
+      const model = models.find((m) => m.id === defaultModelId);
       if (model) {
         dispatch(setSelectedModel(model));
       }
     }
-  }, [
-    defaultModel,
-    models,
-    selectedModel,
-    selectedProvider,
-    dispatch,
-    conversationId,
-  ]);
+  }, [defaultModelId, models, selectedModel, dispatch, conversationId]);
+
+  const groupedOptions = useMemo(() => {
+    const byProvider = new Map<
+      string,
+      { label: string; options: ModelOption[] }
+    >();
+    for (const model of models) {
+      const providerName = model.provider.name;
+      if (!byProvider.has(providerName)) {
+        byProvider.set(providerName, { label: providerName, options: [] });
+      }
+      byProvider.get(providerName)!.options.push({
+        label: model.name,
+        value: model.id,
+      });
+    }
+    return Array.from(byProvider.values());
+  }, [models]);
 
   const handleOptionClick = (newValue: unknown) => {
     const modelOption = newValue as ModelOption;
     const selectedModelData = models.find((m) => m.id === modelOption.value);
+    if (!selectedModelData) return;
 
-    dispatch(
-      setSelectedModel({
-        id: modelOption.value,
-        name: modelOption.label,
-        hasReasoning: selectedModelData?.hasReasoning || false,
-      }),
-    );
+    dispatch(setSelectedModel(selectedModelData));
 
-    if (!selectedModelData?.hasReasoning) {
+    if (!selectedModelData.hasReasoning) {
       dispatch(setReasoningEnabled(false));
     }
 
-    if (!conversationId && selectedProvider) {
+    if (!conversationId) {
       localStorage.setItem(
         DEFAULT_MODEL_KEY,
-        JSON.stringify({
-          modelId: modelOption.value,
-          providerId: selectedProvider.id,
-        }),
+        JSON.stringify(modelOption.value),
       );
     }
   };
@@ -196,11 +180,6 @@ const ModelDropdown: FC = () => {
     return <p className="text-xs text-muted">Loading models...</p>;
   }
 
-  const options = models.map((model) => ({
-    label: model.name,
-    value: model.id,
-  }));
-
   const selectedOption = selectedModel
     ? { label: selectedModel.name, value: selectedModel.id }
     : null;
@@ -208,7 +187,7 @@ const ModelDropdown: FC = () => {
   return (
     <Select
       instanceId="model-dropdown"
-      options={options}
+      options={groupedOptions}
       value={selectedOption}
       isSearchable
       menuPlacement="auto"
