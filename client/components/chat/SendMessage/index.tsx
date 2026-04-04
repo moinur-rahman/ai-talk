@@ -243,6 +243,7 @@ const SendMessage = ({
           onChange={handleFileChange}
           className="hidden"
           multiple
+          accept="image/*,text/*,.pdf,.doc,.docx,.rtf,.odt,.ppt,.pptx,.xls,.xlsx,.pages,.key"
         />
 
         {isListening || isTranscribing ? (

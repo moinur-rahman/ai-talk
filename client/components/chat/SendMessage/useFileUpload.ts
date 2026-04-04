@@ -3,6 +3,57 @@ import { useChat } from '@/contexts/ChatContext';
 import { useUploadFileMutation } from '@/services/fileApi';
 import type { FileMetadata } from '@/types/chat';
 
+const SUPPORTED_APPLICATION_MIME_TYPES = new Set([
+  'application/pdf',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'application/vnd.ms-excel',
+  'application/csv',
+  'application/x-iif',
+  'application/vnd.google-apps.spreadsheet',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/msword',
+  'application/rtf',
+  'application/vnd.oasis.opendocument.text',
+  'application/vnd.apple.pages',
+  'application/vnd.google-apps.document',
+  'application/vnd.apple.iwork',
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  'application/vnd.ms-powerpoint',
+  'application/vnd.apple.keynote',
+  'application/vnd.google-apps.presentation',
+  'application/javascript',
+  'application/typescript',
+  'application/json',
+  'application/xml',
+  'application/x-sql',
+  'application/x-scala',
+  'application/x-rust',
+  'application/x-powershell',
+  'application/x-patch',
+  'application/x-php',
+  'application/x-httpd-php',
+  'application/x-httpd-php-source',
+  'application/x-bash',
+  'application/x-awk',
+  'application/graphql',
+  'application/x-graphql',
+  'application/x-ndjson',
+  'application/json5',
+  'application/x-json5',
+  'application/toml',
+  'application/x-toml',
+  'application/x-yaml',
+  'application/yaml',
+  'application/x-subrip',
+  'application/x-protobuf',
+  'application/x-terraform',
+]);
+
+const isSupportedMimeType = (mimeType: string) =>
+  mimeType.startsWith('image/') ||
+  mimeType.startsWith('text/') ||
+  SUPPORTED_APPLICATION_MIME_TYPES.has(mimeType);
+
 interface FilePreview {
   id: string;
   preview: string;
@@ -26,6 +77,14 @@ const useFileUpload = () => {
     const newAttachments: FileMetadata[] = [];
 
     for (const file of files) {
+      if (!isSupportedMimeType(file.type)) {
+        setError((prev) => ({
+          ...prev,
+          global: `"${file.name}" has an unsupported file type. Please upload an image, PDF, document, spreadsheet, presentation, or text/code file.`,
+        }));
+        continue;
+      }
+
       const id = Math.random().toString(36).substr(2, 9);
 
       if (file.type.startsWith('image/')) {

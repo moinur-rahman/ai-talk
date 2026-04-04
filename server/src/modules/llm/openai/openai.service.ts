@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import OpenAI from 'openai';
 import type { Reasoning } from 'openai/resources';
 import type {
@@ -20,6 +20,58 @@ import {
   buildTitleUserPrompt,
 } from '../llm.prompts.js';
 import { fetchBase64FromPresignedUrl } from '../llm.utils.js';
+
+// All text/* MIME types are supported (covers plain text, markdown, all code formats, CSV, etc.)
+// The following application/* types are explicitly supported per OpenAI's file inputs docs.
+const SUPPORTED_APPLICATION_MIME_TYPES = new Set([
+  'application/pdf',
+  // Spreadsheets
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
+  'application/vnd.ms-excel', // .xls
+  'application/csv',
+  'application/x-iif',
+  'application/vnd.google-apps.spreadsheet',
+  // Rich documents
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
+  'application/msword', // .doc
+  'application/rtf',
+  'application/vnd.oasis.opendocument.text', // .odt
+  'application/vnd.apple.pages',
+  'application/vnd.google-apps.document',
+  'application/vnd.apple.iwork',
+  // Presentations
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation', // .pptx
+  'application/vnd.ms-powerpoint', // .ppt
+  'application/vnd.apple.keynote',
+  'application/vnd.google-apps.presentation',
+  // Code / text-as-application
+  'application/javascript',
+  'application/typescript',
+  'application/json',
+  'application/xml',
+  'application/x-sql',
+  'application/x-scala',
+  'application/x-rust',
+  'application/x-powershell',
+  'application/x-patch',
+  'application/x-php',
+  'application/x-httpd-php',
+  'application/x-httpd-php-source',
+  'application/x-bash',
+  'application/x-awk',
+  'application/graphql',
+  'application/x-graphql',
+  'application/x-ndjson',
+  'application/json5',
+  'application/x-json5',
+  'application/toml',
+  'application/x-toml',
+  'application/x-yaml',
+  'application/yaml',
+  'application/x-subrip',
+  'application/x-protobuf',
+  'application/x-terraform',
+]);
 
 @Injectable()
 export class OpenAIService {
@@ -273,24 +325,34 @@ export class OpenAIService {
   private async processFile(
     file: FileMetadata,
   ): Promise<ResponseInputContent | undefined> {
+    const { mimeType } = file;
+    const isSupported =
+      mimeType.startsWith('image/') ||
+      mimeType.startsWith('text/') ||
+      SUPPORTED_APPLICATION_MIME_TYPES.has(mimeType);
+
+    if (!isSupported) {
+      throw new BadRequestException(
+        `File type "${mimeType}" is not supported. Please upload an image, PDF, document, spreadsheet, presentation, or text/code file.`,
+      );
+    }
+
     const base64 = await fetchBase64FromPresignedUrl(
       (file.storageUrl ?? file.presignedUrl)!,
     );
 
-    if (file.mimeType.startsWith('image/')) {
+    if (mimeType.startsWith('image/')) {
       return {
         type: 'input_image',
-        image_url: `data:${file.mimeType};base64,${base64}`,
+        image_url: `data:${mimeType};base64,${base64}`,
         detail: 'low',
-      };
-    } else if (file.mimeType.startsWith('application/pdf')) {
-      return {
-        type: 'input_file',
-        filename: file.fileName,
-        file_data: `data:${file.mimeType};base64,${base64}`,
       };
     }
 
-    return undefined;
+    return {
+      type: 'input_file',
+      filename: file.fileName,
+      file_data: `data:${mimeType};base64,${base64}`,
+    };
   }
 }
