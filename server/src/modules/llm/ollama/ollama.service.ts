@@ -42,7 +42,7 @@ export class OllamaService {
         model: request.model,
         messages,
         stream: true,
-        think: request.enableReasoning,
+        think: !!request.reasoningLevel,
       });
 
       for await (const chunk of stream) {

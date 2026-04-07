@@ -3,7 +3,6 @@ import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 export interface Model {
   id: string;
   name: string;
-  hasReasoning: boolean;
   provider: {
     id: string;
     name: string;
@@ -14,7 +13,6 @@ export interface AdminModel {
   id: string;
   name: string;
   description: string;
-  hasReasoning: boolean;
   isDeprecated: boolean;
   isEnabled: boolean;
 }
@@ -51,7 +49,6 @@ interface SyncModelsResponse {
 export interface CreateModelPayload {
   name: string;
   description?: string;
-  hasReasoning?: boolean;
   isEnabled?: boolean;
   providerId: string;
 }
@@ -60,7 +57,6 @@ export interface UpdateModelPayload {
   modelId: string;
   name?: string;
   description?: string;
-  hasReasoning?: boolean;
   isEnabled?: boolean;
 }
 

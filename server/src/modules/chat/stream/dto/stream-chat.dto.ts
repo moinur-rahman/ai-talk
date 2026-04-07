@@ -4,7 +4,9 @@ import {
   IsOptional,
   IsArray,
   IsUUID,
+  IsIn,
 } from 'class-validator';
+import { ALL_REASONING_LEVELS } from '../../../llm/reasoning.constants.js';
 
 export class StreamChatDto {
   @IsUUID()
@@ -21,9 +23,9 @@ export class StreamChatDto {
   @IsString()
   lastModelId: string;
 
-  @IsBoolean()
+  @IsIn(ALL_REASONING_LEVELS)
   @IsOptional()
-  enableReasoning?: boolean;
+  reasoningLevel?: string | null;
 
   @IsArray()
   @IsString({ each: true })

@@ -18,7 +18,6 @@ const CreateModelModal = ({
   const [form, setForm] = useState<CreateModelPayload>({
     name: '',
     description: '',
-    hasReasoning: false,
     isEnabled: false,
     providerId: providers[0]?.id ?? '',
   });
@@ -97,18 +96,6 @@ const CreateModelModal = ({
               className="w-full bg-surface-dim border border-border rounded-lg px-3 py-2 text-heading text-sm placeholder-[#3a5068] focus:outline-none focus:border-accent/50"
             />
           </div>
-
-          <label className="flex items-center gap-2.5 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={form.hasReasoning}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, hasReasoning: e.target.checked }))
-              }
-              className="w-4 h-4 rounded accent-accent"
-            />
-            <span className="text-body text-sm">Has reasoning capability</span>
-          </label>
 
           <label className="flex items-center gap-2.5 cursor-pointer">
             <input

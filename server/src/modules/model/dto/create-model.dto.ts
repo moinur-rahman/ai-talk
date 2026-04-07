@@ -20,10 +20,6 @@ export class CreateModelDto {
 
   @IsBoolean()
   @IsOptional()
-  hasReasoning?: boolean;
-
-  @IsBoolean()
-  @IsOptional()
   isEnabled?: boolean;
 
   @IsUUID()

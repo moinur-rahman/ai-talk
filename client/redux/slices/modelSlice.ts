@@ -3,7 +3,7 @@ import { Model } from '@/services/modelApi';
 
 interface ModelState {
   selectedModel: Model | null;
-  reasoningEnabled: boolean;
+  reasoningLevel: string | null;
   webSearchEnabled: boolean;
   imageGenerationEnabled: boolean;
   responseStyle: string;
@@ -11,7 +11,7 @@ interface ModelState {
 
 const initialState: ModelState = {
   selectedModel: null,
-  reasoningEnabled: false,
+  reasoningLevel: null,
   webSearchEnabled: false,
   imageGenerationEnabled: false,
   responseStyle: 'Normal',
@@ -24,8 +24,8 @@ export const modelSlice = createSlice({
     setSelectedModel: (state, action: PayloadAction<Model | null>) => {
       state.selectedModel = action.payload;
     },
-    setReasoningEnabled: (state, action: PayloadAction<boolean>) => {
-      state.reasoningEnabled = action.payload;
+    setReasoningLevel: (state, action: PayloadAction<string | null>) => {
+      state.reasoningLevel = action.payload;
     },
     setWebSearchEnabled: (state, action: PayloadAction<boolean>) => {
       state.webSearchEnabled = action.payload;
@@ -43,7 +43,7 @@ export const modelSlice = createSlice({
 
 export const {
   setSelectedModel,
-  setReasoningEnabled,
+  setReasoningLevel,
   setWebSearchEnabled,
   setImageGenerationEnabled,
   setResponseStyle,

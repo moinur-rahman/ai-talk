@@ -37,7 +37,6 @@ const EditModelDrawer = ({
   const [form, setForm] = useState({
     name: model.name,
     description: model.description,
-    hasReasoning: model.hasReasoning,
     isEnabled: model.isEnabled,
   });
 
@@ -100,19 +99,6 @@ const EditModelDrawer = ({
               }
               placeholder="Optional description"
               className="w-full bg-surface-dim border border-border rounded-lg px-3 py-2 text-heading text-sm placeholder-[#3a5068] focus:outline-none focus:border-accent/50"
-            />
-          </div>
-
-          <div className="flex items-center justify-between py-1">
-            <div>
-              <p className="text-heading text-sm">Reasoning</p>
-              <p className="text-muted text-xs mt-0.5">
-                Model supports extended thinking
-              </p>
-            </div>
-            <Toggle
-              checked={form.hasReasoning}
-              onChange={(v) => setForm((f) => ({ ...f, hasReasoning: v }))}
             />
           </div>
 

@@ -1,52 +1,129 @@
 'use client';
 import { FC } from 'react';
 import { FiCpu } from 'react-icons/fi';
+import Select, { GroupBase, StylesConfig } from 'react-select';
 import { useAppDispatch, useAppSelector } from '@/redux/hooks';
-import { setReasoningEnabled } from '@/redux/slices/modelSlice';
+import { setReasoningLevel } from '@/redux/slices/modelSlice';
+import { getReasoningConfig } from '@/utils/reasoningConfig';
 
-const ReasoningToggle: FC = () => {
+interface ReasoningOption {
+  label: string;
+  value: string | null;
+}
+
+const reasoningStyles: StylesConfig<
+  ReasoningOption,
+  false,
+  GroupBase<ReasoningOption>
+> = {
+  control: (styles) => ({
+    ...styles,
+    backgroundColor: 'transparent',
+    borderColor: 'var(--color-border)',
+    borderRadius: '8px',
+    boxShadow: 'none',
+    minHeight: '30px',
+    fontSize: '12px',
+    cursor: 'pointer',
+    '&:hover': {
+      borderColor: 'var(--color-accent)',
+      backgroundColor: 'rgba(0, 196, 161, 0.04)',
+    },
+  }),
+  menu: (styles) => ({
+    ...styles,
+    backgroundColor: 'var(--color-surface-elevated)',
+    border: '1px solid var(--color-border)',
+    borderRadius: '10px',
+    boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
+    overflow: 'hidden',
+  }),
+  menuList: (styles) => ({
+    ...styles,
+    padding: '4px',
+  }),
+  option: (styles, { isFocused, isSelected }) => ({
+    ...styles,
+    backgroundColor: isSelected
+      ? 'rgba(0, 196, 161, 0.1)'
+      : isFocused
+        ? 'var(--color-surface-overlay)'
+        : 'transparent',
+    color: isSelected ? 'var(--color-accent)' : 'var(--color-heading)',
+    fontSize: '12px',
+    padding: '6px 10px',
+    borderRadius: '6px',
+    cursor: 'pointer',
+    '&:hover': { backgroundColor: 'var(--color-surface-overlay)' },
+  }),
+  singleValue: (styles) => ({
+    ...styles,
+    color: 'var(--color-primary)',
+    fontSize: '12px',
+  }),
+  dropdownIndicator: (styles) => ({
+    ...styles,
+    color: 'var(--color-muted)',
+    padding: '4px 6px',
+    '&:hover': { color: 'var(--color-body)' },
+  }),
+  valueContainer: (styles) => ({
+    ...styles,
+    padding: '0 8px',
+  }),
+};
+
+const ReasoningControl: FC = () => {
   const dispatch = useAppDispatch();
   const selectedModel = useAppSelector((state) => state.model.selectedModel);
-  const reasoningEnabled = useAppSelector(
-    (state) => state.model.reasoningEnabled,
-  );
+  const reasoningLevel = useAppSelector((state) => state.model.reasoningLevel);
 
-  if (!selectedModel || !selectedModel.hasReasoning) {
+  if (!selectedModel) {
     return null;
   }
 
-  const handleToggle = () => {
-    dispatch(setReasoningEnabled(!reasoningEnabled));
+  const config = getReasoningConfig(selectedModel.provider.name);
+  if (!config) {
+    return null;
+  }
+
+  const options: ReasoningOption[] = [
+    { label: 'Off', value: null },
+    ...config.options.map((o) => ({
+      label: o.charAt(0).toUpperCase() + o.slice(1),
+      value: o,
+    })),
+  ];
+
+  const selectedOption =
+    options.find((o) => o.value === reasoningLevel) ?? options[0];
+
+  const handleChange = (option: ReasoningOption | null) => {
+    dispatch(setReasoningLevel(option?.value ?? null));
   };
 
   return (
     <div className="flex items-center gap-2 px-3 py-1.5 bg-surface-elevated rounded-lg border border-border">
       <FiCpu
         size={14}
-        className={`${
-          reasoningEnabled ? 'text-amber-400' : 'text-muted'
-        } transition-colors`}
+        className={`${reasoningLevel ? 'text-amber-400' : 'text-muted'} transition-colors shrink-0`}
       />
-      <span className="text-xs text-body font-medium tracking-wide">
+      <span className="text-xs text-body font-medium tracking-wide shrink-0">
         Reasoning
       </span>
-      <button
-        onClick={handleToggle}
-        className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none focus:ring-1 focus:ring-amber-500/50 focus:ring-offset-1 focus:ring-offset-surface-elevated ${
-          reasoningEnabled ? 'bg-amber-500' : 'bg-border'
-        }`}
-        role="switch"
-        aria-checked={reasoningEnabled}
-        aria-label="Toggle AI reasoning"
-      >
-        <span
-          className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${
-            reasoningEnabled ? 'translate-x-5' : 'translate-x-1'
-          }`}
-        />
-      </button>
+      <Select
+        instanceId="reasoning-dropdown"
+        options={options}
+        value={selectedOption}
+        onChange={handleChange}
+        isSearchable={false}
+        menuPlacement="auto"
+        styles={reasoningStyles}
+        className="w-28"
+        components={{ IndicatorSeparator: () => null }}
+      />
     </div>
   );
 };
 
-export default ReasoningToggle;
+export default ReasoningControl;

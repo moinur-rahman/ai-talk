@@ -13,6 +13,10 @@ Whenever you add a new environment variable, you MUST update ALL of the followin
 
 `docs/structure.md` contains the project layout. Use it as a reference instead of searching the filesystem when you need to navigate the codebase.
 
+## Code Style
+
+- Always use curly braces for `if` conditions, even single-line ones.
+
 ## Running Commands
 
 Always use npm scripts defined in the project's `package.json` instead of invoking tools directly (e.g. never `npx prisma`, `npx eslint`, etc.). Check the relevant `package.json` for the available scripts first.

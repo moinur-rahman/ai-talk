@@ -18,7 +18,7 @@ export interface LLMRequest {
   model: string;
   conversationId: string;
   messages: LLMMessage[];
-  enableReasoning: boolean;
+  reasoningLevel: string | null;
   webSearchEnabled?: boolean;
   imageGenerationEnabled?: boolean;
   systemPrompt?: string;

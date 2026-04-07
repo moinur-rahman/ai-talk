@@ -1,10 +1,8 @@
 'use client';
 import { FC, useEffect, useMemo } from 'react';
 import Select, { GroupBase, StylesConfig } from 'react-select';
-import {
-  setSelectedModel,
-  setReasoningEnabled,
-} from '@/redux/slices/modelSlice';
+import { setSelectedModel, setReasoningLevel } from '@/redux/slices/modelSlice';
+import { getReasoningConfig } from '@/utils/reasoningConfig';
 import { useGetAllModelsQuery } from '@/services/modelApi';
 import { useAppDispatch, useAppSelector } from '@/redux/hooks';
 import { useChat } from '@/contexts/ChatContext';
@@ -164,9 +162,8 @@ const ModelDropdown: FC = () => {
 
     dispatch(setSelectedModel(selectedModelData));
 
-    if (!selectedModelData.hasReasoning) {
-      dispatch(setReasoningEnabled(false));
-    }
+    const config = getReasoningConfig(selectedModelData.provider.name);
+    dispatch(setReasoningLevel(config ? config.default : null));
 
     if (!conversationId) {
       localStorage.setItem(

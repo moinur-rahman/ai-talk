@@ -76,7 +76,6 @@ model Model {
   description  String    @db.VarChar(500)
   isDeprecated Boolean   @map("is_deprecated")
   isEnabled    Boolean   @default(false) @map("is_enabled")
-  hasReasoning Boolean   @default(false) @map("has_reasoning")
   providerId   String    @map("provider_id") @db.Uuid
   provider     Provider  @relation(fields: [providerId], references: [id], onDelete: Cascade)
   messages     Message[]

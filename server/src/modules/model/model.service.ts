@@ -60,7 +60,6 @@ export class ModelService implements OnApplicationBootstrap {
       select: {
         id: true,
         name: true,
-        hasReasoning: true,
         provider: {
           select: { id: true, name: true },
         },
@@ -80,7 +79,6 @@ export class ModelService implements OnApplicationBootstrap {
       },
       select: {
         name: true,
-        hasReasoning: true,
         provider: {
           select: {
             id: true,
@@ -107,7 +105,6 @@ export class ModelService implements OnApplicationBootstrap {
             id: true,
             name: true,
             description: true,
-            hasReasoning: true,
             isDeprecated: true,
             isEnabled: true,
           },
@@ -141,7 +138,6 @@ export class ModelService implements OnApplicationBootstrap {
       data: {
         name: dto.name,
         description: dto.description ?? '',
-        hasReasoning: dto.hasReasoning ?? false,
         isDeprecated: false,
         isEnabled: dto.isEnabled ?? false,
         providerId: dto.providerId,
@@ -150,7 +146,6 @@ export class ModelService implements OnApplicationBootstrap {
         id: true,
         name: true,
         description: true,
-        hasReasoning: true,
         isDeprecated: true,
         isEnabled: true,
       },
@@ -173,7 +168,6 @@ export class ModelService implements OnApplicationBootstrap {
         id: true,
         name: true,
         description: true,
-        hasReasoning: true,
         isDeprecated: true,
         isEnabled: true,
       },

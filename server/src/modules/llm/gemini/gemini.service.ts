@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { GoogleGenAI, Content, Part } from '@google/genai';
+import { GoogleGenAI, Content, Part, type ThinkingLevel } from '@google/genai';
 import config from '../../../common/config/config.js';
 import { LLMMessage, LLMRequest, TokenCallback } from '../types/llm.types.js';
 import {
@@ -35,6 +35,14 @@ export class GeminiService {
         config: {
           systemInstruction: buildSystemInstruction(request.systemPrompt),
           abortSignal: abortController.signal,
+          ...(request.reasoningLevel
+            ? {
+                thinkingConfig: {
+                  thinkingLevel: request.reasoningLevel as ThinkingLevel,
+                  includeThoughts: true,
+                },
+              }
+            : {}),
         },
       });
 

@@ -91,8 +91,8 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
     (state: RootState) => state.model.selectedModel,
   );
 
-  const reasoningEnabled = useSelector(
-    (state: RootState) => state.model.reasoningEnabled,
+  const reasoningLevel = useSelector(
+    (state: RootState) => state.model.reasoningLevel,
   );
 
   const webSearchEnabled = useSelector(
@@ -263,7 +263,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
     streamKey: string,
     params: ISendMessageParams,
     modelId: string,
-    enableReasoning: boolean,
+    reasoningLevel: string | null,
     webSearchEnabled: boolean,
     imageGenerationEnabled: boolean,
     style: string,
@@ -285,7 +285,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
               : { projectId: params.project?.id }),
             prompt: params.prompt,
             lastModelId: modelId,
-            enableReasoning,
+            reasoningLevel,
             webSearchEnabled,
             fileIds: params.attachments
               ? params.attachments.map((f) => f.id)
@@ -376,7 +376,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
           'pending',
           params,
           selectedModel.id,
-          selectedModel.hasReasoning && reasoningEnabled,
+          reasoningLevel,
           webSearchEnabled,
           imageGenerationEnabled,
           responseStyle,
@@ -480,7 +480,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
         currentId,
         params,
         selectedModel.id,
-        selectedModel.hasReasoning && reasoningEnabled,
+        reasoningLevel,
         webSearchEnabled,
         imageGenerationEnabled,
         responseStyle,

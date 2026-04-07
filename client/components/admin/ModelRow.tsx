@@ -21,11 +21,6 @@ const ModelRow = ({
       )}
     </div>
     <div className="flex items-center gap-2 shrink-0">
-      {model.hasReasoning && (
-        <span className="px-2 py-0.5 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-400 text-[10px] font-medium">
-          Reasoning
-        </span>
-      )}
       {model.isDeprecated && (
         <span className="px-2 py-0.5 rounded-full bg-red-500/10 border border-red-500/20 text-red-400 text-[10px] font-medium">
           Deprecated

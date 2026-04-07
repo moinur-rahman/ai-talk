@@ -13,9 +13,5 @@ export class UpdateModelDto {
 
   @IsBoolean()
   @IsOptional()
-  hasReasoning?: boolean;
-
-  @IsBoolean()
-  @IsOptional()
   isEnabled?: boolean;
 }

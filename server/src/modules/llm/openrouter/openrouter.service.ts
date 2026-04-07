@@ -38,7 +38,7 @@ export class OpenRouterService {
         request.messages,
         request.systemPrompt,
       );
-      const reasoning = request.enableReasoning
+      const reasoning = request.reasoningLevel
         ? { effort: 'low' as const }
         : null;
 

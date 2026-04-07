@@ -10,6 +10,7 @@ import { LLMMessage, TokenType } from '../../llm/types/llm.types.js';
 import { FileMetadataResponseDto } from '../../file/dto/file-metadata-response.dto.js';
 import { SenderType } from '../message/dto/save-message.dto.js';
 import { StreamChatDto } from './dto/stream-chat.dto.js';
+import { getProviderReasoningOptions } from '../../llm/reasoning.constants.js';
 
 type SendEvent = (data: object) => void;
 
@@ -44,10 +45,16 @@ export class ChatStreamService {
       dto.lastModelId,
     );
     const providerName = modelDetails.provider.name.toLowerCase();
-    if (dto.enableReasoning && !modelDetails.hasReasoning) {
-      throw new BadRequestException('This model does not support reasoning');
+    const reasoningLevel = dto.reasoningLevel ?? null;
+
+    if (reasoningLevel !== null) {
+      const allowedLevels = getProviderReasoningOptions(providerName);
+      if (!allowedLevels || !allowedLevels.includes(reasoningLevel)) {
+        throw new BadRequestException(
+          `Reasoning level "${reasoningLevel}" is not supported for provider "${providerName}"`,
+        );
+      }
     }
-    const enableReasoning = Boolean(dto.enableReasoning);
     const webSearchEnabled = Boolean(dto.webSearchEnabled);
     const imageGenerationEnabled = Boolean(dto.imageGenerationEnabled);
 
@@ -163,7 +170,7 @@ export class ChatStreamService {
         model: modelDetails.name,
         conversationId: currentConversationId,
         messages,
-        enableReasoning,
+        reasoningLevel,
         webSearchEnabled,
         imageGenerationEnabled,
         systemPrompt,
