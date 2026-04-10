@@ -24,11 +24,7 @@ export interface LLMRequest {
   systemPrompt?: string;
 }
 
-export type TokenType =
-  | 'mainContent'
-  | 'reasoningContent'
-  | 'partialImage'
-  | 'webSearch';
+export type TokenType = 'mainContent' | 'reasoningContent' | 'webSearch';
 
 export type TokenCallback = (
   token: string,
@@ -38,4 +34,5 @@ export type TokenCallback = (
 
 export interface StreamResult {
   openaiImageCallId?: string;
+  imageBase64?: string;
 }

@@ -218,14 +218,6 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
         },
       );
       dispatch(result);
-    } else if (event.type === 'partial-image' && event.imageData) {
-      setImageGenerating((prev) => ({ ...prev, [convId]: true }));
-      dispatch(
-        setLastMessageGeneratedImage({
-          conversationId: convId,
-          imageData: `data:image/png;base64,${event.imageData}`,
-        }),
-      );
     } else if (event.type === 'generated-image' && event.presignedUrl) {
       setImageGenerating((prev) => ({ ...prev, [convId]: false }));
       dispatch(

@@ -162,7 +162,6 @@ export class ChatStreamService {
 
     let mainContentBuffer = '';
     let reasoningContentBuffer = '';
-    let finalImageBase64 = '';
 
     const streamPromise = this.llmService.streamResponse(
       providerName,
@@ -200,16 +199,6 @@ export class ChatStreamService {
             status: isEnd ? 'done' : 'searching',
             conversationId: currentConversationId,
           });
-        } else if (tokenType === 'partialImage') {
-          if (isEnd) {
-            finalImageBase64 = token;
-          } else {
-            sendEvent({
-              type: 'partial-image',
-              imageData: token,
-              conversationId: currentConversationId,
-            });
-          }
         }
       },
     );
@@ -217,7 +206,8 @@ export class ChatStreamService {
     const [streamResult] = await Promise.all([streamPromise, titlePromise]);
 
     let generatedFileId: string | undefined;
-    if (finalImageBase64) {
+    if (streamResult?.imageBase64) {
+      const finalImageBase64 = streamResult.imageBase64;
       try {
         const imageBuffer = Buffer.from(finalImageBase64, 'base64');
         generatedFileId = await this.fileService.uploadBuffer(

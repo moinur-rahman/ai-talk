@@ -110,7 +110,6 @@ export class OpenAIService {
             model: 'gpt-image-1-mini',
             size: '1024x1024',
             quality: 'low',
-            partial_images: 2,
           },
           { type: 'web_search' as const },
         ];
@@ -141,9 +140,8 @@ export class OpenAIService {
       );
 
       let mainContentEnded = false;
-      let lastImageB64 = '';
-      let hasImageOutput = false;
       let openaiImageCallId: string | undefined;
+      let imageBase64: string | undefined;
 
       for await (const event of stream) {
         if (abortController.signal.aborted) break;
@@ -169,24 +167,34 @@ export class OpenAIService {
           case 'response.web_search_call.completed':
             await onToken('', 'webSearch', true);
             break;
-          case 'response.image_generation_call.partial_image':
-            hasImageOutput = true;
-            openaiImageCallId = ev['item_id'];
-            lastImageB64 = ev['partial_image_b64'];
-            await onToken(lastImageB64, 'partialImage', false);
+          case 'response.output_item.added': {
+            const addedItem = (
+              event as unknown as { item: { type: string; id: string } }
+            ).item;
+            if (addedItem?.type === 'image_generation_call') {
+              openaiImageCallId = addedItem.id;
+            }
             break;
+          }
+          case 'response.output_item.done': {
+            const doneItem = (
+              event as unknown as {
+                item: { type: string; result?: string | null };
+              }
+            ).item;
+            if (doneItem?.type === 'image_generation_call' && doneItem.result) {
+              imageBase64 = doneItem.result;
+            }
+            break;
+          }
         }
-      }
-
-      if (hasImageOutput && lastImageB64) {
-        await onToken(lastImageB64, 'partialImage', true);
       }
 
       if (!mainContentEnded) {
         await onToken('', 'mainContent', true);
       }
 
-      return { openaiImageCallId };
+      return { openaiImageCallId, imageBase64 };
     } catch (error) {
       if (abortController.signal.aborted) {
         await onToken('', 'mainContent', true);
