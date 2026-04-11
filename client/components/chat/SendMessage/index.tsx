@@ -67,7 +67,9 @@ const SendMessage = ({
     (state) => state.model.imageGenerationEnabled,
   );
   const selectedModel = useAppSelector((state) => state.model.selectedModel);
-  const isOpenAI = selectedModel?.provider.name.toLowerCase() === 'openai';
+  const providerName = selectedModel?.provider.name.toLowerCase() ?? '';
+  const isOpenAI = providerName === 'openai';
+  const isGemini = providerName === 'gemini';
 
   const [prompt, setPrompt] = useState('');
   const [pendingProject, setPendingProject] = useState<{
@@ -313,13 +315,11 @@ const SendMessage = ({
                   </button>
                 )}
 
-                {isOpenAI && (
+                {(isOpenAI || isGemini) && (
                   <button
                     type="button"
                     onClick={() => {
-                      dispatch(
-                        setImageGenerationEnabled(!imageGenerationEnabled),
-                      );
+                      dispatch(setImageGenerationEnabled(!imageGenerationEnabled));
                       setIsMenuOpen(false);
                     }}
                     className="flex items-center gap-3 w-full px-3 py-2 text-sm text-body hover:bg-surface-overlay transition-colors"
@@ -520,13 +520,13 @@ const SendMessage = ({
             </div>
           )}
 
-          <ReasoningToggle />
-
           <div className="flex-1" />
 
           <div className="w-44 shrink-0">
             <ModelDropdown />
           </div>
+
+          <ReasoningToggle />
 
           {!isListening && !isTranscribing && (
             <button

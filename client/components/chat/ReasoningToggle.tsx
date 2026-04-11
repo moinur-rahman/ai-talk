@@ -103,14 +103,11 @@ const ReasoningControl: FC = () => {
   };
 
   return (
-    <div className="flex items-center gap-2 px-3 py-1.5 bg-surface-elevated rounded-lg border border-border">
+    <div className="flex items-center shrink-0">
       <FiCpu
         size={14}
-        className={`${reasoningLevel ? 'text-amber-400' : 'text-muted'} transition-colors shrink-0`}
+        className={`${reasoningLevel ? 'text-amber-400' : 'text-muted'} transition-colors shrink-0 mr-1.5`}
       />
-      <span className="text-xs text-body font-medium tracking-wide shrink-0">
-        Reasoning
-      </span>
       <Select
         instanceId="reasoning-dropdown"
         options={options}
@@ -119,7 +116,7 @@ const ReasoningControl: FC = () => {
         isSearchable={false}
         menuPlacement="auto"
         styles={reasoningStyles}
-        className="w-28"
+        className="w-20"
         components={{ IndicatorSeparator: () => null }}
       />
     </div>

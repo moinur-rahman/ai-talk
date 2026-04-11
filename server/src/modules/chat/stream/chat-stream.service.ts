@@ -11,6 +11,9 @@ import { FileMetadataResponseDto } from '../../file/dto/file-metadata-response.d
 import { SenderType } from '../message/dto/save-message.dto.js';
 import { StreamChatDto } from './dto/stream-chat.dto.js';
 import { getProviderReasoningOptions } from '../../llm/reasoning.constants.js';
+import { PROVIDER } from '../../../common/constants/providers.js';
+
+const GEMINI_IMAGE_GEN_MODEL = 'gemini-2.5-flash-image';
 
 type SendEvent = (data: object) => void;
 
@@ -57,6 +60,11 @@ export class ChatStreamService {
     }
     const webSearchEnabled = Boolean(dto.webSearchEnabled);
     const imageGenerationEnabled = Boolean(dto.imageGenerationEnabled);
+
+    const modelName =
+      imageGenerationEnabled && providerName === PROVIDER.GEMINI
+        ? GEMINI_IMAGE_GEN_MODEL
+        : modelDetails.name;
 
     onProviderResolved(providerName);
 
@@ -166,7 +174,7 @@ export class ChatStreamService {
     const streamPromise = this.llmService.streamResponse(
       providerName,
       {
-        model: modelDetails.name,
+        model: modelName,
         conversationId: currentConversationId,
         messages,
         reasoningLevel,

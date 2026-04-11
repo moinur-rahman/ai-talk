@@ -38,8 +38,7 @@ export class LlmService {
         await this.zaiService.streamResponse(request, onToken);
         break;
       case PROVIDER.GEMINI:
-        await this.geminiService.streamResponse(request, onToken);
-        break;
+        return this.geminiService.streamResponse(request, onToken);
       default:
         throw new Error(`Unknown provider: ${providerName}`);
     }

@@ -1,7 +1,12 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { GoogleGenAI, Content, Part, type ThinkingLevel } from '@google/genai';
 import config from '../../../common/config/config.js';
-import { LLMMessage, LLMRequest, TokenCallback } from '../types/llm.types.js';
+import {
+  LLMMessage,
+  LLMRequest,
+  StreamResult,
+  TokenCallback,
+} from '../types/llm.types.js';
 import {
   buildSystemInstruction,
   TITLE_SYSTEM_PROMPT,
@@ -22,7 +27,7 @@ export class GeminiService {
   async streamResponse(
     request: LLMRequest,
     onToken: TokenCallback,
-  ): Promise<void> {
+  ): Promise<StreamResult> {
     const abortController = new AbortController();
     this.activeStreams.set(request.conversationId, abortController);
 
@@ -35,6 +40,9 @@ export class GeminiService {
         config: {
           systemInstruction: buildSystemInstruction(request.systemPrompt),
           abortSignal: abortController.signal,
+          ...(request.imageGenerationEnabled
+            ? { responseModalities: ['Text', 'Image'] }
+            : {}),
           ...(request.reasoningLevel
             ? {
                 thinkingConfig: {
@@ -46,12 +54,16 @@ export class GeminiService {
         },
       });
 
+      let imageBase64: string | undefined;
+
       for await (const chunk of stream) {
         if (abortController.signal.aborted) break;
 
         for (const part of chunk.candidates?.[0]?.content?.parts ?? []) {
           if (part.thought) {
             await onToken(part.text ?? '', 'reasoningContent', false);
+          } else if (part.inlineData?.mimeType?.startsWith('image/')) {
+            imageBase64 = part.inlineData.data ?? undefined;
           } else if (part.text) {
             await onToken(part.text, 'mainContent', false);
           }
@@ -59,9 +71,11 @@ export class GeminiService {
       }
 
       await onToken('', 'mainContent', true);
+      return { imageBase64 };
     } catch (error) {
       if (abortController.signal.aborted) {
         await onToken('', 'mainContent', true);
+        return {};
       } else {
         throw error;
       }
