@@ -29,33 +29,36 @@ enum Role {
 }
 
 model User {
-  id            String         @id @default(uuid()) @db.Uuid
-  email         String         @unique @db.VarChar(255)
-  password      String         @db.VarChar(255)
-  name          String         @db.VarChar(255)
-  displayName   String?        @map("display_name") @db.VarChar(255)
-  workDescription String?      @map("work_description") @db.VarChar(100)
-  customInstructions String?   @map("custom_instructions")
-  role          Role           @default(user)
+  id                 String   @id @default(uuid()) @db.Uuid
+  email              String   @unique @db.VarChar(255)
+  password           String   @db.VarChar(255)
+  name               String   @db.VarChar(255)
+  displayName        String?  @map("display_name") @db.VarChar(255)
+  workDescription    String?  @map("work_description") @db.VarChar(100)
+  customInstructions String?  @map("custom_instructions")
+  role               Role     @default(user)
+  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt          DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
   files         File[]
   conversations Conversation[]
   projects      Project[]
-  createdAt     DateTime       @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt     DateTime       @updatedAt @map("updated_at") @db.Timestamptz
 
   @@map("users")
 }
 
 model Project {
-  id            String         @id @default(uuid()) @db.Uuid
-  name          String         @db.VarChar(100)
-  description   String?        @db.VarChar(500)
-  instructions  String?
-  userId        String         @map("user_id") @db.Uuid
-  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id           String   @id @default(uuid()) @db.Uuid
+  name         String   @db.VarChar(100)
+  description  String?  @db.VarChar(500)
+  instructions String?
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  userId String @map("user_id") @db.Uuid
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   conversations Conversation[]
-  createdAt     DateTime       @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt     DateTime       @updatedAt @map("updated_at") @db.Timestamptz
 
   @@map("projects")
 }
@@ -63,32 +66,33 @@ model Project {
 model Provider {
   id        String   @id @default(uuid()) @db.Uuid
   name      String   @unique @db.VarChar(50)
-  models    Model[]
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  models Model[]
 
   @@map("providers")
 }
 
 model Model {
-  id           String    @id @default(uuid()) @db.Uuid
-  name         String    @db.VarChar(100)
-  description  String    @db.VarChar(500)
-  isDeprecated Boolean   @map("is_deprecated")
-  isEnabled    Boolean   @default(false) @map("is_enabled")
-  providerId   String    @map("provider_id") @db.Uuid
-  provider     Provider  @relation(fields: [providerId], references: [id], onDelete: Cascade)
-  messages     Message[]
-  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt    DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+  id           String   @id @default(uuid()) @db.Uuid
+  name         String   @db.VarChar(100)
+  description  String   @db.VarChar(500)
+  isDeprecated Boolean  @map("is_deprecated")
+  isEnabled    Boolean  @default(false) @map("is_enabled")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  providerId String   @map("provider_id") @db.Uuid
+  provider   Provider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+
+  messages Message[]
 
   @@map("models")
 }
 
 model File {
   id         String   @id @default(uuid()) @db.Uuid
-  userId     String   @map("user_id") @db.Uuid
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   bucketName String   @map("bucket_name") @db.VarChar(255)
   fileName   String   @map("file_name") @db.VarChar(255)
   objectName String   @map("object_name") @db.VarChar(1024)
@@ -96,37 +100,54 @@ model File {
   fileSize   BigInt   @map("file_size")
   createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz
 
+  userId String @map("user_id") @db.Uuid
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@map("files")
 }
 
 model Conversation {
-  id             String    @id @default(uuid()) @db.Uuid
-  title          String?   @db.VarChar(50)
-  userId         String    @map("user_id") @db.Uuid
-  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  projectId      String?   @map("project_id") @db.Uuid
-  project        Project?  @relation(fields: [projectId], references: [id], onDelete: SetNull)
-  messages       Message[]
-  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt      DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+  id        String   @id @default(uuid()) @db.Uuid
+  title     String?  @db.VarChar(50)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  userId String @map("user_id") @db.Uuid
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  projectId String?  @map("project_id") @db.Uuid
+  project   Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+
+  activeLeafMessageId String?  @map("active_leaf_message_id") @db.Uuid
+  activeLeafMessage   Message? @relation("ActiveLeafMessage", fields: [activeLeafMessageId], references: [id])
+
+  messages Message[]
 
   @@map("conversations")
 }
 
 model Message {
-  id                  String              @id @default(uuid()) @db.Uuid
-  mainContent         String?             @map("main_content")
-  reasoningContent    String?             @map("reasoning_content")
-  openaiImageCallId   String?             @map("openai_image_call_id") @db.VarChar(255)
-  senderType          SenderType          @map("sender_type")
-  inputType           InputType           @default(text) @map("input_type")
-  audioDurationMs     Int?                @map("audio_duration_ms")
-  modelId             String?             @map("model_id") @db.Uuid
-  model               Model?              @relation(fields: [modelId], references: [id])
-  conversationId      String              @map("conversation_id") @db.Uuid
-  conversation        Conversation        @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-  attachments         MessageAttachment[]
-  createdAt           DateTime            @default(now()) @map("created_at") @db.Timestamptz
+  id                String     @id @default(uuid()) @db.Uuid
+  mainContent       String?    @map("main_content")
+  reasoningContent  String?    @map("reasoning_content")
+  openaiImageCallId String?    @map("openai_image_call_id") @db.VarChar(255)
+  senderType        SenderType @map("sender_type")
+  inputType         InputType  @default(text) @map("input_type")
+  audioDurationMs   Int?       @map("audio_duration_ms")
+  createdAt         DateTime   @default(now()) @map("created_at") @db.Timestamptz
+
+  modelId String? @map("model_id") @db.Uuid
+  model   Model?  @relation(fields: [modelId], references: [id])
+
+  conversationId String       @map("conversation_id") @db.Uuid
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  parentMessageId String?   @map("parent_message_id") @db.Uuid
+  parent          Message?  @relation("MessageTree", fields: [parentMessageId], references: [id])
+  children        Message[] @relation("MessageTree")
+
+  attachments       MessageAttachment[]
+  activeLeafMessage Conversation[]      @relation("ActiveLeafMessage")
 
   @@index([conversationId], name: "idx_conversation_id")
   @@map("messages")
@@ -134,10 +155,11 @@ model Message {
 
 model MessageAttachment {
   id        String   @id @default(uuid()) @db.Uuid
-  messageId String   @map("message_id") @db.Uuid
-  message   Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
   fileId    String   @map("file_id") @db.Uuid
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  messageId String  @map("message_id") @db.Uuid
+  message   Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
 
   @@index([messageId], name: "idx_message_id")
   @@map("message_attachments")

@@ -36,19 +36,28 @@ export class ChatStreamService {
   }
 
   async stream(
-    conversationId: string | undefined,
-    projectId: string | undefined,
     userId: string,
     dto: StreamChatDto,
     sendEvent: SendEvent,
     onProviderResolved: (providerName: string) => void,
     onConversationResolved: (conversationId: string) => void,
   ): Promise<void> {
-    const modelDetails = await this.modelService.getModelDetails(
-      dto.lastModelId,
-    );
+    const {
+      prompt,
+      parentMessageId,
+      conversationId,
+      projectId,
+      lastModelId,
+      reasoningLevel: rawReasoningLevel,
+      webSearchEnabled: rawWebSearchEnabled,
+      imageGenerationEnabled: rawImageGenerationEnabled,
+      responseStyle,
+      fileIds,
+    } = dto;
+
+    const modelDetails = await this.modelService.getModelDetails(lastModelId);
     const providerName = modelDetails.provider.name.toLowerCase();
-    const reasoningLevel = dto.reasoningLevel ?? null;
+    const reasoningLevel = rawReasoningLevel ?? null;
 
     if (reasoningLevel !== null) {
       const allowedLevels = getProviderReasoningOptions(providerName);
@@ -58,8 +67,8 @@ export class ChatStreamService {
         );
       }
     }
-    const webSearchEnabled = Boolean(dto.webSearchEnabled);
-    const imageGenerationEnabled = Boolean(dto.imageGenerationEnabled);
+    const webSearchEnabled = rawWebSearchEnabled ?? false;
+    const imageGenerationEnabled = rawImageGenerationEnabled ?? false;
 
     const modelName =
       imageGenerationEnabled && providerName === PROVIDER.GEMINI
@@ -83,36 +92,42 @@ export class ChatStreamService {
 
     onConversationResolved(currentConversationId);
 
+    let projectIdPromise = Promise.resolve(projectId ?? null);
+
+    if (conversationId) {
+      projectIdPromise = this.conversationService.getProjectId(
+        currentConversationId,
+      );
+    }
+
     const [resolvedProjectId, userPrefs] = await Promise.all([
-      conversationId !== undefined
-        ? this.conversationService.getProjectId(currentConversationId)
-        : Promise.resolve(projectId ?? null),
+      projectIdPromise,
       this.userService.getUserPreferences(userId),
     ]);
 
-    const projectInstructions =
-      resolvedProjectId != null
-        ? await this.projectService.getProjectInstructions(
-            String(resolvedProjectId),
-          )
-        : null;
+    let projectInstructions: string | null = null;
+
+    if (resolvedProjectId) {
+      projectInstructions =
+        await this.projectService.getProjectInstructions(resolvedProjectId);
+    }
 
     const systemPrompt = this.buildSystemPrompt(
       userPrefs,
       projectInstructions,
-      dto.responseStyle,
+      responseStyle,
     );
 
     const { messages: chatHistory } =
-      await this.messageService.getMessagesByConversationId(
-        currentConversationId,
-      );
+      await this.messageService.getMessagesByConversationId({
+        conversationId: currentConversationId,
+        leafMessageId: parentMessageId,
+      });
 
     let attachments: FileMetadataResponseDto[] = [];
-    if (dto.fileIds && dto.fileIds.length > 0) {
-      const filesMetadata = await this.fileService.getMultipleFilesMetadata(
-        dto.fileIds,
-      );
+    if (fileIds && fileIds.length > 0) {
+      const filesMetadata =
+        await this.fileService.getMultipleFilesMetadata(fileIds);
       attachments = filesMetadata.filter((f) => !f.error);
     }
 
@@ -133,7 +148,7 @@ export class ChatStreamService {
           })),
       })),
       {
-        content: dto.prompt,
+        content: prompt,
         senderType: 'user',
         attachments: attachments
           .filter((a) => a.fileName && a.mimeType)
@@ -148,18 +163,24 @@ export class ChatStreamService {
       },
     ];
 
-    await this.messageService.saveMessage({
-      mainContent: dto.prompt,
+    const lastParentMessageId =
+      chatHistory.length > 0
+        ? chatHistory[chatHistory.length - 1].id
+        : undefined;
+
+    const newUserMessage = await this.messageService.saveMessage({
+      mainContent: prompt,
       senderType: SenderType.user,
+      parentMessageId: lastParentMessageId,
       conversationId: currentConversationId,
-      fileIds: dto.fileIds,
+      fileIds,
     });
 
     const titlePromise =
       chatHistory.length === 0
         ? this.generateAndSendTitle(
             currentConversationId,
-            dto.prompt,
+            prompt,
             sendEvent,
           ).catch((err: unknown) =>
             this.logger.error(
@@ -242,15 +263,21 @@ export class ChatStreamService {
     }
 
     if (mainContentBuffer || reasoningContentBuffer || generatedFileId) {
-      await this.messageService.saveMessage({
+      const newAssistantMessage = await this.messageService.saveMessage({
         mainContent: mainContentBuffer || undefined,
         reasoningContent: reasoningContentBuffer || undefined,
         senderType: SenderType.assistant,
+        parentMessageId: newUserMessage.id,
         conversationId: currentConversationId,
-        modelId: dto.lastModelId,
+        modelId: lastModelId,
         fileIds: generatedFileId ? [generatedFileId] : undefined,
         openaiImageCallId: streamResult?.openaiImageCallId,
       });
+
+      await this.conversationService.updateActiveLeafMessage(
+        currentConversationId,
+        newAssistantMessage.id,
+      );
     }
   }
 

@@ -40,8 +40,6 @@ export class ChatStreamController {
 
     try {
       await this.chatStreamService.stream(
-        dto.conversationId,
-        dto.projectId,
         user.id,
         dto,
         sendEvent,

@@ -153,4 +153,19 @@ export class ConversationService {
     });
     return conv?.projectId ?? null;
   }
+
+  async updateActiveLeafMessage(conversationId: string, leafMessageId: string) {
+    await this.prisma.conversation.update({
+      where: { id: conversationId },
+      data: { activeLeafMessageId: leafMessageId },
+    });
+  }
+
+  async getActiveLeafMessage(conversationId: string): Promise<string | null> {
+    const conversation = await this.prisma.conversation.findUnique({
+      where: { id: conversationId },
+      select: { activeLeafMessageId: true },
+    });
+    return conversation?.activeLeafMessageId ?? null;
+  }
 }

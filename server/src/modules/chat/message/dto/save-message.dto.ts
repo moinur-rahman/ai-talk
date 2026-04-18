@@ -39,6 +39,10 @@ export class SaveMessageDto {
   @Min(0)
   audioDurationMs?: number;
 
+  @IsOptional()
+  @IsUUID()
+  parentMessageId?: string;
+
   @IsUUID()
   conversationId: string;
 

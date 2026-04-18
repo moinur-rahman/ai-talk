@@ -9,6 +9,13 @@ import {
 import { ALL_REASONING_LEVELS } from '../../../llm/reasoning.constants.js';
 
 export class StreamChatDto {
+  @IsString()
+  prompt: string;
+
+  @IsUUID()
+  @IsOptional()
+  parentMessageId?: string;
+
   @IsUUID()
   @IsOptional()
   conversationId?: string;
@@ -16,9 +23,6 @@ export class StreamChatDto {
   @IsUUID()
   @IsOptional()
   projectId?: string;
-
-  @IsString()
-  prompt: string;
 
   @IsString()
   lastModelId: string;

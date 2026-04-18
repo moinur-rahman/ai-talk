@@ -3,16 +3,18 @@ import { PrismaService } from '../../../providers/prisma/prisma.service.js';
 import { FileService } from '../../file/file.service.js';
 import { FileMetadataResponseDto } from '../../file/dto/file-metadata-response.dto.js';
 import { SaveMessageDto, SenderType } from './dto/save-message.dto.js';
+import { ConversationService } from '../conversation/conversation.service.js';
 
 @Injectable()
 export class MessageService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly fileService: FileService,
+    private readonly conversationService: ConversationService,
   ) {}
 
   async saveMessage(dto: SaveMessageDto) {
-    await this.prisma.$transaction(async (tx) => {
+    return await this.prisma.$transaction(async (tx) => {
       const message = await tx.message.create({
         data: {
           mainContent: dto.mainContent,
@@ -21,6 +23,7 @@ export class MessageService {
           senderType: dto.senderType,
           inputType: dto.inputType,
           audioDurationMs: dto.audioDurationMs,
+          parentMessageId: dto.parentMessageId,
           modelId:
             dto.senderType === SenderType.assistant ? dto.modelId : undefined,
           conversationId: dto.conversationId,
@@ -35,23 +38,19 @@ export class MessageService {
           })),
         });
       }
+
+      return message;
     });
   }
 
-  async getMessagesByConversationId(conversationId: string) {
-    type MessageRow = {
-      id: string;
-      mainContent: string | null;
-      reasoningContent: string | null;
-      openaiImageCallId: string | null;
-      senderType: string;
-      inputType: string;
-      audioDurationMs: number | null;
-      modelId: string | null;
-      attachments: Array<{ fileId: string }>;
-    };
-
-    const messages = (await this.prisma.message.findMany({
+  async getMessagesByConversationId({
+    conversationId,
+    leafMessageId,
+  }: {
+    conversationId: string;
+    leafMessageId?: string;
+  }) {
+    const messages = await this.prisma.message.findMany({
       where: { conversationId },
       select: {
         id: true,
@@ -61,13 +60,34 @@ export class MessageService {
         senderType: true,
         inputType: true,
         audioDurationMs: true,
+        parentMessageId: true,
         modelId: true,
         attachments: {
           select: { fileId: true },
         },
       },
       orderBy: { createdAt: 'asc' },
-    })) as MessageRow[];
+    });
+
+    const filteredMessages: typeof messages = [];
+
+    let currentMessageId: string | null = leafMessageId ?? null;
+
+    if (!currentMessageId) {
+      currentMessageId =
+        await this.conversationService.getActiveLeafMessage(conversationId);
+    }
+
+    while (currentMessageId) {
+      const message = messages.find((m) => m.id === currentMessageId);
+
+      if (message) {
+        filteredMessages.push(message);
+        currentMessageId = message.parentMessageId;
+      }
+    }
+
+    filteredMessages.reverse();
 
     const conversation = await this.prisma.conversation.findUnique({
       where: { id: conversationId },
@@ -77,7 +97,7 @@ export class MessageService {
       },
     });
 
-    const fileIds = messages.flatMap((msg) =>
+    const fileIds = filteredMessages.flatMap((msg) =>
       msg.attachments.map((a) => a.fileId),
     );
 
@@ -89,7 +109,8 @@ export class MessageService {
     const filesMetadataMap: Record<string, FileMetadataResponseDto> =
       Object.fromEntries(filesMetadata.map((f) => [f.id, f]));
 
-    const messagesWithFiles = messages.map((msg) => ({
+    const messagesWithFiles = filteredMessages.map((msg) => ({
+      id: msg.id,
       mainContent: msg.mainContent,
       reasoningContent: msg.reasoningContent,
       openaiImageCallId: msg.openaiImageCallId,
@@ -97,6 +118,7 @@ export class MessageService {
       inputType: msg.inputType,
       audioDurationMs: msg.audioDurationMs,
       modelId: msg.modelId,
+      parentMessageId: msg.parentMessageId,
       attachments: msg.attachments
         .map((a) => filesMetadataMap[a.fileId])
         .filter((f): f is FileMetadataResponseDto => f !== undefined),

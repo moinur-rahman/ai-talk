@@ -1,0 +1,15 @@
+#### frontend #####
+.next
+
+
+##### backend #####
+dist
+generated
+
+
+##### common #####
+migrations/*
+data
+node_modules
+package-lock.json
+.claude
