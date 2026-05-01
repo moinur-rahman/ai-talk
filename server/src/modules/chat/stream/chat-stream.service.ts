@@ -45,6 +45,7 @@ export class ChatStreamService {
     const {
       prompt,
       branchFromMessageId,
+      regenerateFromMessageId,
       conversationId,
       projectId,
       lastModelId,
@@ -118,7 +119,10 @@ export class ChatStreamService {
       responseStyle,
     );
 
-    let anchorMessageId: string | null = branchFromMessageId ?? null;
+    const isRegenerate = !!regenerateFromMessageId;
+
+    let anchorMessageId: string | null =
+      regenerateFromMessageId ?? branchFromMessageId ?? null;
 
     if (!anchorMessageId) {
       anchorMessageId = await this.conversationService.getActiveLeafMessage(
@@ -140,63 +144,80 @@ export class ChatStreamService {
       attachments = filesMetadata.filter((f) => !f.error);
     }
 
-    const messages: LLMMessage[] = [
-      ...chatHistory.map((msg) => ({
-        content: msg.mainContent || '',
-        senderType: msg.senderType as 'user' | 'assistant',
-        openaiImageCallId: msg.openaiImageCallId,
-        attachments: msg.attachments
-          .filter((a) => !a.error && a.fileName && a.mimeType)
-          .map((a) => ({
-            id: a.id,
-            fileName: a.fileName!,
-            mimeType: a.mimeType!,
-            fileSize: a.fileSize ?? '0',
-            presignedUrl: a.presignedUrl,
-            storageUrl: a.storageUrl,
-          })),
-      })),
-      {
-        content: prompt,
-        senderType: 'user',
-        attachments: attachments
-          .filter((a) => a.fileName && a.mimeType)
-          .map((a) => ({
-            id: a.id,
-            fileName: a.fileName!,
-            mimeType: a.mimeType!,
-            fileSize: a.fileSize ?? '0',
-            presignedUrl: a.presignedUrl,
-            storageUrl: a.storageUrl,
-          })),
-      },
-    ];
+    const historyMessages: LLMMessage[] = chatHistory.map((msg) => ({
+      content: msg.mainContent || '',
+      senderType: msg.senderType as 'user' | 'assistant',
+      openaiImageCallId: msg.openaiImageCallId,
+      attachments: msg.attachments
+        .filter((a) => !a.error && a.fileName && a.mimeType)
+        .map((a) => ({
+          id: a.id,
+          fileName: a.fileName!,
+          mimeType: a.mimeType!,
+          fileSize: a.fileSize ?? '0',
+          presignedUrl: a.presignedUrl,
+          storageUrl: a.storageUrl,
+        })),
+    }));
 
-    const lastMessageId =
+    const lastHistoryMessageId =
       chatHistory.length > 0
         ? chatHistory[chatHistory.length - 1].id
         : undefined;
 
-    const newUserMessage = await this.messageService.saveMessage({
-      mainContent: prompt,
-      senderType: SenderType.user,
-      parentMessageId: lastMessageId,
-      conversationId: currentConversationId,
-      fileIds,
-    });
+    let assistantParentMessageId: string | undefined;
+    let messages: LLMMessage[];
+    let titlePromise: Promise<void>;
 
-    const titlePromise =
-      chatHistory.length === 0
-        ? this.generateAndSendTitle(
-            currentConversationId,
-            prompt,
-            sendEvent,
-          ).catch((err: unknown) =>
-            this.logger.error(
-              `Failed to generate conversation title: ${err instanceof Error ? err.message : String(err)}`,
-            ),
-          )
-        : Promise.resolve();
+    if (isRegenerate) {
+      //* Regenerate: reuse the existing user message as-is, no new user message saved.
+      //* The assistant response will be a new sibling of the existing one.
+      messages = historyMessages;
+      assistantParentMessageId = lastHistoryMessageId;
+      titlePromise = Promise.resolve();
+    } else {
+      //* Normal send: append the new user prompt to the LLM context and persist it.
+      messages = [
+        ...historyMessages,
+        {
+          content: prompt ?? '',
+          senderType: 'user',
+          attachments: attachments
+            .filter((a) => a.fileName && a.mimeType)
+            .map((a) => ({
+              id: a.id,
+              fileName: a.fileName!,
+              mimeType: a.mimeType!,
+              fileSize: a.fileSize ?? '0',
+              presignedUrl: a.presignedUrl,
+              storageUrl: a.storageUrl,
+            })),
+        },
+      ];
+
+      const newUserMessage = await this.messageService.saveMessage({
+        mainContent: prompt,
+        senderType: SenderType.user,
+        parentMessageId: lastHistoryMessageId,
+        conversationId: currentConversationId,
+        fileIds,
+      });
+
+      assistantParentMessageId = newUserMessage.id;
+
+      titlePromise =
+        chatHistory.length === 0
+          ? this.generateAndSendTitle(
+              currentConversationId,
+              prompt ?? '',
+              sendEvent,
+            ).catch((err: unknown) =>
+              this.logger.error(
+                `Failed to generate conversation title: ${err instanceof Error ? err.message : String(err)}`,
+              ),
+            )
+          : Promise.resolve();
+    }
 
     let mainContentBuffer = '';
     let reasoningContentBuffer = '';
@@ -276,7 +297,7 @@ export class ChatStreamService {
         mainContent: mainContentBuffer || undefined,
         reasoningContent: reasoningContentBuffer || undefined,
         senderType: SenderType.assistant,
-        parentMessageId: newUserMessage.id,
+        parentMessageId: assistantParentMessageId,
         conversationId: currentConversationId,
         modelId: lastModelId,
         fileIds: generatedFileId ? [generatedFileId] : undefined,
@@ -287,6 +308,11 @@ export class ChatStreamService {
         currentConversationId,
         newAssistantMessage.id,
       );
+
+      sendEvent({
+        type: 'stream-complete',
+        conversationId: currentConversationId,
+      });
     }
   }
 

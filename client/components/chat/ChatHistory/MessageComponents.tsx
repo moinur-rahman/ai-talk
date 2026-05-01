@@ -1,5 +1,5 @@
 'use client';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { FileMetadata } from '@/types/chat';
 import { MarkdownRenderer } from './MarkdownRenderer';
 import Image from 'next/image';
@@ -13,9 +13,11 @@ import {
   FiChevronRight,
   FiCpu,
   FiDownload,
+  FiEdit2,
   FiGlobe,
   FiLoader,
   FiMic,
+  FiRefreshCw,
   FiSquare,
   FiVolume2,
 } from 'react-icons/fi';
@@ -146,6 +148,8 @@ interface MessageProps {
   messageId?: string;
   siblingIds?: string[];
   onNavigate?: (messageId: string) => void;
+  onEdit?: (editedText: string) => void;
+  onRegenerate?: () => void;
 }
 
 const MessageImages = ({ attachments }: { attachments: FileMetadata[] }) => {
@@ -311,6 +315,7 @@ export const UserMessage = ({
   messageId,
   siblingIds,
   onNavigate,
+  onEdit,
 }: MessageProps) => {
   const imageFiles = attachments?.filter(
     (file) => file.mimeType.startsWith('image/') && file.presignedUrl,
@@ -321,6 +326,9 @@ export const UserMessage = ({
   );
 
   const [copyStatus, setCopyStatus] = useState<string>('');
+  const [isEditing, setIsEditing] = useState(false);
+  const [editValue, setEditValue] = useState('');
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const handleCopy = () => {
     if (!mainContent) return;
@@ -332,7 +340,87 @@ export const UserMessage = ({
     });
   };
 
+  const handleEditStart = () => {
+    setEditValue(mainContent ?? '');
+    setIsEditing(true);
+  };
+
+  const handleEditCancel = () => {
+    setIsEditing(false);
+    setEditValue('');
+  };
+
+  const handleEditSend = () => {
+    const trimmed = editValue.trim();
+    if (!trimmed) {
+      return;
+    }
+    onEdit?.(trimmed);
+    setIsEditing(false);
+    setEditValue('');
+  };
+
+  const handleEditKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+      e.preventDefault();
+      handleEditSend();
+    }
+    if (e.key === 'Escape') {
+      handleEditCancel();
+    }
+  };
+
+  const handleTextareaInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setEditValue(e.target.value);
+    const el = e.target;
+    el.style.height = 'auto';
+    el.style.height = `${el.scrollHeight}px`;
+  };
+
+  useEffect(() => {
+    if (isEditing && textareaRef.current) {
+      const el = textareaRef.current;
+      el.style.height = 'auto';
+      el.style.height = `${el.scrollHeight}px`;
+      el.focus();
+      el.setSelectionRange(el.value.length, el.value.length);
+    }
+  }, [isEditing]);
+
   const isVoice = inputType === 'voice';
+
+  if (isEditing) {
+    return (
+      <div className="flex flex-col items-end w-full">
+        <div className="w-full max-w-[80%] flex flex-col gap-2">
+          <textarea
+            ref={textareaRef}
+            value={editValue}
+            onChange={handleTextareaInput}
+            onKeyDown={handleEditKeyDown}
+            className="w-full bg-[#1e2f44] border border-accent/50 text-[#C8D8E4] text-sm px-4 py-3 rounded-2xl rounded-tr-sm resize-none outline-none focus:border-accent overflow-hidden leading-relaxed"
+            rows={1}
+          />
+          <div className="flex items-center justify-end gap-2">
+            <span className="text-xs text-muted">Ctrl+Enter to send</span>
+            <button
+              onClick={handleEditCancel}
+              className="px-3 py-1.5 text-xs text-muted hover:text-body border border-border rounded-lg hover:bg-surface-elevated transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleEditSend}
+              disabled={!editValue.trim()}
+              className="px-3 py-1.5 text-xs bg-accent text-white rounded-lg hover:bg-accent/80 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              Send
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col items-end w-full group">
@@ -379,6 +467,17 @@ export const UserMessage = ({
             onNavigate={onNavigate}
           />
         )}
+        {onEdit && (
+          <button
+            onClick={handleEditStart}
+            className="flex items-center gap-1.5 px-2 py-1 text-muted hover:text-body transition-colors duration-150 rounded-md hover:bg-surface-elevated"
+            aria-label="Edit message"
+            title="Edit message"
+          >
+            <FiEdit2 size={12} />
+            <span className="text-xs">Edit</span>
+          </button>
+        )}
         <button
           onClick={handleCopy}
           className="flex items-center gap-1.5 px-2 py-1 text-muted hover:text-body transition-colors duration-150 rounded-md hover:bg-surface-elevated"
@@ -418,6 +517,7 @@ export const AssistantMessage = ({
   messageId,
   siblingIds,
   onNavigate,
+  onRegenerate,
 }: AssistantMessageProps) => {
   const effectiveGeneratedImage =
     generatedImage ??
@@ -575,6 +675,17 @@ export const AssistantMessage = ({
               siblingIds={siblingIds}
               onNavigate={onNavigate}
             />
+          )}
+          {onRegenerate && (
+            <button
+              onClick={onRegenerate}
+              className="flex items-center gap-1.5 px-2 py-1 text-muted hover:text-body transition-colors duration-150 rounded-md hover:bg-surface-elevated"
+              aria-label="Regenerate response"
+              title="Regenerate response"
+            >
+              <FiRefreshCw size={12} />
+              <span className="text-xs">Regenerate</span>
+            </button>
           )}
           <button
             onClick={handleCopy}

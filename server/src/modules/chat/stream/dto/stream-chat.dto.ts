@@ -10,11 +10,16 @@ import { ALL_REASONING_LEVELS } from '../../../llm/reasoning.constants.js';
 
 export class StreamChatDto {
   @IsString()
-  prompt: string;
+  @IsOptional()
+  prompt?: string;
 
   @IsUUID()
   @IsOptional()
   branchFromMessageId?: string;
+
+  @IsUUID()
+  @IsOptional()
+  regenerateFromMessageId?: string;
 
   @IsUUID()
   @IsOptional()

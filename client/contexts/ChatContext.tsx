@@ -12,6 +12,7 @@ import {
   updateLastMessage,
   setLastMessageGeneratedImage,
   addMessage,
+  loadChatHistory,
   setNewConversationId,
   setNewConversationTitle,
   setNewConversationProject,
@@ -24,9 +25,11 @@ import { FileMetadata } from '@/types/chat';
 import { getCsrfTokenFromCookie } from '@/utils/getCsrfTokenFromCookie';
 
 interface ISendMessageParams {
-  prompt: string;
+  prompt?: string;
   attachments?: FileMetadata[];
   project?: { id: string; name: string };
+  branchFromMessageId?: string;
+  regenerateFromMessageId?: string;
 }
 
 interface IChatContext {
@@ -231,6 +234,22 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
         ...prev,
         [convId]: event.status === 'searching',
       }));
+    } else if (event.type === 'stream-complete') {
+      void dispatch(
+        chatApi.endpoints.getChatHistory.initiate(
+          { conversationId: convId },
+          { forceRefetch: true },
+        ),
+      ).then((result) => {
+        if (result.data) {
+          dispatch(
+            loadChatHistory({
+              conversationId: convId,
+              messages: result.data.messages,
+            }),
+          );
+        }
+      });
     } else if (event.type === 'error') {
       const message = event.message ?? 'An error occurred';
       console.error(`Error for conversation ${convId}:`, message);
@@ -275,7 +294,13 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
             ...(currentId
               ? { conversationId: currentId }
               : { projectId: params.project?.id }),
-            prompt: params.prompt,
+            ...(params.prompt !== undefined ? { prompt: params.prompt } : {}),
+            ...(params.branchFromMessageId
+              ? { branchFromMessageId: params.branchFromMessageId }
+              : {}),
+            ...(params.regenerateFromMessageId
+              ? { regenerateFromMessageId: params.regenerateFromMessageId }
+              : {}),
             lastModelId: modelId,
             reasoningLevel,
             webSearchEnabled,
@@ -386,7 +411,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
 
         // Optimistically add to sidebar using the user's message as the
         // initial title. It will be replaced once the AI title arrives.
-        const prompt = params.prompt.trim();
+        const prompt = (params.prompt ?? '').trim();
         const initialTitle =
           prompt.length > 60 ? `${prompt.slice(0, 60)}…` : prompt;
         dispatch(
@@ -437,17 +462,19 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
       }
 
       // Existing conversation: optimistic UI updates then fire the stream.
-      dispatch(
-        addMessage({
-          conversationId: currentId,
-          message: {
-            mainContent: params.prompt,
-            senderType: 'user',
-            inputType: 'text',
-            attachments: params.attachments,
-          },
-        }),
-      );
+      if (!params.regenerateFromMessageId) {
+        dispatch(
+          addMessage({
+            conversationId: currentId,
+            message: {
+              mainContent: params.prompt,
+              senderType: 'user',
+              inputType: 'text',
+              attachments: params.attachments,
+            },
+          }),
+        );
+      }
 
       dispatch(
         addMessage({

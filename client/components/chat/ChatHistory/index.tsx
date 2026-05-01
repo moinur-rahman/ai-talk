@@ -1,10 +1,13 @@
 'use client';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useDispatch } from 'react-redux';
 import { useChat } from '@/contexts/ChatContext';
 import { useVoiceAgentContext } from '@/contexts/VoiceAgentContext';
 import { useChatData } from './useChatData';
 import { UserMessage, AssistantMessage } from './MessageComponents';
-import { Message } from '@/types/chat';
+import { Message, FileMetadata } from '@/types/chat';
+import { loadChatHistory } from '@/redux/slices/chatSlice';
+import { AppDispatch } from '@/redux/store';
 
 const ChatHistory = () => {
   const {
@@ -13,8 +16,10 @@ const ChatHistory = () => {
     reasoningStreaming,
     imageGenerating,
     webSearching,
+    sendMessage,
   } = useChat();
   const { isAssistantSpeaking } = useVoiceAgentContext();
+  const dispatch = useDispatch<AppDispatch>();
   const [switchToMessageId, setSwitchToMessageId] = useState<
     string | undefined
   >();
@@ -36,6 +41,52 @@ const ChatHistory = () => {
   const handleNavigate = useCallback((messageId: string) => {
     setSwitchToMessageId(messageId);
   }, []);
+
+  const handleRegenerate = useCallback(
+    (
+      messageIndex: number,
+      assistantParentMessageId: string | null | undefined,
+    ) => {
+      if (!conversationId) {
+        return;
+      }
+      dispatch(
+        loadChatHistory({
+          conversationId,
+          messages: chatHistories.slice(0, messageIndex),
+        }),
+      );
+      sendMessage({
+        regenerateFromMessageId: assistantParentMessageId ?? undefined,
+      });
+    },
+    [conversationId, chatHistories, dispatch, sendMessage],
+  );
+
+  const handleEditAndResend = useCallback(
+    (
+      messageIndex: number,
+      editedText: string,
+      parentMessageId: string | null | undefined,
+      attachments: FileMetadata[] | undefined,
+    ) => {
+      if (!conversationId) {
+        return;
+      }
+      dispatch(
+        loadChatHistory({
+          conversationId,
+          messages: chatHistories.slice(0, messageIndex),
+        }),
+      );
+      sendMessage({
+        prompt: editedText,
+        branchFromMessageId: parentMessageId ?? undefined,
+        attachments,
+      });
+    },
+    [conversationId, chatHistories, dispatch, sendMessage],
+  );
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -71,6 +122,14 @@ const ChatHistory = () => {
                   messageId={chat.id}
                   siblingIds={chat.siblingIds}
                   onNavigate={handleNavigate}
+                  onEdit={(editedText) =>
+                    handleEditAndResend(
+                      index,
+                      editedText,
+                      chat.parentMessageId,
+                      chat.attachments,
+                    )
+                  }
                 />
               );
             case 'assistant':
@@ -92,6 +151,11 @@ const ChatHistory = () => {
                   messageId={chat.id}
                   siblingIds={chat.siblingIds}
                   onNavigate={handleNavigate}
+                  onRegenerate={
+                    chat.id
+                      ? () => handleRegenerate(index, chat.parentMessageId)
+                      : undefined
+                  }
                 />
               );
             default:
