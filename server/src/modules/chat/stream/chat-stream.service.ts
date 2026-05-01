@@ -44,7 +44,7 @@ export class ChatStreamService {
   ): Promise<void> {
     const {
       prompt,
-      parentMessageId,
+      branchFromMessageId,
       conversationId,
       projectId,
       lastModelId,
@@ -118,10 +118,19 @@ export class ChatStreamService {
       responseStyle,
     );
 
+    let anchorMessageId: string | null = branchFromMessageId ?? null;
+
+    if (!anchorMessageId) {
+      anchorMessageId = await this.conversationService.getActiveLeafMessage(
+        currentConversationId,
+      );
+    }
+
     const { messages: chatHistory } =
       await this.messageService.getMessagesByConversationId({
         conversationId: currentConversationId,
-        leafMessageId: parentMessageId,
+        anchorMessageId,
+        followToLeaf: false,
       });
 
     let attachments: FileMetadataResponseDto[] = [];
@@ -163,7 +172,7 @@ export class ChatStreamService {
       },
     ];
 
-    const lastParentMessageId =
+    const lastMessageId =
       chatHistory.length > 0
         ? chatHistory[chatHistory.length - 1].id
         : undefined;
@@ -171,7 +180,7 @@ export class ChatStreamService {
     const newUserMessage = await this.messageService.saveMessage({
       mainContent: prompt,
       senderType: SenderType.user,
-      parentMessageId: lastParentMessageId,
+      parentMessageId: lastMessageId,
       conversationId: currentConversationId,
       fileIds,
     });

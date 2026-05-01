@@ -7,6 +7,7 @@ export interface FileMetadata {
 }
 
 export interface Message {
+  id?: string;
   mainContent?: string;
   reasoningContent?: string;
   generatedImage?: string;
@@ -15,6 +16,8 @@ export interface Message {
   audioDurationMs?: number | null;
   modelId?: string | null;
   attachments?: FileMetadata[];
+  parentMessageId?: string | null;
+  siblingIds?: string[];
 }
 
 export interface Conversation {

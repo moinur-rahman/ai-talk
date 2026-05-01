@@ -57,10 +57,16 @@ export const chatApi = createApi({
       }),
       invalidatesTags: ['Conversations'],
     }),
-    getChatHistory: builder.query<ChatHistoryResponse['data'], string>({
-      query: (conversationId) => `/chats/messages/${conversationId}`,
+    getChatHistory: builder.query<
+      ChatHistoryResponse['data'],
+      { conversationId: string; switchToMessageId?: string }
+    >({
+      query: ({ conversationId, switchToMessageId }) => ({
+        url: `/chats/messages/${conversationId}`,
+        params: switchToMessageId ? { switchToMessageId } : undefined,
+      }),
       transformResponse: (response: ChatHistoryResponse) => response.data,
-      providesTags: (result, error, conversationId) => [
+      providesTags: (result, error, { conversationId }) => [
         { type: 'ChatHistory', id: conversationId },
       ],
     }),
@@ -92,7 +98,7 @@ export const chatApi = createApi({
         const chatHistoryPatch = dispatch(
           chatApi.util.updateQueryData(
             'getChatHistory',
-            conversationId,
+            { conversationId },
             (draft) => {
               draft.title = title;
             },

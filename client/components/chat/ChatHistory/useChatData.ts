@@ -16,7 +16,10 @@ const selectChatHistories = createSelector(
   (chatHistories, conversationId) => chatHistories[conversationId] || [],
 );
 
-export const useChatData = (conversationId: string) => {
+export const useChatData = (
+  conversationId: string,
+  switchToMessageId?: string,
+) => {
   const dispatch = useDispatch();
   const chatHistories = useSelector((state: RootState) =>
     selectChatHistories(state, conversationId),
@@ -26,12 +29,15 @@ export const useChatData = (conversationId: string) => {
   );
 
   const { data: models = [] } = useGetAllModelsQuery();
-  const { data: chatHistoryData } = useGetChatHistoryQuery(conversationId, {
-    skip:
-      newConversationId === conversationId ||
-      !conversationId ||
-      chatHistories.length > 0,
-  });
+  const { data: chatHistoryData } = useGetChatHistoryQuery(
+    { conversationId, switchToMessageId },
+    {
+      skip:
+        newConversationId === conversationId ||
+        !conversationId ||
+        (chatHistories.length > 0 && !switchToMessageId),
+    },
+  );
 
   useEffect(() => {
     if (chatHistoryData) {

@@ -3,14 +3,12 @@ import { PrismaService } from '../../../providers/prisma/prisma.service.js';
 import { FileService } from '../../file/file.service.js';
 import { FileMetadataResponseDto } from '../../file/dto/file-metadata-response.dto.js';
 import { SaveMessageDto, SenderType } from './dto/save-message.dto.js';
-import { ConversationService } from '../conversation/conversation.service.js';
 
 @Injectable()
 export class MessageService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly fileService: FileService,
-    private readonly conversationService: ConversationService,
   ) {}
 
   async saveMessage(dto: SaveMessageDto) {
@@ -45,10 +43,12 @@ export class MessageService {
 
   async getMessagesByConversationId({
     conversationId,
-    leafMessageId,
+    anchorMessageId,
+    followToLeaf = true,
   }: {
     conversationId: string;
-    leafMessageId?: string;
+    anchorMessageId: string | null;
+    followToLeaf?: boolean;
   }) {
     const messages = await this.prisma.message.findMany({
       where: { conversationId },
@@ -69,14 +69,45 @@ export class MessageService {
       orderBy: { createdAt: 'asc' },
     });
 
+    //* Helper function to check if a message is a descendant of another message or itself.
+    //* This function traverses the message tree upwards from the given message ID
+    //* until it finds the ancestor ID or reaches the root (null parent).
+    //* Returns true if the message is a descendant of the ancestor, false otherwise.
+    const isDescendantOrSelf = (id: string) => {
+      if (!anchorMessageId) {
+        return false;
+      }
+      let currentId: string | null = id;
+      while (currentId) {
+        if (currentId === anchorMessageId) {
+          return true;
+        }
+        const message = messages.find((m) => m.id === currentId);
+        currentId = message?.parentMessageId ?? null;
+      }
+      return false;
+    };
+
+    //* A leaf message is a message that has no children.
+    //* This helper function checks if a message is a leaf by verifying that
+    //* no other message has the current message as its parent.
+    const isLeaf = (message: (typeof messages)[number]) => {
+      return !messages.some((other) => other.parentMessageId === message.id);
+    };
+
+    let leaves: (typeof messages)[number][] = [];
+
+    leaves = anchorMessageId
+      ? messages.filter((m) => isLeaf(m) && isDescendantOrSelf(m.id))
+      : [];
+
     const filteredMessages: typeof messages = [];
 
-    let currentMessageId: string | null = leafMessageId ?? null;
+    const leafMessageId: string | null = followToLeaf
+      ? (leaves.at(-1)?.id ?? anchorMessageId)
+      : anchorMessageId;
 
-    if (!currentMessageId) {
-      currentMessageId =
-        await this.conversationService.getActiveLeafMessage(conversationId);
-    }
+    let currentMessageId: string | null = leafMessageId;
 
     while (currentMessageId) {
       const message = messages.find((m) => m.id === currentMessageId);
@@ -84,6 +115,8 @@ export class MessageService {
       if (message) {
         filteredMessages.push(message);
         currentMessageId = message.parentMessageId;
+      } else {
+        break;
       }
     }
 
@@ -109,6 +142,14 @@ export class MessageService {
     const filesMetadataMap: Record<string, FileMetadataResponseDto> =
       Object.fromEntries(filesMetadata.map((f) => [f.id, f]));
 
+    const siblingsByParentId = new Map<string | null, string[]>();
+    for (const msg of messages) {
+      const key = msg.parentMessageId ?? null;
+      const group = siblingsByParentId.get(key) ?? [];
+      group.push(msg.id);
+      siblingsByParentId.set(key, group);
+    }
+
     const messagesWithFiles = filteredMessages.map((msg) => ({
       id: msg.id,
       mainContent: msg.mainContent,
@@ -119,6 +160,7 @@ export class MessageService {
       audioDurationMs: msg.audioDurationMs,
       modelId: msg.modelId,
       parentMessageId: msg.parentMessageId,
+      siblingIds: siblingsByParentId.get(msg.parentMessageId ?? null) ?? [],
       attachments: msg.attachments
         .map((a) => filesMetadataMap[a.fileId])
         .filter((f): f is FileMetadataResponseDto => f !== undefined),

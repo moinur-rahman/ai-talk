@@ -14,7 +14,7 @@ export class StreamChatDto {
 
   @IsUUID()
   @IsOptional()
-  parentMessageId?: string;
+  branchFromMessageId?: string;
 
   @IsUUID()
   @IsOptional()

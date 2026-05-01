@@ -29,9 +29,10 @@ const Chat = () => {
   );
   const isNew = newConversationId === conversationId;
 
-  const { data, isLoading } = useGetChatHistoryQuery(conversationId, {
-    skip: isNew,
-  });
+  const { data, isLoading } = useGetChatHistoryQuery(
+    { conversationId },
+    { skip: isNew },
+  );
   const project = isNew ? newConversationProject : (data?.project ?? null);
   const title = isNew ? newConversationTitle : (data?.title ?? null);
 

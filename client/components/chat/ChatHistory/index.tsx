@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useChat } from '@/contexts/ChatContext';
 import { useVoiceAgentContext } from '@/contexts/VoiceAgentContext';
 import { useChatData } from './useChatData';
@@ -15,13 +15,27 @@ const ChatHistory = () => {
     webSearching,
   } = useChat();
   const { isAssistantSpeaking } = useVoiceAgentContext();
-  const { chatHistories } = useChatData(conversationId ?? '');
+  const [switchToMessageId, setSwitchToMessageId] = useState<
+    string | undefined
+  >();
+  const { chatHistories } = useChatData(
+    conversationId ?? '',
+    switchToMessageId,
+  );
   const bottomRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setSwitchToMessageId(undefined);
+  }, [conversationId]);
 
   const isStreaming =
     (conversationId && streaming[conversationId]) ||
     (conversationId && reasoningStreaming[conversationId]) ||
     isAssistantSpeaking;
+
+  const handleNavigate = useCallback((messageId: string) => {
+    setSwitchToMessageId(messageId);
+  }, []);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -44,21 +58,25 @@ const ChatHistory = () => {
       <div className="w-full max-w-[52rem] flex flex-col space-y-6 py-6">
         {chatHistories.map((chat: Message, index: number) => {
           const isLast = index === chatHistories.length - 1;
+          const key = chat.id ?? `msg-${index}`;
           switch (chat.senderType) {
             case 'user':
               return (
                 <UserMessage
-                  key={`user-${index}`}
+                  key={key}
                   mainContent={chat.mainContent}
                   attachments={chat.attachments}
                   inputType={chat.inputType}
                   audioDurationMs={chat.audioDurationMs}
+                  messageId={chat.id}
+                  siblingIds={chat.siblingIds}
+                  onNavigate={handleNavigate}
                 />
               );
             case 'assistant':
               return (
                 <AssistantMessage
-                  key={`assistant-${index}`}
+                  key={key}
                   mainContent={chat.mainContent}
                   reasoningContent={chat.reasoningContent}
                   attachments={chat.attachments}
@@ -71,6 +89,9 @@ const ChatHistory = () => {
                     ((streaming[conversationId] ?? false) ||
                       isAssistantSpeaking)
                   }
+                  messageId={chat.id}
+                  siblingIds={chat.siblingIds}
+                  onNavigate={handleNavigate}
                 />
               );
             default:

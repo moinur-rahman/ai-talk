@@ -9,6 +9,8 @@ import {
   FiCopy,
   FiChevronDown,
   FiChevronUp,
+  FiChevronLeft,
+  FiChevronRight,
   FiCpu,
   FiDownload,
   FiGlobe,
@@ -91,6 +93,49 @@ const formatDuration = (ms: number): string => {
   return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
 };
 
+const MessageNavigation = ({
+  messageId,
+  siblingIds,
+  onNavigate,
+}: {
+  messageId?: string;
+  siblingIds?: string[];
+  onNavigate: (messageId: string) => void;
+}) => {
+  if (!messageId || !siblingIds || siblingIds.length <= 1) {
+    return null;
+  }
+
+  const currentIndex = siblingIds.indexOf(messageId);
+  if (currentIndex === -1) {
+    return null;
+  }
+
+  return (
+    <div className="flex items-center gap-0.5 text-xs text-muted">
+      <button
+        onClick={() => onNavigate(siblingIds[currentIndex - 1])}
+        disabled={currentIndex === 0}
+        className="p-1 rounded hover:bg-surface-elevated hover:text-body transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+        aria-label="Previous version"
+      >
+        <FiChevronLeft size={12} />
+      </button>
+      <span className="tabular-nums px-0.5">
+        {currentIndex + 1} / {siblingIds.length}
+      </span>
+      <button
+        onClick={() => onNavigate(siblingIds[currentIndex + 1])}
+        disabled={currentIndex === siblingIds.length - 1}
+        className="p-1 rounded hover:bg-surface-elevated hover:text-body transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+        aria-label="Next version"
+      >
+        <FiChevronRight size={12} />
+      </button>
+    </div>
+  );
+};
+
 interface MessageProps {
   mainContent?: string;
   reasoningContent?: string;
@@ -98,6 +143,9 @@ interface MessageProps {
   isProcessing?: boolean;
   inputType?: 'text' | 'voice';
   audioDurationMs?: number | null;
+  messageId?: string;
+  siblingIds?: string[];
+  onNavigate?: (messageId: string) => void;
 }
 
 const MessageImages = ({ attachments }: { attachments: FileMetadata[] }) => {
@@ -260,6 +308,9 @@ export const UserMessage = ({
   attachments,
   inputType,
   audioDurationMs,
+  messageId,
+  siblingIds,
+  onNavigate,
 }: MessageProps) => {
   const imageFiles = attachments?.filter(
     (file) => file.mimeType.startsWith('image/') && file.presignedUrl,
@@ -320,7 +371,14 @@ export const UserMessage = ({
           </div>
         </div>
       )}
-      <div className="flex items-center mt-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+      <div className="flex items-center justify-end mt-1 gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+        {onNavigate && (
+          <MessageNavigation
+            messageId={messageId}
+            siblingIds={siblingIds}
+            onNavigate={onNavigate}
+          />
+        )}
         <button
           onClick={handleCopy}
           className="flex items-center gap-1.5 px-2 py-1 text-muted hover:text-body transition-colors duration-150 rounded-md hover:bg-surface-elevated"
@@ -357,6 +415,9 @@ export const AssistantMessage = ({
   isGeneratingImage = false,
   isSearching = false,
   isStreaming = false,
+  messageId,
+  siblingIds,
+  onNavigate,
 }: AssistantMessageProps) => {
   const effectiveGeneratedImage =
     generatedImage ??
@@ -507,7 +568,14 @@ export const AssistantMessage = ({
         </div>
       </div>
       {mainContent && (
-        <div className="flex items-center mt-1 ml-9 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+        <div className="flex items-center mt-1 ml-9 gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+          {onNavigate && (
+            <MessageNavigation
+              messageId={messageId}
+              siblingIds={siblingIds}
+              onNavigate={onNavigate}
+            />
+          )}
           <button
             onClick={handleCopy}
             className="flex items-center gap-1.5 px-2 py-1 text-muted hover:text-body transition-colors duration-150 rounded-md hover:bg-surface-elevated"
