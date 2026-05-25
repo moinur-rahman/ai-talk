@@ -62,6 +62,10 @@ services:
       - GEMINI_API_KEY=${GEMINI_API_KEY}
       - TITLE_GENERATION_PROVIDER=${TITLE_GENERATION_PROVIDER}
       - TITLE_GENERATION_MODEL=${TITLE_GENERATION_MODEL}
+      - EMBEDDING_PROVIDER=${EMBEDDING_PROVIDER}
+      - EMBEDDING_MODEL=${EMBEDDING_MODEL}
+      - EMBEDDING_DIMENSIONS=${EMBEDDING_DIMENSIONS}
+      - LARGE_DOC_CHAR_THRESHOLD=${LARGE_DOC_CHAR_THRESHOLD}
     depends_on:
       postgres:
         condition: service_healthy
@@ -75,7 +79,7 @@ services:
       - ai_talk_network
 
   postgres:
-    image: postgres:16.4-alpine
+    image: pgvector/pgvector:pg16
     restart: always
     volumes:
       - ./data/postgres:/var/lib/postgresql/data

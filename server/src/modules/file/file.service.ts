@@ -8,6 +8,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { Readable } from 'stream';
 import { PrismaService } from '../../providers/prisma/prisma.service.js';
 import { SeaweedFSService } from '../../providers/seaweedfs/seaweedfs.service.js';
+import { RagService } from '../document/rag.service.js';
 import { FileUploadResponseDto } from './dto/file-upload-response.dto.js';
 import { FileMetadataResponseDto } from './dto/file-metadata-response.dto.js';
 
@@ -21,6 +22,7 @@ export class FileService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly seaweedfs: SeaweedFSService,
+    private readonly ragService: RagService,
   ) {}
 
   private async ensureBucketExists(bucketName: string): Promise<void> {
@@ -58,6 +60,14 @@ export class FileService {
         },
       });
 
+      this.ragService
+        .processFileForRag(fileRecord.id, file.buffer, file.mimetype)
+        .catch((err: unknown) =>
+          this.logger.error(
+            `RAG processing failed for file ${fileRecord.id}: ${err instanceof Error ? err.message : String(err)}`,
+          ),
+        );
+
       const presignedUrl = await this.seaweedfs.getPresignedUrl(
         bucketName,
         objectName,
@@ -78,7 +88,7 @@ export class FileService {
     }
   }
 
-  async uploadBuffer(
+  async uploadGeneratedImage(
     buffer: Buffer,
     userId: string,
     fileName: string,

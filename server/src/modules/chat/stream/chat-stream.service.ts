@@ -3,6 +3,7 @@ import { LlmService } from '../../llm/llm.service.js';
 import { ModelService } from '../../model/model.service.js';
 import { MessageService } from '../message/message.service.js';
 import { FileService } from '../../file/file.service.js';
+import { RagService } from '../../document/rag.service.js';
 import { ConversationService } from '../conversation/conversation.service.js';
 import { ProjectService } from '../../project/project.service.js';
 import { UserService } from '../../user/user.service.js';
@@ -25,6 +26,7 @@ export class ChatStreamService {
     private readonly modelService: ModelService,
     private readonly messageService: MessageService,
     private readonly fileService: FileService,
+    private readonly ragService: RagService,
     private readonly conversationService: ConversationService,
     private readonly projectService: ProjectService,
     private readonly userService: UserService,
@@ -144,6 +146,14 @@ export class ChatStreamService {
       attachments = filesMetadata.filter((f) => !f.error);
     }
 
+    const documentAttachments = attachments.filter(
+      (a) => !a.error && !this.isImageAttachment(a),
+    );
+    const { context: ragContext, ragFileIds } =
+      documentAttachments.length > 0 && prompt
+        ? await this.buildRagContext(documentAttachments, prompt, providerName)
+        : { context: null, ragFileIds: [] as string[] };
+
     const historyMessages: LLMMessage[] = chatHistory.map((msg) => ({
       content: msg.mainContent || '',
       senderType: msg.senderType as 'user' | 'assistant',
@@ -177,12 +187,22 @@ export class ChatStreamService {
       titlePromise = Promise.resolve();
     } else {
       //* Normal send: append the new user prompt to the LLM context and persist it.
+      const userMessageContent = ragContext
+        ? `[Document Context]\n${ragContext}\n\n---\n${prompt ?? ''}`
+        : (prompt ?? '');
+
+      const nativeAttachments = this.filterAttachmentsForProvider(
+        attachments,
+        providerName,
+        ragFileIds,
+      );
+
       messages = [
         ...historyMessages,
         {
-          content: prompt ?? '',
+          content: userMessageContent,
           senderType: 'user',
-          attachments: attachments
+          attachments: nativeAttachments
             .filter((a) => a.fileName && a.mimeType)
             .map((a) => ({
               id: a.id,
@@ -269,7 +289,7 @@ export class ChatStreamService {
       const finalImageBase64 = streamResult.imageBase64;
       try {
         const imageBuffer = Buffer.from(finalImageBase64, 'base64');
-        generatedFileId = await this.fileService.uploadBuffer(
+        generatedFileId = await this.fileService.uploadGeneratedImage(
           imageBuffer,
           userId,
           `generated-${Date.now()}.png`,
@@ -314,6 +334,87 @@ export class ChatStreamService {
         conversationId: currentConversationId,
       });
     }
+  }
+
+  /**
+   * Build RAG context for the current message by checking each non-image document attachment:
+   * - Large doc (chunks stored in pgvector) → semantic retrieval of top-k chunks
+   * - Small doc + non-native provider → full text extraction injected inline
+   * - Small doc + OpenAI → no context needed (passed natively)
+   */
+  private async buildRagContext(
+    documentAttachments: FileMetadataResponseDto[],
+    query: string,
+    providerName: string,
+  ): Promise<{ context: string | null; ragFileIds: string[] }> {
+    const ragFileIds: string[] = [];
+    const injectFileIds: string[] = [];
+
+    for (const attachment of documentAttachments) {
+      const isProcessed = await this.ragService.isAlreadyProcessed(
+        attachment.id,
+      );
+      if (isProcessed) {
+        // Large doc: use RAG regardless of provider (too large to pass natively)
+        ragFileIds.push(attachment.id);
+      } else if (providerName.toLowerCase() !== 'openai') {
+        // Small doc + non-OpenAI: inject full text inline
+        injectFileIds.push(attachment.id);
+      }
+      // Small doc + OpenAI: no action here — passed natively via filterAttachmentsForProvider
+    }
+
+    const contextParts: string[] = [];
+
+    if (ragFileIds.length > 0) {
+      const chunks = await this.ragService.retrieveRelevantChunks(
+        ragFileIds,
+        query,
+        3,
+      );
+      if (chunks) {
+        contextParts.push(chunks);
+      }
+    }
+
+    if (injectFileIds.length > 0) {
+      const texts = await Promise.all(
+        injectFileIds.map((id) => this.ragService.extractTextForSmallDoc(id)),
+      );
+      for (const text of texts) {
+        if (text) {
+          contextParts.push(text);
+        }
+      }
+    }
+
+    return {
+      context: contextParts.length > 0 ? contextParts.join('\n\n') : null,
+      ragFileIds,
+    };
+  }
+
+  /**
+   * Filter attachments to only those that can be passed natively to the provider.
+   * OpenAI supports all document types natively.
+   * All other providers only support images natively (documents are handled via RAG/injection).
+   */
+  private filterAttachmentsForProvider(
+    attachments: FileMetadataResponseDto[],
+    providerName: string,
+    ragFileIds: string[] = [],
+  ): FileMetadataResponseDto[] {
+    if (providerName.toLowerCase() === 'openai') {
+      // Exclude large docs already handled via RAG — sending them natively too
+      // would duplicate content and defeat the purpose of chunking.
+      return attachments.filter((a) => !ragFileIds.includes(a.id));
+    }
+
+    return attachments.filter((a) => this.isImageAttachment(a));
+  }
+
+  private isImageAttachment(attachment: FileMetadataResponseDto): boolean {
+    return !!attachment.mimeType?.startsWith('image/');
   }
 
   private buildSystemPrompt(

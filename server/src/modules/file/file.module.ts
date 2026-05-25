@@ -3,9 +3,10 @@ import { FileController } from './file.controller.js';
 import { FileService } from './file.service.js';
 import { PrismaModule } from '../../providers/prisma/prisma.module.js';
 import { SeaweedFSModule } from '../../providers/seaweedfs/seaweedfs.module.js';
+import { DocumentModule } from '../document/document.module.js';
 
 @Module({
-  imports: [PrismaModule, SeaweedFSModule],
+  imports: [PrismaModule, SeaweedFSModule, DocumentModule],
   controllers: [FileController],
   providers: [FileService],
   exports: [FileService],

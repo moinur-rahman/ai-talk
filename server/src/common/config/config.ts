@@ -24,6 +24,10 @@ interface IConfig {
   ollamaHost: string;
   titleGenerationProvider: string;
   titleGenerationModel: string;
+  embeddingProvider: string;
+  embeddingModel: string;
+  embeddingDimensions: number;
+  largeDocCharThreshold: number;
 }
 
 const config: IConfig = {
@@ -44,6 +48,10 @@ const config: IConfig = {
   ollamaHost: getEnvVar('OLLAMA_HOST', 'http://localhost:11434'),
   titleGenerationProvider: getEnvVar('TITLE_GENERATION_PROVIDER', 'ollama'),
   titleGenerationModel: getEnvVar('TITLE_GENERATION_MODEL', 'llama3.2:1b'),
+  embeddingProvider: getEnvVar('EMBEDDING_PROVIDER', 'ollama'),
+  embeddingModel: getEnvVar('EMBEDDING_MODEL', 'nomic-embed-text'),
+  embeddingDimensions: Number(getEnvVar('EMBEDDING_DIMENSIONS', '768')),
+  largeDocCharThreshold: Number(getEnvVar('LARGE_DOC_CHAR_THRESHOLD', '40000')),
 };
 
 export default config;

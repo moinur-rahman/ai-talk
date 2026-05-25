@@ -5,12 +5,14 @@
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
+  provider        = "prisma-client"
+  output          = "../generated/prisma"
+  previewFeatures = ["postgresqlExtensions"]
 }
 
 datasource db {
-  provider = "postgresql"
+  provider   = "postgresql"
+  extensions = [vector]
 }
 
 enum SenderType {
@@ -103,7 +105,22 @@ model File {
   userId String @map("user_id") @db.Uuid
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  documentChunks DocumentChunk[]
+
   @@map("files")
+}
+
+model DocumentChunk {
+  id         String   @id @default(uuid()) @db.Uuid
+  fileId     String   @map("file_id") @db.Uuid
+  file       File     @relation(fields: [fileId], references: [id], onDelete: Cascade)
+  content    String
+  chunkIndex Int      @map("chunk_index")
+  embedding  Unsupported("vector(768)")?
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  @@index([fileId], name: "idx_document_chunks_file_id")
+  @@map("document_chunks")
 }
 
 model Conversation {
