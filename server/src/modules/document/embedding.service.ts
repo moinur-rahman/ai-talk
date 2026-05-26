@@ -64,14 +64,25 @@ export class EmbeddingService {
     return response.data[0].embedding;
   }
 
-  private async embedBatchWithOpenAI(texts: string[]): Promise<number[][]> {
-    const response = await this.openaiClient!.embeddings.create({
-      model: config.embeddingModel,
-      input: texts,
-    });
-    return response.data
-      .sort((a, b) => a.index - b.index)
-      .map((item) => item.embedding);
+  private async embedBatchWithOpenAI(
+    texts: string[],
+    subBatchSize: number = 20,
+  ): Promise<number[][]> {
+    const results: number[][] = [];
+
+    for (let i = 0; i < texts.length; i += subBatchSize) {
+      const subBatch = texts.slice(i, i + subBatchSize);
+      const response = await this.openaiClient!.embeddings.create({
+        model: config.embeddingModel,
+        input: subBatch,
+      });
+      const embeddings = response.data
+        .sort((a, b) => a.index - b.index)
+        .map((item) => item.embedding);
+      results.push(...embeddings);
+    }
+
+    return results;
   }
 
   private async embedBatchWithOllama(texts: string[]): Promise<number[][]> {
