@@ -1,7 +1,7 @@
-import { useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useChat } from '@/contexts/ChatContext';
 import { useUploadFileMutation } from '@/services/fileApi';
-import type { FileMetadata } from '@/types/chat';
+import type { FileMetadata, RagStatus } from '@/types/chat';
 
 const SUPPORTED_APPLICATION_MIME_TYPES = new Set([
   'application/pdf',
@@ -54,11 +54,20 @@ const isSupportedMimeType = (mimeType: string) =>
   mimeType.startsWith('text/') ||
   SUPPORTED_APPLICATION_MIME_TYPES.has(mimeType);
 
-interface FilePreview {
+const TERMINAL_STATUSES = new Set<RagStatus>(['completed', 'skipped', 'failed']);
+const POLL_INITIAL_DELAY_MS = 1500;
+const POLL_MAX_DELAY_MS = 5000;
+const POLL_BACKOFF_FACTOR = 1.5;
+
+export interface FilePreview {
   id: string;
   preview: string;
   type: string;
   name: string;
+  /** Actual file ID returned by the server after upload. */
+  fileId?: string;
+  /** RAG indexing status — null for images, set for documents. */
+  ragStatus?: RagStatus | null;
 }
 
 const useFileUpload = () => {
@@ -66,15 +75,86 @@ const useFileUpload = () => {
   const [uploadFile] = useUploadFileMutation();
 
   const [filePreviews, setFilePreviews] = useState<FilePreview[]>([]);
-  const [uploadedAttachments, setUploadedAttachments] = useState<
-    FileMetadata[]
-  >([]);
+  const [uploadedAttachments, setUploadedAttachments] = useState<FileMetadata[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Tracks which file IDs still need polling.
+  const activePollingIdsRef = useRef<Set<string>>(new Set());
+  const pollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const mountedRef = useRef(true);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      if (pollTimerRef.current) {
+        clearTimeout(pollTimerRef.current);
+      }
+    };
+  }, []);
+
+  const schedulePoll = useCallback((delayMs: number) => {
+    if (pollTimerRef.current) {
+      clearTimeout(pollTimerRef.current);
+    }
+    pollTimerRef.current = setTimeout(async () => {
+      if (!mountedRef.current || activePollingIdsRef.current.size === 0) {
+        return;
+      }
+
+      const ids = [...activePollingIdsRef.current];
+      try {
+        const query = ids.map((id) => `ids=${id}`).join('&');
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/files/metadata?${query}`,
+          { credentials: 'include' },
+        );
+        if (!res.ok) throw new Error('Poll failed');
+
+        const data = (await res.json()) as {
+          data: { id: string; ragStatus?: RagStatus | null }[];
+        };
+
+        const statusMap = new Map(
+          data.data.map((f) => [f.id, f.ragStatus ?? null]),
+        );
+
+        // Update previews with latest statuses.
+        setFilePreviews((prev) =>
+          prev.map((p) => {
+            if (p.fileId && statusMap.has(p.fileId)) {
+              const next = statusMap.get(p.fileId) as RagStatus | null;
+              return next !== p.ragStatus ? { ...p, ragStatus: next } : p;
+            }
+            return p;
+          }),
+        );
+
+        // Remove terminal IDs from the polling set.
+        for (const [id, status] of statusMap) {
+          if (status && TERMINAL_STATUSES.has(status)) {
+            activePollingIdsRef.current.delete(id);
+          }
+        }
+
+        // Keep polling if any IDs remain.
+        if (mountedRef.current && activePollingIdsRef.current.size > 0) {
+          schedulePoll(Math.min(delayMs * POLL_BACKOFF_FACTOR, POLL_MAX_DELAY_MS));
+        }
+      } catch {
+        // Retry at the same delay on transient errors.
+        if (mountedRef.current && activePollingIdsRef.current.size > 0) {
+          schedulePoll(delayMs);
+        }
+      }
+    }, delayMs);
+  }, []);
 
   const processFiles = async (files: File[]) => {
     setError({});
     const newPreviews: FilePreview[] = [];
     const newAttachments: FileMetadata[] = [];
+    const newPollingIds: string[] = [];
 
     for (const file of files) {
       if (!isSupportedMimeType(file.type)) {
@@ -86,26 +166,21 @@ const useFileUpload = () => {
       }
 
       const id = Math.random().toString(36).substr(2, 9);
+      const preview: FilePreview = { id, preview: '', type: 'document', name: file.name };
 
       if (file.type.startsWith('image/')) {
         try {
-          const preview = await new Promise<string>((resolve, reject) => {
+          const dataUrl = await new Promise<string>((resolve, reject) => {
             const reader = new FileReader();
             reader.onloadend = () => resolve(reader.result as string);
             reader.onerror = reject;
             reader.readAsDataURL(file);
           });
-          newPreviews.push({ id, preview, type: 'image', name: file.name });
+          preview.preview = dataUrl;
+          preview.type = 'image';
         } catch {
           console.error('Error creating preview');
         }
-      } else {
-        newPreviews.push({
-          id,
-          preview: '',
-          type: 'document',
-          name: file.name,
-        });
       }
 
       try {
@@ -113,22 +188,44 @@ const useFileUpload = () => {
         formData.append('file', file);
         const result = await uploadFile(formData).unwrap();
         newAttachments.push(result.data);
+
+        preview.fileId = result.data.id;
+        preview.ragStatus = result.data.ragStatus ?? null;
+
+        if (result.data.ragStatus === 'processing') {
+          newPollingIds.push(result.data.id);
+        }
       } catch {
         setError((prev) => ({
           ...prev,
           global: 'Failed to upload one or more files. Please try again.',
         }));
       }
+
+      newPreviews.push(preview);
     }
 
     setFilePreviews((prev) => [...prev, ...newPreviews]);
     setUploadedAttachments((prev) => [...prev, ...newAttachments]);
+
+    if (newPollingIds.length > 0) {
+      for (const fileId of newPollingIds) {
+        activePollingIdsRef.current.add(fileId);
+      }
+      schedulePoll(POLL_INITIAL_DELAY_MS);
+    }
   };
 
   const removeFile = (id: string) => {
     setFilePreviews((prev) => {
+      const removed = prev.find((p) => p.id === id);
+      if (removed?.fileId) {
+        activePollingIdsRef.current.delete(removed.fileId);
+      }
       const next = prev.filter((p) => p.id !== id);
-      if (next.length === 0) setUploadedAttachments([]);
+      if (next.length === 0) {
+        setUploadedAttachments([]);
+      }
       return next;
     });
   };
@@ -159,9 +256,17 @@ const useFileUpload = () => {
   };
 
   const reset = () => {
+    activePollingIdsRef.current.clear();
+    if (pollTimerRef.current) {
+      clearTimeout(pollTimerRef.current);
+    }
     setFilePreviews([]);
     setUploadedAttachments([]);
   };
+
+  const isAnyDocumentProcessing = filePreviews.some(
+    (p) => p.ragStatus === 'processing',
+  );
 
   return {
     filePreviews,
@@ -172,6 +277,7 @@ const useFileUpload = () => {
     handlePaste,
     removeFile,
     reset,
+    isAnyDocumentProcessing,
   };
 };
 

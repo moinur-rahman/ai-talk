@@ -1,9 +1,12 @@
+export type RagStatus = 'processing' | 'completed' | 'skipped' | 'failed';
+
 export interface FileMetadata {
   id: string;
   fileName: string;
   mimeType: string;
   fileSize: string;
   presignedUrl?: string;
+  ragStatus?: RagStatus | null;
 }
 
 export interface Message {

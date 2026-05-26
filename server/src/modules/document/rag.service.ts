@@ -18,9 +18,19 @@ export class RagService {
   ) {}
 
   /**
+   * Returns true if the MIME type is a supported non-image document.
+   * Delegates to DocumentProcessorService — exposed here so FileService
+   * can decide whether to set ragStatus = 'processing' at upload time.
+   */
+  isDocumentMimeType(mimeType: string): boolean {
+    return this.processor.isDocumentMimeType(mimeType);
+  }
+
+  /**
    * Full RAG pipeline: extract → chunk → embed → store in pgvector.
    * Only runs if extracted text exceeds LARGE_DOC_CHAR_THRESHOLD.
    * Designed to be called fire-and-forget from FileService.
+   * Assumes ragStatus has already been set to 'processing' by FileService.
    */
   async processFileForRag(
     fileId: string,
@@ -35,6 +45,7 @@ export class RagService {
       const alreadyProcessed = await this.isAlreadyProcessed(fileId);
       if (alreadyProcessed) {
         this.logger.log(`File ${fileId} already processed for RAG, skipping`);
+        await this.updateRagStatus(fileId, 'completed');
         return;
       }
 
@@ -44,6 +55,7 @@ export class RagService {
         this.logger.log(
           `File ${fileId} is below threshold (${text.length} < ${config.largeDocCharThreshold} chars), skipping RAG indexing`,
         );
+        await this.updateRagStatus(fileId, 'skipped');
         return;
       }
 
@@ -54,6 +66,7 @@ export class RagService {
 
       const embeddings = await this.embedding.embedBatch(chunks);
       await this.storeChunks(fileId, chunks, embeddings);
+      await this.updateRagStatus(fileId, 'completed');
 
       this.logger.log(
         `Successfully indexed file ${fileId} for RAG (${chunks.length} chunks stored)`,
@@ -62,6 +75,11 @@ export class RagService {
       this.logger.error(
         `Failed to process file ${fileId} for RAG: ${error instanceof Error ? error.message : String(error)}`,
         error instanceof Error ? error.stack : undefined,
+      );
+      await this.updateRagStatus(fileId, 'failed').catch((updateErr: unknown) =>
+        this.logger.warn(
+          `Failed to update rag_status to failed for ${fileId}: ${updateErr instanceof Error ? updateErr.message : String(updateErr)}`,
+        ),
       );
     }
   }
@@ -158,6 +176,16 @@ export class RagService {
       );
       return false;
     }
+  }
+
+  private async updateRagStatus(
+    fileId: string,
+    status: 'processing' | 'completed' | 'skipped' | 'failed',
+  ): Promise<void> {
+    await this.prisma.file.update({
+      where: { id: fileId },
+      data: { ragStatus: status },
+    });
   }
 
   /**

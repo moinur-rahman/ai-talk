@@ -102,6 +102,7 @@ const SendMessage = ({
     handlePaste,
     removeFile,
     reset: resetFiles,
+    isAnyDocumentProcessing,
   } = useFileUpload();
 
   const {
@@ -568,14 +569,22 @@ const SendMessage = ({
               <FaStop size={15} />
             </button>
           ) : (
-            <button
-              type="submit"
-              className="p-2 text-accent hover:text-accent-hover hover:bg-accent/10 rounded-lg transition-all duration-150 shrink-0 disabled:text-muted disabled:hover:bg-transparent disabled:cursor-not-allowed"
-              disabled={!prompt.trim() && uploadedAttachments.length === 0}
-              aria-label="Send Message"
+            <div
+              title={isAnyDocumentProcessing ? 'Indexing document…' : undefined}
+              className="shrink-0"
             >
-              <FiSend size={17} />
-            </button>
+              <button
+                type="submit"
+                className="p-2 text-accent hover:text-accent-hover hover:bg-accent/10 rounded-lg transition-all duration-150 disabled:text-muted disabled:hover:bg-transparent disabled:cursor-not-allowed"
+                disabled={
+                  (!prompt.trim() && uploadedAttachments.length === 0) ||
+                  isAnyDocumentProcessing
+                }
+                aria-label="Send Message"
+              >
+                <FiSend size={17} />
+              </button>
+            </div>
           )}
         </div>
       </form>

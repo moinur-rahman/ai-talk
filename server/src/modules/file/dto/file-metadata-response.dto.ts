@@ -1,3 +1,5 @@
+import type { RagStatus } from './file-upload-response.dto.js';
+
 export class FileMetadataResponseDto {
   id: string;
   fileName?: string;
@@ -6,5 +8,6 @@ export class FileMetadataResponseDto {
   createdAt?: Date;
   presignedUrl?: string;
   storageUrl?: string;
+  ragStatus?: RagStatus | null;
   error?: string;
 }

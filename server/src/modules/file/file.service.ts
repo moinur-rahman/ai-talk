@@ -49,6 +49,8 @@ export class FileService {
         file.mimetype,
       );
 
+      const isDocument = this.ragService.isDocumentMimeType(file.mimetype);
+
       const fileRecord = await this.prisma.file.create({
         data: {
           userId,
@@ -57,16 +59,19 @@ export class FileService {
           objectName,
           mimeType: file.mimetype,
           fileSize: BigInt(file.size),
+          ragStatus: isDocument ? 'processing' : null,
         },
       });
 
-      this.ragService
-        .processFileForRag(fileRecord.id, file.buffer, file.mimetype)
-        .catch((err: unknown) =>
-          this.logger.error(
-            `RAG processing failed for file ${fileRecord.id}: ${err instanceof Error ? err.message : String(err)}`,
-          ),
-        );
+      if (isDocument) {
+        this.ragService
+          .processFileForRag(fileRecord.id, file.buffer, file.mimetype)
+          .catch((err: unknown) =>
+            this.logger.error(
+              `RAG processing failed for file ${fileRecord.id}: ${err instanceof Error ? err.message : String(err)}`,
+            ),
+          );
+      }
 
       const presignedUrl = await this.seaweedfs.getPresignedUrl(
         bucketName,
@@ -80,6 +85,7 @@ export class FileService {
         mimeType: file.mimetype,
         fileSize: file.size,
         presignedUrl,
+        ragStatus: isDocument ? 'processing' : null,
       };
     } catch (error: unknown) {
       const err = error as Error;
@@ -204,6 +210,7 @@ export class FileService {
             createdAt: fileRecord.createdAt,
             presignedUrl,
             storageUrl,
+            ragStatus: fileRecord.ragStatus,
           };
         } catch (error) {
           return {

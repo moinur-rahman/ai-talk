@@ -1,20 +1,51 @@
 'use client';
 import { useState } from 'react';
 import Image from 'next/image';
-import { FiFileText } from 'react-icons/fi';
+import { FiAlertTriangle, FiCheck, FiFileText } from 'react-icons/fi';
 import ImageModal from '@/components/common/ImageModal';
-
-interface FilePreview {
-  id: string;
-  preview: string;
-  type: string;
-  name: string;
-}
+import type { FilePreview } from './useFileUpload';
 
 interface FilePreviewsProps {
   filePreviews: FilePreview[];
   onRemove: (id: string) => void;
 }
+
+const RagStatusBadge = ({ ragStatus }: { ragStatus: FilePreview['ragStatus'] }) => {
+  if (!ragStatus || ragStatus === 'completed' || ragStatus === 'skipped') {
+    return (
+      <span
+        title="Ready"
+        className="absolute bottom-1.5 right-1.5 flex items-center justify-center w-4 h-4 rounded-full bg-green-500/20 text-green-400"
+      >
+        <FiCheck size={10} strokeWidth={3} />
+      </span>
+    );
+  }
+
+  if (ragStatus === 'processing') {
+    return (
+      <span
+        title="Indexing document…"
+        className="absolute bottom-1.5 right-1.5 flex items-center justify-center w-4 h-4"
+      >
+        <span className="w-3.5 h-3.5 rounded-full border-2 border-accent/30 border-t-accent animate-spin" />
+      </span>
+    );
+  }
+
+  if (ragStatus === 'failed') {
+    return (
+      <span
+        title="Indexing failed — document may not be searchable"
+        className="absolute bottom-1.5 right-1.5 flex items-center justify-center w-4 h-4 rounded-full bg-amber-500/20 text-amber-400"
+      >
+        <FiAlertTriangle size={10} strokeWidth={2.5} />
+      </span>
+    );
+  }
+
+  return null;
+};
 
 const FilePreviews = ({ filePreviews, onRemove }: FilePreviewsProps) => {
   const [modalImage, setModalImage] = useState<{
@@ -32,8 +63,8 @@ const FilePreviews = ({ filePreviews, onRemove }: FilePreviewsProps) => {
             Attachments ({filePreviews.length})
           </h4>
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-2 max-h-[200px] overflow-y-auto p-0.5">
-          {filePreviews.map(({ id, preview, type, name }) => (
+        <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-2 max-h-50 overflow-y-auto p-0.5">
+          {filePreviews.map(({ id, preview, type, name, ragStatus }) => (
             <div key={id} className="relative w-full pb-[100%] group">
               <div className="absolute inset-0 bg-surface-overlay rounded-lg overflow-hidden border border-border transition-all duration-200 hover:border-border-strong">
                 {type === 'image' ? (
@@ -50,9 +81,7 @@ const FilePreviews = ({ filePreviews, onRemove }: FilePreviewsProps) => {
                       />
                     </button>
                     <div className="absolute bottom-0 left-0 right-0 bg-linear-to-t from-surface-dim/90 to-transparent p-2 pt-6 pointer-events-none">
-                      <p className="text-xs text-body truncate w-full">
-                        {name}
-                      </p>
+                      <p className="text-xs text-body truncate w-full">{name}</p>
                     </div>
                   </div>
                 ) : (
@@ -63,6 +92,7 @@ const FilePreviews = ({ filePreviews, onRemove }: FilePreviewsProps) => {
                     <p className="text-xs text-body truncate w-full font-medium">
                       {name}
                     </p>
+                    <RagStatusBadge ragStatus={ragStatus} />
                   </div>
                 )}
                 <button
