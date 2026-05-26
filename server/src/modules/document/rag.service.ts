@@ -105,9 +105,11 @@ export class RagService {
         `SELECT content
          FROM document_chunks
          WHERE file_id = ANY($1::uuid[])
-         ORDER BY embedding <=> $2::vector
-         LIMIT $3`,
+           AND embedding_model = $2
+         ORDER BY embedding::vector(${config.embeddingDimensions}) <=> $3::vector
+         LIMIT $4`,
         fileIds,
+        config.embeddingModel,
         embeddingStr,
         topK,
       );
@@ -200,13 +202,14 @@ export class RagService {
     for (let i = 0; i < chunks.length; i++) {
       const embeddingStr = `[${embeddings[i].join(',')}]`;
       await this.prisma.$executeRawUnsafe(
-        `INSERT INTO document_chunks (id, file_id, content, chunk_index, embedding, created_at)
-         VALUES ($1::uuid, $2::uuid, $3, $4, $5::vector, NOW())`,
+        `INSERT INTO document_chunks (id, file_id, content, chunk_index, embedding, embedding_model, created_at)
+         VALUES ($1::uuid, $2::uuid, $3, $4, $5::vector, $6, NOW())`,
         randomUUID(),
         fileId,
         chunks[i],
         i,
         embeddingStr,
+        config.embeddingModel,
       );
     }
   }
