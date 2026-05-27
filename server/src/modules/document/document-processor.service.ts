@@ -61,7 +61,9 @@ export class DocumentProcessorService {
       this.logger.error(
         `PDF extraction failed: ${error instanceof Error ? error.message : String(error)}`,
       );
-      throw new Error('Failed to extract text from PDF');
+      throw new Error('Failed to extract text from PDF', {
+        cause: error,
+      });
     }
   }
 
@@ -73,7 +75,9 @@ export class DocumentProcessorService {
       this.logger.error(
         `DOCX extraction failed: ${error instanceof Error ? error.message : String(error)}`,
       );
-      throw new Error('Failed to extract text from DOCX');
+      throw new Error('Failed to extract text from DOCX', {
+        cause: error,
+      });
     }
   }
 
@@ -93,7 +97,9 @@ export class DocumentProcessorService {
       this.logger.error(
         `Spreadsheet extraction failed: ${error instanceof Error ? error.message : String(error)}`,
       );
-      throw new Error('Failed to extract text from spreadsheet');
+      throw new Error('Failed to extract text from spreadsheet', {
+        cause: error,
+      });
     }
   }
 

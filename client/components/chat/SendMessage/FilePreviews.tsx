@@ -10,7 +10,11 @@ interface FilePreviewsProps {
   onRemove: (id: string) => void;
 }
 
-const RagStatusBadge = ({ ragStatus }: { ragStatus: FilePreview['ragStatus'] }) => {
+const RagStatusBadge = ({
+  ragStatus,
+}: {
+  ragStatus: FilePreview['ragStatus'];
+}) => {
   if (!ragStatus || ragStatus === 'completed' || ragStatus === 'skipped') {
     return (
       <span
@@ -81,7 +85,9 @@ const FilePreviews = ({ filePreviews, onRemove }: FilePreviewsProps) => {
                       />
                     </button>
                     <div className="absolute bottom-0 left-0 right-0 bg-linear-to-t from-surface-dim/90 to-transparent p-2 pt-6 pointer-events-none">
-                      <p className="text-xs text-body truncate w-full">{name}</p>
+                      <p className="text-xs text-body truncate w-full">
+                        {name}
+                      </p>
                     </div>
                   </div>
                 ) : (

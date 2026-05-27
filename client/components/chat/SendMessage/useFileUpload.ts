@@ -54,7 +54,11 @@ const isSupportedMimeType = (mimeType: string) =>
   mimeType.startsWith('text/') ||
   SUPPORTED_APPLICATION_MIME_TYPES.has(mimeType);
 
-const TERMINAL_STATUSES = new Set<RagStatus>(['completed', 'skipped', 'failed']);
+const TERMINAL_STATUSES = new Set<RagStatus>([
+  'completed',
+  'skipped',
+  'failed',
+]);
 const POLL_INITIAL_DELAY_MS = 1500;
 const POLL_MAX_DELAY_MS = 5000;
 const POLL_BACKOFF_FACTOR = 1.5;
@@ -75,7 +79,9 @@ const useFileUpload = () => {
   const [uploadFile] = useUploadFileMutation();
 
   const [filePreviews, setFilePreviews] = useState<FilePreview[]>([]);
-  const [uploadedAttachments, setUploadedAttachments] = useState<FileMetadata[]>([]);
+  const [uploadedAttachments, setUploadedAttachments] = useState<
+    FileMetadata[]
+  >([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Tracks which file IDs still need polling.
@@ -139,7 +145,9 @@ const useFileUpload = () => {
 
         // Keep polling if any IDs remain.
         if (mountedRef.current && activePollingIdsRef.current.size > 0) {
-          schedulePoll(Math.min(delayMs * POLL_BACKOFF_FACTOR, POLL_MAX_DELAY_MS));
+          schedulePoll(
+            Math.min(delayMs * POLL_BACKOFF_FACTOR, POLL_MAX_DELAY_MS),
+          );
         }
       } catch {
         // Retry at the same delay on transient errors.
@@ -166,7 +174,12 @@ const useFileUpload = () => {
       }
 
       const id = Math.random().toString(36).substr(2, 9);
-      const preview: FilePreview = { id, preview: '', type: 'document', name: file.name };
+      const preview: FilePreview = {
+        id,
+        preview: '',
+        type: 'document',
+        name: file.name,
+      };
 
       if (file.type.startsWith('image/')) {
         try {

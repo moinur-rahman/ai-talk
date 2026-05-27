@@ -320,7 +320,9 @@ const SendMessage = ({
                   <button
                     type="button"
                     onClick={() => {
-                      dispatch(setImageGenerationEnabled(!imageGenerationEnabled));
+                      dispatch(
+                        setImageGenerationEnabled(!imageGenerationEnabled),
+                      );
                       setIsMenuOpen(false);
                     }}
                     className="flex items-center gap-3 w-full px-3 py-2 text-sm text-body hover:bg-surface-overlay transition-colors"

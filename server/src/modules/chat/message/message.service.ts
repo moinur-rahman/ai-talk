@@ -95,9 +95,7 @@ export class MessageService {
       return !messages.some((other) => other.parentMessageId === message.id);
     };
 
-    let leaves: (typeof messages)[number][] = [];
-
-    leaves = anchorMessageId
+    const leaves = anchorMessageId
       ? messages.filter((m) => isLeaf(m) && isDescendantOrSelf(m.id))
       : [];
 

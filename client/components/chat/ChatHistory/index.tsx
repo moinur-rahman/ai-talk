@@ -23,15 +23,17 @@ const ChatHistory = () => {
   const [switchToMessageId, setSwitchToMessageId] = useState<
     string | undefined
   >();
+  const [prevConversationId, setPrevConversationId] = useState(conversationId);
+  if (conversationId !== prevConversationId) {
+    setPrevConversationId(conversationId);
+    setSwitchToMessageId(undefined);
+  }
+
   const { chatHistories } = useChatData(
     conversationId ?? '',
     switchToMessageId,
   );
   const bottomRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    setSwitchToMessageId(undefined);
-  }, [conversationId]);
 
   const isStreaming =
     (conversationId && streaming[conversationId]) ||
