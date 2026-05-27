@@ -18,7 +18,7 @@ Implement provider-agnostic document handling for file attachments in chat. Prev
   │  SeaweedFS  │◄────│  file.service.ts │
   │  (storage)  │     │  uploadFile()    │
   └─────────────┘     └────────┬─────────┘
-                               │ save metadata
+                               │ save metadata + ragStatus = 'processing'
                                ▼
                        ┌───────────────┐
                        │  files table  │
@@ -34,8 +34,13 @@ Implement provider-agnostic document handling for file attachments in chat. Prev
               processFileForRag()    (skip — no RAG for images)
                        │
                        ▼
-              extractText(buffer)
-              pdf-parse / mammoth / xlsx / utf-8
+              isAlreadyProcessed(fileId)?
+                 │               │
+                YES              NO
+                 │               │
+                 ▼               ▼
+            (skip —         extractText(buffer)
+            already done)   pdf-parse / mammoth / xlsx / utf-8
                        │
                        ▼
               text.length ≥ 40,000 chars?
@@ -44,7 +49,7 @@ Implement provider-agnostic document handling for file attachments in chat. Prev
                  │               │
                  ▼               ▼
           chunkText()       (skip — small doc,
-          2000 chars,        no chunks stored)
+          2000 chars,        ragStatus = 'skipped')
           200 overlap
                  │
                  ▼
@@ -53,8 +58,9 @@ Implement provider-agnostic document handling for file attachments in chat. Prev
                  │
                  ▼
           INSERT INTO document_chunks
-          (content, chunk_index, embedding::vector)
-          pgvector stores 768-dim vectors
+          (id, file_id, content, chunk_index, embedding, embedding_model, created_at)
+          ragStatus = 'completed'
+          (on error: ragStatus = 'failed')
 
 
 ┌─────────────────────────────────────────────────────────────────────────────┐
@@ -87,11 +93,11 @@ Implement provider-agnostic document handling for file attachments in chat. Prev
   retrieveRelevantChunks()   provider == OpenAI?
   embed query → cosine            │          │
   similarity search          YES (native)   NO
-  top-3 chunks returned       │              │
-        │                     ▼              ▼
-        │         (nothing — passed     extractTextForSmallDoc()
-        │          natively below)      download from SeaweedFS
-        │                               extract full text inline
+  (filter by embedding_model)    │              │
+  top-3 chunks returned       │              ▼
+        │                     ▼         extractTextForSmallDoc()
+        │         (nothing — passed     download from SeaweedFS
+        │          natively below)      extract full text inline
         ▼
   Combine: RAG chunks + inline texts
         │
@@ -103,6 +109,7 @@ Implement provider-agnostic document handling for file attachments in chat. Prev
         ▼               ▼
   original prompt   "[Document Context]
   unchanged          {chunks/text}
+
                      ---
                      {original prompt}"
         │               │
@@ -154,13 +161,14 @@ Images always follow the existing path unchanged.
 File uploaded
     │
     ├─ Stored in SeaweedFS (unchanged)
-    ├─ Metadata saved to DB (unchanged)
+    ├─ Metadata saved to DB with ragStatus = 'processing'
     └─ isDocumentMimeType()?
             YES → processFileForRag() [async, fire-and-forget]
                       │
+                      ├─ isAlreadyProcessed()? → skip
                       ├─ extractText() → pdf-parse / mammoth / xlsx / utf-8
-                      ├─ text.length < 40,000? → skip (small doc, no chunks stored)
-                      └─ text.length ≥ 40,000? → chunk → embed → store in pgvector
+                      ├─ text.length < 40,000? → skip, ragStatus = 'skipped'
+                      └─ text.length ≥ 40,000? → chunk → embed → store in pgvector, ragStatus = 'completed'
 ```
 
 ### Chat Send Time
@@ -186,25 +194,46 @@ User sends message with document attachment
 
 ## Data Model
 
+New enum `RagStatus`:
+
+```prisma
+enum RagStatus {
+  processing
+  completed
+  skipped
+  failed
+}
+```
+
+New field on `File` model:
+
+```prisma
+ragStatus       RagStatus?         @map("rag_status")
+documentChunks  DocumentChunk[]
+```
+
 New table `document_chunks`:
 
 ```prisma
 model DocumentChunk {
-  id         String   @id @default(uuid()) @db.Uuid
-  fileId     String   @map("file_id") @db.Uuid
-  file       File     @relation(fields: [fileId], references: [id], onDelete: Cascade)
-  content    String
-  chunkIndex Int      @map("chunk_index")
-  embedding  Unsupported("vector(768)")?
-  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz
+  id             String   @id @default(uuid()) @db.Uuid
+  fileId         String   @map("file_id") @db.Uuid
+  file           File     @relation(fields: [fileId], references: [id], onDelete: Cascade)
+  content        String
+  chunkIndex     Int      @map("chunk_index")
+  embedding      Unsupported("vector")?
+  embeddingModel String   @map("embedding_model")
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz
 
-  @@index([fileId])
+  @@index([fileId], name: "idx_document_chunks_file_id")
   @@map("document_chunks")
 }
 ```
 
 - **Cascade delete**: chunks are automatically removed when the parent file is deleted.
-- **Embedding column**: uses pgvector `vector(768)` — dimension must match the configured embedding model.
+- **Embedding column**: uses pgvector `vector` (dimensionless) — dimension is applied dynamically at query time via cast.
+- **Embedding model**: each chunk records which model produced its vector; similarity search filters by model to prevent cross-model corruption.
+- **RAG status tracking**: `File.ragStatus` tracks pipeline state (`processing` → `completed` / `skipped` / `failed`).
 - pgvector extension required: `CREATE EXTENSION IF NOT EXISTS "vector"`.
 
 ## New Module: `server/src/modules/document/`
@@ -230,9 +259,13 @@ pgvector cosine similarity (`<=>` operator) via raw SQL (Prisma does not support
 SELECT content
 FROM document_chunks
 WHERE file_id = ANY($1::uuid[])
-ORDER BY embedding <=> $2::vector
-LIMIT $3
+  AND embedding_model = $2
+ORDER BY embedding::vector($dimensions) <=> $3::vector
+LIMIT $4
 ```
+
+- Filters by `embedding_model` to ensure only chunks from the same model are compared.
+- Uses dynamic dimension cast `embedding::vector($dimensions)` since the column is dimensionless.
 
 ## Configuration
 
@@ -247,7 +280,7 @@ Four new environment variables — must be set in `.env`, `.env.example`, `docke
 
 ## Embedding Dimensions
 
-The `EMBEDDING_DIMENSIONS` env var, the `vector(N)` schema column, and the model's actual output **must all be the same number**. The model enforces its own fixed dimension — it cannot be changed.
+The `EMBEDDING_DIMENSIONS` env var and the model's actual output **must be the same number**. The schema column is dimensionless (`vector` without a dimension argument), so the dimension is enforced only at query time via a dynamic cast.
 
 | Model | Provider | Dimensions |
 |-------|----------|-----------|
@@ -256,14 +289,14 @@ The `EMBEDDING_DIMENSIONS` env var, the `vector(N)` schema column, and the model
 | `text-embedding-3-small` | OpenAI | 1536 |
 | `text-embedding-3-large` | OpenAI | 3072 |
 
-**Switching embedding models** requires updating all three (env var, schema, new migration) and re-indexing all existing document chunks, since vectors of different dimensions are mathematically incomparable.
+**Switching embedding models** requires updating the env var and re-indexing all existing document chunks, since vectors of different dimensions are mathematically incomparable. The schema column does not need to change (it is dimensionless).
 
 ## Supported Document Types
 
 Extracted and processed for RAG:
 
 - **PDF** — via `pdf-parse`
-- **DOCX** — via `mammoth`
+- **DOCX / DOC** — via `mammoth` (DOCX only; `.doc` falls through to UTF-8 decode and may produce garbled output)
 - **XLSX / XLS / CSV** — via `xlsx` (sheets converted to CSV text)
 - **text/*** — all plain text, markdown, code files (read as UTF-8)
 - **application/json**, **application/xml**, etc. — read as UTF-8
@@ -278,7 +311,7 @@ Extracted and processed for RAG:
 | File | Change |
 |------|--------|
 | `docker-compose.dev.yml` | Postgres image → `pgvector/pgvector:pg16`; new env vars added |
-| `server/prisma/schema.prisma` | pgvector extension; `DocumentChunk` model; `File.documentChunks` relation |
+| `server/prisma/schema.prisma` | pgvector extension; `RagStatus` enum; `DocumentChunk` model (with `embeddingModel`); `File.ragStatus` field; `File.documentChunks` relation |
 | `server/src/common/config/config.ts` | 4 new embedding config fields |
 | `.env` / `.env.example` | 4 new RAG env vars |
 | `server/package.json` | `pdf-parse`, `mammoth`, `xlsx` dependencies |

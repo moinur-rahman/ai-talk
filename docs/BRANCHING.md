@@ -22,21 +22,21 @@ Each message can have multiple sibling versions. The conversation is a **tree**,
 ## Stream API Changes
 
 - Reuse existing `POST /chats/stream` — no new endpoint needed
-- `parentMessageId` is optional — only sent for branching scenarios:
+- Two optional fields in the DTO — only sent for branching scenarios:
 
-| Scenario | `parentMessageId` sent by frontend |
+| Scenario | Field sent by frontend |
 |---|---|
-| First message | not sent |
-| Normal send | not sent — backend reads `activeLeafMessageId` from conversation |
-| Edit & resend | same `parentMessageId` as the message being edited |
-| Regenerate | ID of the last user message |
+| First message | neither field sent |
+| Normal send | neither field — backend reads `activeLeafMessageId` from conversation |
+| Edit & resend | `branchFromMessageId` = `parentMessageId` of the message being edited |
+| Regenerate | `regenerateFromMessageId` = ID of the last user message |
 
-- `isRegenerate: boolean` added to DTO — tells backend to fetch prompt from DB instead of DTO
+- Backend derives `isRegenerate = !!regenerateFromMessageId` — tells it to fetch prompt from DB instead of DTO
 - After streaming, `activeLeafMessageId` on the conversation is updated to the new assistant message ID
 
 ## Message Fetch API
 
-Single endpoint: `GET /messages/:conversationId?switchToMessageId=xxx`
+Single endpoint: `GET /chats/messages/:conversationId?switchToMessageId=xxx`
 
 - Without `switchToMessageId` → backend uses `activeLeafMessageId` to determine the path
 - With `switchToMessageId` → backend finds the leaf under that message (latest child recursion), returns that path
@@ -49,7 +49,7 @@ Each message in the response includes `siblingIds` (array of sibling IDs ordered
 ## Branch Navigation
 
 - Navigation is **frontend-only state** — `activeLeafMessageId` is NOT updated on navigation
-- On arrow click → frontend reads `siblingIds`, picks next/prev ID, calls `GET /messages/:conversationId?switchToMessageId=xxx`
+- On arrow click → frontend reads `siblingIds`, picks next/prev ID, calls `GET /chats/messages/:conversationId?switchToMessageId=xxx`
 - Backend finds the leaf under the target message (always picking latest child), returns the new active path
 - On page reload → user lands back at `activeLeafMessageId` (last sent/received position), matching ChatGPT behaviour
 
@@ -58,7 +58,7 @@ Each message in the response includes `siblingIds` (array of sibling IDs ordered
 - Redux state tracks the active branch path per conversation (local only, resets on reload)
 - Message component shows `< 2/3 >` navigator when `siblingIds.length > 1`
 - "Edit" button on user messages opens inline edit
-- "Regenerate" button on last assistant message
+- "Regenerate" button on any assistant message
 - Switching branches calls the message fetch endpoint with `switchToMessageId`, re-renders the conversation
 
 ## Constraints

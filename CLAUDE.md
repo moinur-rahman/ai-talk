@@ -4,10 +4,9 @@
 
 Whenever you add a new environment variable, you MUST update ALL of the following files — no exceptions:
 
-1. `.env` — add with a default or empty value
-2. `.env.example` — add with a placeholder/empty value
-3. `docker-compose.dev.yml` — add `- VAR_NAME=${VAR_NAME}` under the `server` service `environment` section
-4. `server/src/common/config/config.ts` — add to `IConfig` interface and `config` object
+1. `docker-compose.dev.yml` — add `- VAR_NAME=${VAR_NAME}` under the `server` service `environment` section
+2. `server/src/common/config/config.ts` — add to `IConfig` interface and `config` object
+3. Instruct the developer to manually add the variable to `.env` (default or empty value) and `.env.example` (placeholder/empty value) — Claude cannot edit these files
 
 ## Project Structure
 
