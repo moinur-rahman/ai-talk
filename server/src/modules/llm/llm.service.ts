@@ -5,67 +5,44 @@ import { OpenRouterService } from './openrouter/openrouter.service.js';
 import { ZaiService } from './zai/zai.service.js';
 import { GeminiService } from './gemini/gemini.service.js';
 import { LLMRequest, StreamResult, TokenCallback } from './types/llm.types.js';
+import { LLMStrategy } from './types/llm-strategy.interface.js';
 import config from '../../common/config/config.js';
 import { PROVIDER } from '../../common/constants/providers.js';
 
 @Injectable()
 export class LlmService {
   private readonly logger = new Logger(LlmService.name);
+  private readonly strategies: Map<string, LLMStrategy>;
 
   constructor(
-    private readonly ollamaService: OllamaService,
-    private readonly openAIService: OpenAIService,
-    private readonly openRouterService: OpenRouterService,
-    private readonly zaiService: ZaiService,
-    private readonly geminiService: GeminiService,
-  ) {}
+    ollamaService: OllamaService,
+    openAIService: OpenAIService,
+    openRouterService: OpenRouterService,
+    zaiService: ZaiService,
+    geminiService: GeminiService,
+  ) {
+    this.strategies = new Map<string, LLMStrategy>([
+      [PROVIDER.OPENAI, openAIService],
+      [PROVIDER.OLLAMA, ollamaService],
+      [PROVIDER.OPENROUTER, openRouterService],
+      [PROVIDER.ZAI, zaiService],
+      [PROVIDER.GEMINI, geminiService],
+    ]);
+  }
 
   async streamResponse(
     providerName: string,
     request: LLMRequest,
     onToken: TokenCallback,
   ): Promise<StreamResult> {
-    switch (providerName.toLowerCase()) {
-      case PROVIDER.OPENAI:
-        return this.openAIService.streamResponse(request, onToken);
-      case PROVIDER.OLLAMA:
-        await this.ollamaService.streamResponse(request, onToken);
-        break;
-      case PROVIDER.OPENROUTER:
-        await this.openRouterService.streamResponse(request, onToken);
-        break;
-      case PROVIDER.ZAI:
-        await this.zaiService.streamResponse(request, onToken);
-        break;
-      case PROVIDER.GEMINI:
-        return this.geminiService.streamResponse(request, onToken);
-      default:
-        throw new Error(`Unknown provider: ${providerName}`);
-    }
-    return {};
+    return this.getStrategy(providerName).streamResponse(request, onToken);
   }
 
   stopStream(providerName: string, conversationId: string): void {
-    switch (providerName.toLowerCase()) {
-      case PROVIDER.OPENAI:
-        this.openAIService.stopStream(conversationId);
-        break;
-      case PROVIDER.OLLAMA:
-        this.ollamaService.stopStream(conversationId);
-        break;
-      case PROVIDER.OPENROUTER:
-        this.openRouterService.stopStream(conversationId);
-        break;
-      case PROVIDER.ZAI:
-        this.zaiService.stopStream(conversationId);
-        break;
-      case PROVIDER.GEMINI:
-        this.geminiService.stopStream(conversationId);
-        break;
-      default:
-        this.logger.warn(
-          `Cannot stop stream: unknown provider ${providerName}`,
-        );
+    try {
+      this.getStrategy(providerName).stopStream(conversationId);
+    } catch {
+      this.logger.warn(`Cannot stop stream: unknown provider ${providerName}`);
     }
   }
 
@@ -74,41 +51,10 @@ export class LlmService {
     const model = config.titleGenerationModel;
 
     try {
-      let rawTitle: string;
-      switch (provider) {
-        case PROVIDER.OPENAI:
-          rawTitle = await this.openAIService.generateTitle(
-            conversationText,
-            model,
-          );
-          break;
-        case PROVIDER.OPENROUTER:
-          rawTitle = await this.openRouterService.generateTitle(
-            conversationText,
-            model,
-          );
-          break;
-        case PROVIDER.OLLAMA:
-          rawTitle = await this.ollamaService.generateTitle(
-            conversationText,
-            model,
-          );
-          break;
-        case PROVIDER.ZAI:
-          rawTitle = await this.zaiService.generateTitle(
-            conversationText,
-            model,
-          );
-          break;
-        case PROVIDER.GEMINI:
-          rawTitle = await this.geminiService.generateTitle(
-            conversationText,
-            model,
-          );
-          break;
-        default:
-          throw new Error(`Unknown title generation provider: ${provider}`);
-      }
+      const rawTitle = await this.getStrategy(provider).generateTitle(
+        conversationText,
+        model,
+      );
       return this.formatTitle(rawTitle);
     } catch (error) {
       this.logger.warn(
@@ -116,6 +62,14 @@ export class LlmService {
       );
       return this.formatTitle(conversationText);
     }
+  }
+
+  private getStrategy(providerName: string): LLMStrategy {
+    const strategy = this.strategies.get(providerName.toLowerCase());
+    if (!strategy) {
+      throw new Error(`Unknown provider: ${providerName}`);
+    }
+    return strategy;
   }
 
   private formatTitle(title: string): string {

@@ -1,7 +1,8 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { Ollama } from 'ollama';
 import { OLLAMA_CLIENT } from '../../../providers/ai-client.tokens.js';
-import { LLMRequest, TokenCallback } from '../types/llm.types.js';
+import { LLMRequest, StreamResult, TokenCallback } from '../types/llm.types.js';
+import { LLMStrategy } from '../types/llm-strategy.interface.js';
 import {
   buildSystemInstruction,
   TITLE_SYSTEM_PROMPT,
@@ -9,7 +10,7 @@ import {
 } from '../llm.prompts.js';
 
 @Injectable()
-export class OllamaService {
+export class OllamaService implements LLMStrategy {
   private readonly logger = new Logger(OllamaService.name);
   private readonly activeStreams: Map<string, AbortController> = new Map();
 
@@ -18,7 +19,7 @@ export class OllamaService {
   async streamResponse(
     request: LLMRequest,
     onToken: TokenCallback,
-  ): Promise<void> {
+  ): Promise<StreamResult> {
     const abortController = new AbortController();
     this.activeStreams.set(request.conversationId, abortController);
 
@@ -56,9 +57,11 @@ export class OllamaService {
       }
 
       await onToken('', 'mainContent', true);
+      return {};
     } catch (error) {
       if (abortController.signal.aborted) {
         await onToken('', 'mainContent', true);
+        return {};
       } else {
         throw error;
       }

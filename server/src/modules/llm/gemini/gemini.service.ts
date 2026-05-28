@@ -7,6 +7,7 @@ import {
   StreamResult,
   TokenCallback,
 } from '../types/llm.types.js';
+import { LLMStrategy } from '../types/llm-strategy.interface.js';
 import {
   buildSystemInstruction,
   TITLE_SYSTEM_PROMPT,
@@ -15,7 +16,7 @@ import {
 import { fetchBase64FromPresignedUrl } from '../llm.utils.js';
 
 @Injectable()
-export class GeminiService {
+export class GeminiService implements LLMStrategy {
   private readonly logger = new Logger(GeminiService.name);
   private readonly client: GoogleGenAI;
   private readonly activeStreams: Map<string, AbortController> = new Map();

@@ -1,7 +1,13 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { OpenRouter } from '@openrouter/sdk';
 import { OPENROUTER_CLIENT } from '../../../providers/ai-client.tokens.js';
-import { LLMMessage, LLMRequest, TokenCallback } from '../types/llm.types.js';
+import {
+  LLMMessage,
+  LLMRequest,
+  StreamResult,
+  TokenCallback,
+} from '../types/llm.types.js';
+import { LLMStrategy } from '../types/llm-strategy.interface.js';
 import {
   buildSystemInstruction,
   TITLE_SYSTEM_PROMPT,
@@ -14,7 +20,7 @@ type ContentPart =
   | { type: 'image_url'; imageUrl: { url: string; detail: 'low' } };
 
 @Injectable()
-export class OpenRouterService {
+export class OpenRouterService implements LLMStrategy {
   private readonly logger = new Logger(OpenRouterService.name);
   private readonly activeStreams: Map<string, AbortController> = new Map();
 
@@ -23,7 +29,7 @@ export class OpenRouterService {
   async streamResponse(
     request: LLMRequest,
     onToken: TokenCallback,
-  ): Promise<void> {
+  ): Promise<StreamResult> {
     const abortController = new AbortController();
     this.activeStreams.set(request.conversationId, abortController);
 
@@ -64,9 +70,11 @@ export class OpenRouterService {
       }
 
       await onToken('', 'mainContent', true);
+      return {};
     } catch (error) {
       if (abortController.signal.aborted) {
         await onToken('', 'mainContent', true);
+        return {};
       } else {
         throw error;
       }

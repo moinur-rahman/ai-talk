@@ -5,7 +5,13 @@ import type {
   ChatCompletionMessageParam,
 } from 'openai/resources/chat/completions';
 import { ZAI_CLIENT } from '../../../providers/ai-client.tokens.js';
-import { LLMMessage, LLMRequest, TokenCallback } from '../types/llm.types.js';
+import {
+  LLMMessage,
+  LLMRequest,
+  StreamResult,
+  TokenCallback,
+} from '../types/llm.types.js';
+import { LLMStrategy } from '../types/llm-strategy.interface.js';
 import {
   buildSystemInstruction,
   TITLE_SYSTEM_PROMPT,
@@ -14,7 +20,7 @@ import {
 import { fetchBase64FromPresignedUrl } from '../llm.utils.js';
 
 @Injectable()
-export class ZaiService {
+export class ZaiService implements LLMStrategy {
   private readonly logger = new Logger(ZaiService.name);
   private readonly activeStreams: Map<string, AbortController> = new Map();
 
@@ -23,7 +29,7 @@ export class ZaiService {
   async streamResponse(
     request: LLMRequest,
     onToken: TokenCallback,
-  ): Promise<void> {
+  ): Promise<StreamResult> {
     const abortController = new AbortController();
     this.activeStreams.set(request.conversationId, abortController);
 
@@ -54,9 +60,11 @@ export class ZaiService {
       }
 
       await onToken('', 'mainContent', true);
+      return {};
     } catch (error) {
       if (abortController.signal.aborted) {
         await onToken('', 'mainContent', true);
+        return {};
       } else {
         throw error;
       }

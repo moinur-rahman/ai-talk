@@ -19,6 +19,7 @@ import {
   StreamResult,
   TokenCallback,
 } from '../types/llm.types.js';
+import { LLMStrategy } from '../types/llm-strategy.interface.js';
 import {
   buildSystemInstruction,
   TITLE_SYSTEM_PROMPT,
@@ -79,7 +80,7 @@ const SUPPORTED_APPLICATION_MIME_TYPES = new Set([
 ]);
 
 @Injectable()
-export class OpenAIService {
+export class OpenAIService implements LLMStrategy {
   private readonly logger = new Logger(OpenAIService.name);
   private readonly activeStreams: Map<string, AbortController> = new Map();
 
