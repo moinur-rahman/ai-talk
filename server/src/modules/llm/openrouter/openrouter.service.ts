@@ -1,9 +1,5 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import OpenAI from 'openai';
-import type {
-  ChatCompletionContentPart,
-  ChatCompletionMessageParam,
-} from 'openai/resources/chat/completions';
+import { OpenRouter } from '@openrouter/sdk';
 import { OPENROUTER_CLIENT } from '../../../providers/ai-client.tokens.js';
 import { LLMMessage, LLMRequest, TokenCallback } from '../types/llm.types.js';
 import {
@@ -13,12 +9,16 @@ import {
 } from '../llm.prompts.js';
 import { fetchBase64FromPresignedUrl } from '../llm.utils.js';
 
+type ContentPart =
+  | { type: 'text'; text: string }
+  | { type: 'image_url'; imageUrl: { url: string; detail: 'low' } };
+
 @Injectable()
 export class OpenRouterService {
   private readonly logger = new Logger(OpenRouterService.name);
   private readonly activeStreams: Map<string, AbortController> = new Map();
 
-  constructor(@Inject(OPENROUTER_CLIENT) private readonly client: OpenAI) {}
+  constructor(@Inject(OPENROUTER_CLIENT) private readonly client: OpenRouter) {}
 
   async streamResponse(
     request: LLMRequest,
@@ -34,14 +34,16 @@ export class OpenRouterService {
       );
       const reasoning = request.reasoningLevel
         ? { effort: 'low' as const }
-        : null;
+        : undefined;
 
-      const stream = await this.client.chat.completions.create(
+      const stream = await this.client.chat.send(
         {
-          model: request.model,
-          messages,
-          stream: true,
-          ...(reasoning && { reasoning }),
+          chatRequest: {
+            model: request.model,
+            messages,
+            stream: true,
+            ...(reasoning && { reasoning }),
+          },
         },
         { signal: abortController.signal },
       );
@@ -52,9 +54,8 @@ export class OpenRouterService {
         const delta = chunk.choices[0]?.delta;
         if (!delta) continue;
 
-        const reasoning = (delta as { reasoning?: string }).reasoning;
-        if (reasoning) {
-          await onToken(reasoning, 'reasoningContent', false);
+        if (delta.reasoning) {
+          await onToken(delta.reasoning, 'reasoningContent', false);
         }
 
         if (delta.content) {
@@ -76,11 +77,11 @@ export class OpenRouterService {
 
   async listModels(): Promise<{ name: string; description: string }[]> {
     try {
-      const models: { name: string; description: string }[] = [];
-      for await (const model of this.client.models.list()) {
-        models.push({ name: model.id, description: '' });
-      }
-      return models;
+      const result = await this.client.models.list();
+      return result.data.map((model) => ({
+        name: model.id,
+        description: model.description ?? '',
+      }));
     } catch (error) {
       this.logger.warn('Failed to list OpenRouter models', error);
       return [];
@@ -88,16 +89,19 @@ export class OpenRouterService {
   }
 
   async generateTitle(text: string, model: string): Promise<string> {
-    const response = await this.client.chat.completions.create({
-      model,
-      messages: [
-        { role: 'system', content: TITLE_SYSTEM_PROMPT },
-        { role: 'user', content: buildTitleUserPrompt(text) },
-      ],
-      stream: false,
+    const response = await this.client.chat.send({
+      chatRequest: {
+        model,
+        messages: [
+          { role: 'system', content: TITLE_SYSTEM_PROMPT },
+          { role: 'user', content: buildTitleUserPrompt(text) },
+        ],
+        stream: false,
+      },
     });
 
-    return response.choices[0]?.message?.content?.trim() ?? '';
+    const raw: unknown = response.choices[0]?.message?.content;
+    return (typeof raw === 'string' ? raw : null)?.trim() ?? '';
   }
 
   stopStream(conversationId: string): void {
@@ -112,12 +116,9 @@ export class OpenRouterService {
     }
   }
 
-  private async prepareMessages(
-    messages: LLMMessage[],
-    systemPrompt?: string,
-  ): Promise<ChatCompletionMessageParam[]> {
-    const systemMessage: ChatCompletionMessageParam = {
-      role: 'system',
+  private async prepareMessages(messages: LLMMessage[], systemPrompt?: string) {
+    const systemMessage = {
+      role: 'system' as const,
       content: buildSystemInstruction(systemPrompt),
     };
 
@@ -128,12 +129,12 @@ export class OpenRouterService {
           return {
             role: message.senderType,
             content,
-          } as ChatCompletionMessageParam;
+          };
         }
         return {
           role: message.senderType,
           content: message.content,
-        } as ChatCompletionMessageParam;
+        };
       }),
     );
 
@@ -142,8 +143,8 @@ export class OpenRouterService {
 
   private async processMessageWithFiles(
     message: LLMMessage,
-  ): Promise<ChatCompletionContentPart[]> {
-    const parts: ChatCompletionContentPart[] = [];
+  ): Promise<ContentPart[]> {
+    const parts: ContentPart[] = [];
 
     for (const attachment of message.attachments) {
       const attachmentUrl = attachment.storageUrl ?? attachment.presignedUrl;
@@ -152,7 +153,7 @@ export class OpenRouterService {
       const base64 = await fetchBase64FromPresignedUrl(attachmentUrl);
       parts.push({
         type: 'image_url',
-        image_url: {
+        imageUrl: {
           url: `data:${attachment.mimeType};base64,${base64}`,
           detail: 'low',
         },
