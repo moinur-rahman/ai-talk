@@ -1,9 +1,10 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import OpenAI, { toFile } from 'openai';
 import { Readable } from 'stream';
 import type { ReadableStream } from 'stream/web';
 import WebSocket from 'ws';
 import config from '../../common/config/config.js';
+import { OPENAI_CLIENT } from '../../providers/ai-client.tokens.js';
 import { ConversationService } from '../chat/conversation/conversation.service.js';
 import { MessageService } from '../chat/message/message.service.js';
 import { InputType, SenderType } from '../chat/message/dto/save-message.dto.js';
@@ -11,16 +12,14 @@ import { LlmService } from '../llm/llm.service.js';
 
 @Injectable()
 export class AudioService {
-  private readonly client: OpenAI;
   private readonly logger = new Logger(AudioService.name);
 
   constructor(
+    @Inject(OPENAI_CLIENT) private readonly client: OpenAI,
     private readonly conversationService: ConversationService,
     private readonly messageService: MessageService,
     private readonly llmService: LlmService,
-  ) {
-    this.client = new OpenAI({ apiKey: config.openaiApiKey });
-  }
+  ) {}
 
   async transcribe(file: Express.Multer.File): Promise<string> {
     const audioFile = await toFile(file.buffer, file.originalname, {

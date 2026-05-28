@@ -1,32 +1,39 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import OpenAI from 'openai';
 import { Ollama } from 'ollama';
 import config from '../../common/config/config.js';
+import {
+  OLLAMA_CLIENT,
+  OPENAI_CLIENT,
+  OPENROUTER_CLIENT,
+} from '../../providers/ai-client.tokens.js';
 
 @Injectable()
 export class EmbeddingService {
-  private readonly logger = new Logger(EmbeddingService.name);
-  private readonly openaiClient?: OpenAI;
-  private readonly ollamaClient?: Ollama;
+  private readonly openAICompatibleClient: OpenAI | undefined;
+  private readonly ollamaClient: Ollama | undefined;
 
-  constructor() {
+  constructor(
+    @Inject(OPENAI_CLIENT) openaiClient: OpenAI,
+    @Inject(OPENROUTER_CLIENT) openrouterClient: OpenAI,
+    @Inject(OLLAMA_CLIENT) ollamaClient: Ollama,
+  ) {
     if (config.embeddingProvider === 'openai') {
-      this.openaiClient = new OpenAI({ apiKey: config.openaiApiKey });
+      this.openAICompatibleClient = openaiClient;
+    } else if (config.embeddingProvider === 'openrouter') {
+      this.openAICompatibleClient = openrouterClient;
     } else if (config.embeddingProvider === 'ollama') {
-      this.ollamaClient = new Ollama({ host: config.ollamaHost });
+      this.ollamaClient = ollamaClient;
     } else {
       throw new Error(
-        `Unknown embedding provider: "${config.embeddingProvider}". Supported values: "openai", "ollama"`,
+        `Unknown embedding provider: "${config.embeddingProvider}". Supported values: "openai", "openrouter", "ollama"`,
       );
     }
   }
 
-  /**
-   * Generate an embedding vector for a single text string.
-   */
   async embedText(text: string): Promise<number[]> {
-    if (this.openaiClient) {
-      return this.embedWithOpenAI(text);
+    if (this.openAICompatibleClient) {
+      return this.embedWithOpenAICompatible(text);
     }
 
     if (this.ollamaClient) {
@@ -36,17 +43,13 @@ export class EmbeddingService {
     throw new Error('No embedding client configured');
   }
 
-  /**
-   * Generate embedding vectors for multiple texts.
-   * OpenAI supports batching; Ollama is called sequentially.
-   */
   async embedBatch(texts: string[]): Promise<number[][]> {
     if (texts.length === 0) {
       return [];
     }
 
-    if (this.openaiClient) {
-      return this.embedBatchWithOpenAI(texts);
+    if (this.openAICompatibleClient) {
+      return this.embedBatchWithOpenAICompatible(texts);
     }
 
     if (this.ollamaClient) {
@@ -56,15 +59,15 @@ export class EmbeddingService {
     throw new Error('No embedding client configured');
   }
 
-  private async embedWithOpenAI(text: string): Promise<number[]> {
-    const response = await this.openaiClient!.embeddings.create({
+  private async embedWithOpenAICompatible(text: string): Promise<number[]> {
+    const response = await this.openAICompatibleClient!.embeddings.create({
       model: config.embeddingModel,
       input: text,
     });
     return response.data[0].embedding;
   }
 
-  private async embedBatchWithOpenAI(
+  private async embedBatchWithOpenAICompatible(
     texts: string[],
     subBatchSize: number = 20,
   ): Promise<number[][]> {
@@ -72,7 +75,7 @@ export class EmbeddingService {
 
     for (let i = 0; i < texts.length; i += subBatchSize) {
       const subBatch = texts.slice(i, i + subBatchSize);
-      const response = await this.openaiClient!.embeddings.create({
+      const response = await this.openAICompatibleClient!.embeddings.create({
         model: config.embeddingModel,
         input: subBatch,
       });

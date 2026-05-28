@@ -1,10 +1,10 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import OpenAI from 'openai';
 import type {
   ChatCompletionContentPart,
   ChatCompletionMessageParam,
 } from 'openai/resources/chat/completions';
-import config from '../../../common/config/config.js';
+import { ZAI_CLIENT } from '../../../providers/ai-client.tokens.js';
 import { LLMMessage, LLMRequest, TokenCallback } from '../types/llm.types.js';
 import {
   buildSystemInstruction,
@@ -16,15 +16,9 @@ import { fetchBase64FromPresignedUrl } from '../llm.utils.js';
 @Injectable()
 export class ZaiService {
   private readonly logger = new Logger(ZaiService.name);
-  private readonly client: OpenAI;
   private readonly activeStreams: Map<string, AbortController> = new Map();
 
-  constructor() {
-    this.client = new OpenAI({
-      apiKey: config.zaiApiKey,
-      baseURL: 'https://api.z.ai/api/coding/paas/v4',
-    });
-  }
+  constructor(@Inject(ZAI_CLIENT) private readonly client: OpenAI) {}
 
   async streamResponse(
     request: LLMRequest,

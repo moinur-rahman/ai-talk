@@ -1,0 +1,4 @@
+export const OPENAI_CLIENT = 'OPENAI_CLIENT';
+export const OPENROUTER_CLIENT = 'OPENROUTER_CLIENT';
+export const OLLAMA_CLIENT = 'OLLAMA_CLIENT';
+export const ZAI_CLIENT = 'ZAI_CLIENT';

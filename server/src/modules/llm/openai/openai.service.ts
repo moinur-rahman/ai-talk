@@ -1,4 +1,9 @@
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import {
+  BadRequestException,
+  Inject,
+  Injectable,
+  Logger,
+} from '@nestjs/common';
 import OpenAI from 'openai';
 import type { Reasoning } from 'openai/resources';
 import type {
@@ -6,7 +11,7 @@ import type {
   ResponseInputContent,
   ResponseInputMessageContentList,
 } from 'openai/resources/responses/responses';
-import config from '../../../common/config/config.js';
+import { OPENAI_CLIENT } from '../../../providers/ai-client.tokens.js';
 import {
   FileMetadata,
   LLMMessage,
@@ -76,12 +81,9 @@ const SUPPORTED_APPLICATION_MIME_TYPES = new Set([
 @Injectable()
 export class OpenAIService {
   private readonly logger = new Logger(OpenAIService.name);
-  private readonly client: OpenAI;
   private readonly activeStreams: Map<string, AbortController> = new Map();
 
-  constructor() {
-    this.client = new OpenAI({ apiKey: config.openaiApiKey });
-  }
+  constructor(@Inject(OPENAI_CLIENT) private readonly client: OpenAI) {}
 
   async streamResponse(
     request: LLMRequest,

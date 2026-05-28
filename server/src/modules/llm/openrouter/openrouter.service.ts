@@ -1,10 +1,10 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import OpenAI from 'openai';
 import type {
   ChatCompletionContentPart,
   ChatCompletionMessageParam,
 } from 'openai/resources/chat/completions';
-import config from '../../../common/config/config.js';
+import { OPENROUTER_CLIENT } from '../../../providers/ai-client.tokens.js';
 import { LLMMessage, LLMRequest, TokenCallback } from '../types/llm.types.js';
 import {
   buildSystemInstruction,
@@ -16,15 +16,9 @@ import { fetchBase64FromPresignedUrl } from '../llm.utils.js';
 @Injectable()
 export class OpenRouterService {
   private readonly logger = new Logger(OpenRouterService.name);
-  private readonly client: OpenAI;
   private readonly activeStreams: Map<string, AbortController> = new Map();
 
-  constructor() {
-    this.client = new OpenAI({
-      apiKey: config.openrouterApiKey,
-      baseURL: 'https://openrouter.ai/api/v1',
-    });
-  }
+  constructor(@Inject(OPENROUTER_CLIENT) private readonly client: OpenAI) {}
 
   async streamResponse(
     request: LLMRequest,

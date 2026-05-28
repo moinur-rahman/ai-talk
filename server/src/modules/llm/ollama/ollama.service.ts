@@ -1,6 +1,6 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { Ollama } from 'ollama';
-import config from '../../../common/config/config.js';
+import { OLLAMA_CLIENT } from '../../../providers/ai-client.tokens.js';
 import { LLMRequest, TokenCallback } from '../types/llm.types.js';
 import {
   buildSystemInstruction,
@@ -11,12 +11,9 @@ import {
 @Injectable()
 export class OllamaService {
   private readonly logger = new Logger(OllamaService.name);
-  private readonly client: Ollama;
   private readonly activeStreams: Map<string, AbortController> = new Map();
 
-  constructor() {
-    this.client = new Ollama({ host: config.ollamaHost });
-  }
+  constructor(@Inject(OLLAMA_CLIENT) private readonly client: Ollama) {}
 
   async streamResponse(
     request: LLMRequest,
