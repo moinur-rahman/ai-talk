@@ -43,6 +43,9 @@ export class OllamaService implements LLMStrategy {
         think: !!request.reasoningLevel,
       });
 
+      let promptEvalCount = 0;
+      let evalCount = 0;
+
       for await (const chunk of stream) {
         if (abortController.signal.aborted) break;
 
@@ -54,10 +57,26 @@ export class OllamaService implements LLMStrategy {
         if (content) {
           await onToken(content, 'mainContent', false);
         }
+
+        if (chunk.done) {
+          promptEvalCount = chunk.prompt_eval_count ?? 0;
+          evalCount = chunk.eval_count ?? 0;
+        }
       }
 
       await onToken('', 'mainContent', true);
-      return {};
+
+      const hasUsage = promptEvalCount > 0 || evalCount > 0;
+      return {
+        usage: hasUsage
+          ? {
+              inputTokens: promptEvalCount,
+              outputTokens: evalCount,
+              totalTokens: promptEvalCount + evalCount,
+              tokenSource: 'api' as const,
+            }
+          : undefined,
+      };
     } catch (error) {
       if (abortController.signal.aborted) {
         await onToken('', 'mainContent', true);

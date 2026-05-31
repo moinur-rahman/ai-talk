@@ -18,6 +18,7 @@ import {
   LLMRequest,
   StreamResult,
   TokenCallback,
+  TokenUsage,
 } from '../types/llm.types.js';
 import { LLMStrategy } from '../types/llm-strategy.interface.js';
 import {
@@ -145,6 +146,7 @@ export class OpenAIService implements LLMStrategy {
       let mainContentEnded = false;
       let openaiImageCallId: string | undefined;
       let imageBase64: string | undefined;
+      let usage: TokenUsage | undefined;
 
       for await (const event of stream) {
         if (abortController.signal.aborted) break;
@@ -190,6 +192,30 @@ export class OpenAIService implements LLMStrategy {
             }
             break;
           }
+          case 'response.completed': {
+            const completedResponse = (
+              event as unknown as {
+                response: {
+                  usage?: {
+                    input_tokens: number;
+                    output_tokens: number;
+                    output_tokens_details?: { reasoning_tokens?: number };
+                  };
+                };
+              }
+            ).response;
+            if (completedResponse?.usage) {
+              const u = completedResponse.usage;
+              usage = {
+                inputTokens: u.input_tokens,
+                outputTokens: u.output_tokens,
+                reasoningTokens: u.output_tokens_details?.reasoning_tokens,
+                totalTokens: u.input_tokens + u.output_tokens,
+                tokenSource: 'api',
+              };
+            }
+            break;
+          }
         }
       }
 
@@ -197,7 +223,7 @@ export class OpenAIService implements LLMStrategy {
         await onToken('', 'mainContent', true);
       }
 
-      return { openaiImageCallId, imageBase64 };
+      return { openaiImageCallId, imageBase64, usage };
     } catch (error) {
       if (abortController.signal.aborted) {
         await onToken('', 'mainContent', true);

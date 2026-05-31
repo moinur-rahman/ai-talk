@@ -8,6 +8,7 @@ import { ConversationService } from '../conversation/conversation.service.js';
 import { ProjectService } from '../../project/project.service.js';
 import { UserService } from '../../user/user.service.js';
 import { LLMMessage, TokenType } from '../../llm/types/llm.types.js';
+import { UsageService } from '../../usage/usage.service.js';
 import { FileMetadataResponseDto } from '../../file/dto/file-metadata-response.dto.js';
 import { SenderType } from '../message/dto/save-message.dto.js';
 import { StreamChatDto } from './dto/stream-chat.dto.js';
@@ -31,6 +32,7 @@ export class ChatStreamService {
     private readonly projectService: ProjectService,
     private readonly userService: UserService,
     private readonly llmService: LlmService,
+    private readonly usageService: UsageService,
   ) {}
 
   stopStream(providerName: string, conversationId: string): void {
@@ -323,6 +325,22 @@ export class ChatStreamService {
         fileIds: generatedFileId ? [generatedFileId] : undefined,
         openaiImageCallId: streamResult?.openaiImageCallId,
       });
+
+      if (streamResult?.usage && lastModelId) {
+        this.usageService
+          .recordMessageUsage({
+            messageId: newAssistantMessage.id,
+            modelId: lastModelId,
+            providerName,
+            modelName,
+            usage: streamResult.usage,
+          })
+          .catch((err: unknown) =>
+            this.logger.warn(
+              `Usage recording failed: ${err instanceof Error ? err.message : String(err)}`,
+            ),
+          );
+      }
 
       await this.conversationService.updateActiveLeafMessage(
         currentConversationId,

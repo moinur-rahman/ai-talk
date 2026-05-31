@@ -20,6 +20,11 @@ enum SenderType {
   assistant
 }
 
+enum TokenSource {
+  api
+  estimated
+}
+
 enum InputType {
   text
   voice
@@ -96,6 +101,7 @@ model Model {
   provider   Provider @relation(fields: [providerId], references: [id], onDelete: Cascade)
 
   messages Message[]
+  pricing  ModelPricing?
 
   @@map("models")
 }
@@ -174,6 +180,7 @@ model Message {
 
   attachments       MessageAttachment[]
   activeLeafMessage Conversation[]      @relation("ActiveLeafMessage")
+  usage             MessageUsage?
 
   @@index([conversationId], name: "idx_conversation_id")
   @@map("messages")
@@ -189,4 +196,42 @@ model MessageAttachment {
 
   @@index([messageId], name: "idx_message_id")
   @@map("message_attachments")
+}
+
+model ModelPricing {
+  id                  String   @id @default(uuid()) @db.Uuid
+  modelId             String   @unique @map("model_id") @db.Uuid
+  model               Model    @relation(fields: [modelId], references: [id], onDelete: Cascade)
+  inputTokenPrice     Decimal  @map("input_token_price") @db.Decimal(10, 6)
+  outputTokenPrice    Decimal  @map("output_token_price") @db.Decimal(10, 6)
+  reasoningTokenPrice Decimal? @map("reasoning_token_price") @db.Decimal(10, 6)
+  createdAt           DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt           DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  messageUsages MessageUsage[]
+
+  @@map("model_pricing")
+}
+
+model MessageUsage {
+  id              String       @id @default(uuid()) @db.Uuid
+  messageId       String       @unique @map("message_id") @db.Uuid
+  message         Message      @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  modelPricingId  String       @map("model_pricing_id") @db.Uuid
+  modelPricing    ModelPricing @relation(fields: [modelPricingId], references: [id])
+  providerName    String       @map("provider_name") @db.VarChar(50)
+  modelName       String       @map("model_name") @db.VarChar(100)
+  inputTokens     Int          @map("input_tokens") @default(0)
+  outputTokens    Int          @map("output_tokens") @default(0)
+  reasoningTokens Int?         @map("reasoning_tokens")
+  totalTokens     Int          @map("total_tokens") @default(0)
+  inputCost       Decimal      @map("input_cost") @db.Decimal(12, 8)
+  outputCost      Decimal      @map("output_cost") @db.Decimal(12, 8)
+  reasoningCost   Decimal?     @map("reasoning_cost") @db.Decimal(12, 8)
+  totalCost       Decimal      @map("total_cost") @db.Decimal(12, 8)
+  tokenSource     TokenSource  @map("token_source") @default(api)
+  createdAt       DateTime     @default(now()) @map("created_at") @db.Timestamptz
+
+  @@index([createdAt], name: "idx_message_usage_created_at")
+  @@map("message_usage")
 }

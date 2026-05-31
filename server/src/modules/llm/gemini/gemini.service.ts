@@ -56,6 +56,14 @@ export class GeminiService implements LLMStrategy {
       });
 
       let imageBase64: string | undefined;
+      let lastUsageMetadata:
+        | {
+            promptTokenCount?: number;
+            candidatesTokenCount?: number;
+            thoughtsTokenCount?: number;
+            totalTokenCount?: number;
+          }
+        | undefined;
 
       for await (const chunk of stream) {
         if (abortController.signal.aborted) break;
@@ -69,10 +77,25 @@ export class GeminiService implements LLMStrategy {
             await onToken(part.text, 'mainContent', false);
           }
         }
+
+        if (chunk.usageMetadata) {
+          lastUsageMetadata = chunk.usageMetadata;
+        }
       }
 
       await onToken('', 'mainContent', true);
-      return { imageBase64 };
+
+      const usage = lastUsageMetadata
+        ? {
+            inputTokens: lastUsageMetadata.promptTokenCount ?? 0,
+            outputTokens: lastUsageMetadata.candidatesTokenCount ?? 0,
+            reasoningTokens: lastUsageMetadata.thoughtsTokenCount,
+            totalTokens: lastUsageMetadata.totalTokenCount ?? 0,
+            tokenSource: 'api' as const,
+          }
+        : undefined;
+
+      return { imageBase64, usage };
     } catch (error) {
       if (abortController.signal.aborted) {
         await onToken('', 'mainContent', true);

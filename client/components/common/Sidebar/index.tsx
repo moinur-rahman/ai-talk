@@ -3,6 +3,7 @@ import { FC, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
+  FiBarChart2,
   FiChevronUp,
   FiFolder,
   FiImage,
@@ -78,6 +79,7 @@ const Sidebar: FC = () => {
 
   const isOnProjects = pathname.startsWith('/projects');
   const isOnImageGeneration = pathname.startsWith('/image-generation');
+  const isOnUsage = pathname.startsWith('/usage');
 
   return (
     <>
@@ -120,6 +122,17 @@ const Sidebar: FC = () => {
             >
               <FiImage size={14} />
               <span>Image Generation</span>
+            </Link>
+            <Link
+              href="/usage"
+              className={`flex items-center gap-2 w-full px-3 py-2 rounded-lg border transition-all duration-200 text-sm ${
+                isOnUsage
+                  ? 'border-accent/30 bg-accent/5 text-accent'
+                  : 'border-border text-body hover:text-accent hover:border-accent/30 hover:bg-accent/5'
+              }`}
+            >
+              <FiBarChart2 size={14} />
+              <span>Usage</span>
             </Link>
             <button
               onClick={() => setSearchOpen(true)}

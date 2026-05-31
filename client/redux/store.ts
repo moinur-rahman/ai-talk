@@ -8,6 +8,7 @@ import { userApi } from '@/services/userApi';
 import { projectApi } from '@/services/projectApi';
 import { imageGenerationApi } from '@/services/imageGenerationApi';
 import { audioApi } from '@/services/audioApi';
+import { usageApi } from '@/services/usageApi';
 
 export const store = configureStore({
   reducer: {
@@ -20,6 +21,7 @@ export const store = configureStore({
     [projectApi.reducerPath]: projectApi.reducer,
     [imageGenerationApi.reducerPath]: imageGenerationApi.reducer,
     [audioApi.reducerPath]: audioApi.reducer,
+    [usageApi.reducerPath]: usageApi.reducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware()
@@ -29,7 +31,8 @@ export const store = configureStore({
       .concat(userApi.middleware)
       .concat(projectApi.middleware)
       .concat(imageGenerationApi.middleware)
-      .concat(audioApi.middleware),
+      .concat(audioApi.middleware)
+      .concat(usageApi.middleware),
 });
 
 export type RootState = ReturnType<typeof store.getState>;

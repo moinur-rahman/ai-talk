@@ -54,23 +54,47 @@ export class OpenRouterService implements LLMStrategy {
         { signal: abortController.signal },
       );
 
+      let inputTokens = 0;
+      let outputTokens = 0;
+      let totalTokens = 0;
+      let gotUsage = false;
+
       for await (const chunk of stream) {
         if (abortController.signal.aborted) break;
 
         const delta = chunk.choices[0]?.delta;
-        if (!delta) continue;
-
-        if (delta.reasoning) {
-          await onToken(delta.reasoning, 'reasoningContent', false);
+        if (delta) {
+          if (delta.reasoning) {
+            await onToken(delta.reasoning, 'reasoningContent', false);
+          }
+          if (delta.content) {
+            await onToken(delta.content, 'mainContent', false);
+          }
         }
 
-        if (delta.content) {
-          await onToken(delta.content, 'mainContent', false);
+        const chunkUsage = (
+          chunk as unknown as {
+            usage?: {
+              prompt_tokens: number;
+              completion_tokens: number;
+              total_tokens: number;
+            };
+          }
+        ).usage;
+        if (chunkUsage) {
+          inputTokens = chunkUsage.prompt_tokens;
+          outputTokens = chunkUsage.completion_tokens;
+          totalTokens = chunkUsage.total_tokens;
+          gotUsage = true;
         }
       }
 
       await onToken('', 'mainContent', true);
-      return {};
+      return {
+        usage: gotUsage
+          ? { inputTokens, outputTokens, totalTokens, tokenSource: 'api' }
+          : undefined,
+      };
     } catch (error) {
       if (abortController.signal.aborted) {
         await onToken('', 'mainContent', true);

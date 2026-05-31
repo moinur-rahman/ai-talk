@@ -44,23 +44,43 @@ export class ZaiService implements LLMStrategy {
           model: request.model,
           messages,
           stream: true,
+          stream_options: { include_usage: true },
         },
         { signal: abortController.signal },
       );
+
+      let inputTokens = 0;
+      let outputTokens = 0;
+      let totalTokens = 0;
+      let gotUsage = false;
 
       for await (const chunk of stream) {
         if (abortController.signal.aborted) break;
 
         const delta = chunk.choices[0]?.delta;
-        if (!delta) continue;
-
-        if (delta.content) {
+        if (delta?.content) {
           await onToken(delta.content, 'mainContent', false);
+        }
+
+        if (chunk.usage) {
+          inputTokens = chunk.usage.prompt_tokens;
+          outputTokens = chunk.usage.completion_tokens;
+          totalTokens = chunk.usage.total_tokens;
+          gotUsage = true;
         }
       }
 
       await onToken('', 'mainContent', true);
-      return {};
+      return {
+        usage: gotUsage
+          ? {
+              inputTokens,
+              outputTokens,
+              totalTokens,
+              tokenSource: 'api' as const,
+            }
+          : undefined,
+      };
     } catch (error) {
       if (abortController.signal.aborted) {
         await onToken('', 'mainContent', true);

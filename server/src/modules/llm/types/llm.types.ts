@@ -32,7 +32,16 @@ export type TokenCallback = (
   isEnd: boolean,
 ) => void | Promise<void>;
 
+export interface TokenUsage {
+  inputTokens: number;
+  outputTokens: number;
+  reasoningTokens?: number;
+  totalTokens: number;
+  tokenSource: 'api' | 'estimated';
+}
+
 export interface StreamResult {
   openaiImageCallId?: string;
   imageBase64?: string;
+  usage?: TokenUsage;
 }
