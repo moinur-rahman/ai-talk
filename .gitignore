@@ -9,7 +9,7 @@
 docker-compose.override.yml
 
 # Local data mounts
-data/
+/data/
 
 # Logs
 *.log
