@@ -1,5 +1,14 @@
-import { Body, Controller, Logger, Post, Req, Res } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Logger,
+  Post,
+  Req,
+  Res,
+  UseGuards,
+} from '@nestjs/common';
 import type { Request, Response } from 'express';
+import { RateLimitGuard } from '../guards/rate-limit.guard.js';
 import { StreamChatDto } from './dto/stream-chat.dto.js';
 import { ChatStreamService } from './chat-stream.service.js';
 import {
@@ -13,6 +22,7 @@ export class ChatStreamController {
 
   constructor(private readonly chatStreamService: ChatStreamService) {}
 
+  @UseGuards(RateLimitGuard)
   @Post('stream')
   async streamChat(
     @Body() dto: StreamChatDto,

@@ -13,6 +13,7 @@ import { MessageController } from './message/message.controller.js';
 import { MessageService } from './message/message.service.js';
 import { ChatStreamController } from './stream/chat-stream.controller.js';
 import { ChatStreamService } from './stream/chat-stream.service.js';
+import { RateLimitGuard } from './guards/rate-limit.guard.js';
 
 @Module({
   imports: [
@@ -30,7 +31,12 @@ import { ChatStreamService } from './stream/chat-stream.service.js';
     MessageController,
     ChatStreamController,
   ],
-  providers: [ConversationService, MessageService, ChatStreamService],
+  providers: [
+    ConversationService,
+    MessageService,
+    ChatStreamService,
+    RateLimitGuard,
+  ],
   exports: [ConversationService, MessageService],
 })
 export class ChatModule {}

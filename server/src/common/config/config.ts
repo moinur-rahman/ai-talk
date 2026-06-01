@@ -28,6 +28,8 @@ interface IConfig {
   embeddingModel: string;
   embeddingDimensions: number;
   largeDocCharThreshold: number;
+  rateLimitWindowSeconds: number;
+  rateLimitMaxRequests: number;
 }
 
 const config: IConfig = {
@@ -52,6 +54,8 @@ const config: IConfig = {
   embeddingModel: getEnvVar('EMBEDDING_MODEL', 'nomic-embed-text'),
   embeddingDimensions: Number(getEnvVar('EMBEDDING_DIMENSIONS', '768')),
   largeDocCharThreshold: Number(getEnvVar('LARGE_DOC_CHAR_THRESHOLD', '40000')),
+  rateLimitWindowSeconds: Number(getEnvVar('RATE_LIMIT_WINDOW_SECONDS', '60')),
+  rateLimitMaxRequests: Number(getEnvVar('RATE_LIMIT_MAX_REQUESTS', '20')),
 };
 
 export default config;

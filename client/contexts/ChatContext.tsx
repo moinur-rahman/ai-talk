@@ -315,7 +315,15 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
       );
 
       if (!response.ok || !response.body) {
-        throw new Error('Stream request failed');
+        if (response.status === 429) {
+          const data = (await response.json().catch(() => null)) as {
+            message?: string;
+          } | null;
+          throw new Error(
+            data?.message ?? 'Rate limit exceeded. Try again shortly.',
+          );
+        }
+        throw new Error('Failed to send message. Please try again.');
       }
 
       const reader = response.body.getReader();
@@ -352,7 +360,10 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
       if (currentId) {
         setError((prev) => ({
           ...prev,
-          [currentId]: 'Failed to send message. Please try again.',
+          [currentId]:
+            err instanceof Error
+              ? err.message
+              : 'Failed to send message. Please try again.',
         }));
         setStreaming((prev) => ({ ...prev, [currentId]: false }));
         setReasoningStreaming((prev) => ({ ...prev, [currentId]: false }));
