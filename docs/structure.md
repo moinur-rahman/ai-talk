@@ -26,19 +26,22 @@ ai-talk/
   - `llm/` — LLM provider integrations: `openai/`, `gemini/`, `ollama/`, `openrouter/`, `zai/`; shared `types/`; prompts, utils, reasoning constants
   - `model/` — AI model CRUD
   - `project/` — projects CRUD
+  - `usage/` — usage tracking
   - `user/` — user management
-- `providers/` — infrastructure: `prisma/`, `redis/`, `seaweedfs/`
+- `providers/` — infrastructure: `prisma/`, `redis/`, `seaweedfs/`, `openai/`, `ollama/`, `openrouter/`, `zai/`, `ai-client.tokens`
 - `generated/prisma/` — Prisma client output (at `server/generated/prisma/`)
 
 ## Client (`client/`)
 
 - `app/` — Next.js App Router
   - `(protected)/`
-    - `(chat)/` — chat pages, `chat/[conversationId]/`, `new/`
-    - `(projects)/` — `projects/`, `projects/[projectId]/`
+    - `(workspace)/` — workspace layout
+      - `(chat)/` — chat pages, `chat/[conversationId]/`, `new/`
+      - `projects/` — `projects/`, `projects/[projectId]/`
+      - `image-generation/`
+      - `settings/` — `general/`, `data/`, `privacy/`
+      - `usage/` — usage dashboard (`_components/`)
     - `admin/` — admin pages, `models/`
-    - `image-generation/`
-    - `settings/` — `general/`, `data/`
   - `(public)/` — `(auth)/` (login, register)
 - `components/`
   - `admin/` — admin UI (model management)
@@ -46,9 +49,9 @@ ai-talk/
   - `chat/` — `ChatHistory/`, `SendMessage/`, `ModelDropdown`, `ReasoningToggle`, `VoiceAgentPanel`
   - `common/` — `Sidebar/`, `ImageModal`, `SearchModal`
 - `apis/` — API call definitions (axios instance)
-- `services/` — client-side service layer (`chatApi`, `audioApi`, `fileApi`, `imageGenerationApi`, `modelApi`, `projectApi`, `userApi`)
+- `services/` — client-side service layer (`chatApi`, `audioApi`, `fileApi`, `imageGenerationApi`, `modelApi`, `projectApi`, `usageApi`, `userApi`)
 - `hooks/` — React hooks (`useVoiceAgent`)
-- `redux/slices/` — Redux state slices (`chatSlice`, `modelSlice`)
+- `redux/` — Redux store, hooks; `slices/` (`chatSlice`, `modelSlice`)
 - `contexts/` — React contexts (`ChatContext`, `VoiceAgentContext`)
-- `types/` — TypeScript types
+- `types/` — TypeScript types (`chat`, `speech`)
 - `utils/` — utility helpers (`reasoningConfig`, `url`, `getCsrfTokenFromCookie`)
