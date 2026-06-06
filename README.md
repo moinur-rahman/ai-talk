@@ -11,9 +11,10 @@ A self-hosted, production-quality multi-model AI chat application. Supports mult
 | Backend | NestJS (TypeScript) |
 | Frontend | Next.js (App Router), Tailwind CSS, shadcn/ui |
 | Database | PostgreSQL via Prisma ORM |
+| Vector Search | pgvector (PostgreSQL extension) |
 | State / Data Fetching | Redux Toolkit + RTK Query |
 | Object Storage | SeaweedFS |
-| Caching | Redis |
+| Caching / Rate Limiting | Redis |
 | Infrastructure | Docker Compose, Nginx reverse proxy |
 
 ---
@@ -36,16 +37,19 @@ ai-talk/
 | Feature | Status |
 |---|---|
 | Multi-provider chat (OpenAI, Gemini, Ollama, OpenRouter, Zai) | ✅ |
-| Token streaming with reasoning/thinking support | ✅ |
-| File attachments (images, documents) | ✅ |
+| Token streaming with per-provider reasoning/thinking support | ✅ |
+| File attachments (images, documents, spreadsheets, code) | ✅ |
 | Project-based conversations with custom instructions | ✅ |
 | OpenAI image generation (in-chat + standalone) | ✅ |
+| Gemini image generation | ✅ |
 | Voice input (transcription) + TTS | ✅ |
 | WebRTC Realtime voice sessions | ✅ |
 | Admin model management + live sync | ✅ |
-| Gemini image generation | 🔄 Planned |
-| Message branching / edit history | 🔄 Planned |
-| File Search / RAG (vector stores) | 🔄 Planned |
+| Message branching and regeneration | ✅ |
+| RAG pipeline with pgvector (PDF, DOCX, XLSX, code) | ✅ |
+| Token usage tracking + per-model cost analytics dashboard | ✅ |
+| Web search tool use (OpenAI) | ✅ |
+| Redis sliding window rate limiting on chat stream | ✅ |
 
 ---
 
@@ -75,7 +79,11 @@ NestJS module-based structure under `server/src/modules/`:
 
 **`audio/`** — Transcription (`gpt-4o-mini-transcribe`), TTS (`gpt-4o-mini-tts`), WebRTC Realtime API sessions via a sideband WebSocket listener.
 
-**`file/`** — Upload and management backed by SeaweedFS.
+**`document/`** — RAG pipeline: multi-format ingestion (PDF via `pdf-parse`, DOCX via `mammoth`, XLSX/CSV via `xlsx`, plain text/code), 2000-char overlapping chunking, OpenAI/OpenRouter/Ollama embedding generation stored as pgvector, cosine similarity retrieval. Small documents are injected as full text; large documents go through chunked RAG.
+
+**`file/`** — Upload and management backed by SeaweedFS. Tracks `ragStatus` per file (`processing → completed / skipped / failed`).
+
+**`usage/`** — Records input/output/reasoning token counts and costs per message (`MessageUsage`). Exposes dashboard summary, per-model breakdown, and daily trend endpoints. Admin endpoints for managing `ModelPricing` (input/output/reasoning rates per 1M tokens).
 
 **`user/`** — User profile, custom instructions, work description.
 
@@ -89,8 +97,10 @@ NestJS module-based structure under `server/src/modules/`:
 User ──→ Project[] ──→ Conversation[]
 User ──→ Conversation[] ──→ Message[] ──→ MessageAttachment[]
 Message ──→ Model (nullable, assistant messages only)
+Message ──→ MessageUsage (token counts + costs)
 Model ──→ Provider
-User ──→ File[]
+Model ──→ ModelPricing (input/output/reasoning rates)
+User ──→ File[] ──→ DocumentChunk[] (pgvector embeddings)
 MessageAttachment ──→ File
 ```
 
@@ -98,7 +108,12 @@ Key columns:
 - `Message.openaiImageCallId` — stores OpenAI's `image_generation_call.id` for passing generated images in subsequent turns
 - `Message.reasoningContent` — separate column for chain-of-thought / thinking tokens
 - `Message.inputType` — `text | voice` with `audioDurationMs`
+- `Conversation.activeLeafMessageId` — pointer to the current active branch tip
 - `Conversation.projectId` — nullable, `SetNull` on project delete
+- `File.ragStatus` — `processing | completed | skipped | failed`
+- `DocumentChunk.embedding` — pgvector column; `embeddingModel` tracks which model produced it
+- `MessageUsage.*` — `inputTokens`, `outputTokens`, `reasoningTokens`, `totalCost` (Decimal for precision)
+- `ModelPricing.*` — `inputTokenPrice`, `outputTokenPrice`, `reasoningTokenPrice` per 1M tokens
 
 ---
 
@@ -109,11 +124,12 @@ Next.js App Router with route groups under `client/app/`:
 | Route | Description |
 |---|---|
 | `(public)/auth/` | Login / register |
-| `(protected)/(chat)/` | Main chat interface |
-| `(protected)/(projects)/` | Project list and project detail |
-| `(protected)/image-generation/` | Standalone image generation UI |
+| `(protected)/(workspace)/(chat)/` | Main chat interface |
+| `(protected)/(workspace)/projects/` | Project list and project detail |
+| `(protected)/(workspace)/image-generation/` | Standalone image generation UI |
+| `(protected)/(workspace)/usage/` | Token usage and cost analytics dashboard |
+| `(protected)/(workspace)/settings/` | User preferences |
 | `(protected)/admin/` | Model management (enable/disable, sync, create) |
-| `(protected)/settings/` | User preferences |
 
 **Data layer:** RTK Query service files (`chatApi`, `projectApi`, `modelApi`) with `providesTags`/`invalidatesTags` cache invalidation and infinite query pagination for conversation lists.
 
