@@ -1,0 +1,555 @@
+import {
+  type ReactNode,
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useRef,
+} from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import {
+  updateLastMessage,
+  setLastMessageGeneratedImage,
+  addMessage,
+  loadChatHistory,
+  setNewConversationId,
+  setNewConversationTitle,
+  setNewConversationProject,
+  removeConversation,
+} from '@/redux/slices/chatSlice';
+import { chatApi } from '@/services/chatApi';
+import { type AppDispatch, type RootState } from '@/redux/store';
+import { useParams } from 'react-router-dom';
+import type { FileMetadata } from '@/types/chat';
+import { getCsrfTokenFromCookie } from '@/utils/getCsrfTokenFromCookie';
+
+interface ISendMessageParams {
+  prompt?: string;
+  attachments?: FileMetadata[];
+  project?: { id: string; name: string };
+  branchFromMessageId?: string;
+  regenerateFromMessageId?: string;
+}
+
+interface IChatContext {
+  streaming: Record<string, boolean>;
+  reasoningStreaming: Record<string, boolean>;
+  imageGenerating: Record<string, boolean>;
+  webSearching: Record<string, boolean>;
+  error: Record<string, string | null>;
+  setError: (
+    error: React.SetStateAction<Record<string, string | null>>,
+  ) => void;
+  sendMessage: (params: ISendMessageParams) => Promise<string | undefined>;
+  stopStream: () => void;
+  conversationId: string | undefined;
+  projectId: string | undefined;
+}
+
+const ChatContext = createContext<IChatContext | null>(null);
+
+// eslint-disable-next-line react-refresh/only-export-components
+export const useChat = () => {
+  const context = useContext(ChatContext);
+
+  if (!context) {
+    throw new Error('useChat must be used within a ChatProvider');
+  }
+
+  return context;
+};
+
+export const ChatProvider = ({ children }: { children: ReactNode }) => {
+  const { conversationId, projectId } = useParams<{
+    conversationId?: string;
+    projectId?: string;
+  }>();
+
+  const [streaming, setStreaming] = useState<Record<string, boolean>>({});
+  const [error, setError] = useState<Record<string, string | null>>({});
+  const [reasoningStreaming, setReasoningStreaming] = useState<
+    Record<string, boolean>
+  >({});
+  const [imageGenerating, setImageGenerating] = useState<
+    Record<string, boolean>
+  >({});
+  const [webSearching, setWebSearching] = useState<Record<string, boolean>>({});
+
+  const previousConversationIdRef = useRef<string | undefined>(undefined);
+  const pendingCleanupRef = useRef<Set<string>>(new Set());
+  const activeStreamsRef = useRef<Record<string, AbortController>>({});
+  const effectiveProjectIdRef = useRef<string | undefined>(undefined);
+  const pendingConvResolverRef = useRef<((id: string) => void) | null>(null);
+
+  const dispatch = useDispatch<AppDispatch>();
+
+  const newConversationId = useSelector(
+    (state: RootState) => state.chat.newConversationId,
+  );
+
+  const selectedModel = useSelector(
+    (state: RootState) => state.model.selectedModel,
+  );
+
+  const reasoningLevel = useSelector(
+    (state: RootState) => state.model.reasoningLevel,
+  );
+
+  const webSearchEnabled = useSelector(
+    (state: RootState) => state.model.webSearchEnabled,
+  );
+
+  const imageGenerationEnabled = useSelector(
+    (state: RootState) => state.model.imageGenerationEnabled,
+  );
+
+  const responseStyle = useSelector(
+    (state: RootState) => state.model.responseStyle,
+  );
+
+  useEffect(() => {
+    if (
+      conversationId &&
+      previousConversationIdRef.current !== undefined &&
+      previousConversationIdRef.current !== conversationId
+    ) {
+      const prevId = previousConversationIdRef.current;
+
+      if (prevId && !streaming[prevId]) {
+        dispatch(removeConversation(prevId));
+      } else if (prevId && streaming[prevId]) {
+        pendingCleanupRef.current.add(prevId);
+      }
+    }
+
+    previousConversationIdRef.current = conversationId;
+  }, [conversationId, streaming, dispatch]);
+
+  useEffect(() => {
+    if (conversationId && newConversationId !== conversationId) {
+      dispatch(setNewConversationId(null));
+    }
+  }, [conversationId, newConversationId, dispatch]);
+
+  const handleStreamEvent = (
+    event: {
+      type: string;
+      token?: string;
+      tokenType?: 'mainContent' | 'reasoningContent';
+      isEnd?: boolean;
+      title?: string;
+      message?: string;
+      imageData?: string;
+      presignedUrl?: string;
+      conversationId?: string;
+      status?: 'searching' | 'done';
+    },
+    currentConversationId: string,
+  ) => {
+    if (event.type === 'conversation-created' && event.conversationId) {
+      pendingConvResolverRef.current?.(event.conversationId);
+      pendingConvResolverRef.current = null;
+      return;
+    }
+    const convId = event.conversationId ?? currentConversationId;
+
+    if (event.type === 'token') {
+      const { token = '', tokenType, isEnd = false } = event;
+
+      if (isEnd) {
+        if (tokenType === 'mainContent') {
+          setStreaming((prev) => ({ ...prev, [convId]: false }));
+          setReasoningStreaming((prev) => ({ ...prev, [convId]: false }));
+          setImageGenerating((prev) => ({ ...prev, [convId]: false }));
+          setWebSearching((prev) => ({ ...prev, [convId]: false }));
+
+          if (
+            pendingCleanupRef.current.has(convId) &&
+            convId !== previousConversationIdRef.current
+          ) {
+            dispatch(removeConversation(convId));
+            pendingCleanupRef.current.delete(convId);
+          }
+        } else if (tokenType === 'reasoningContent') {
+          setReasoningStreaming((prev) => ({ ...prev, [convId]: false }));
+        }
+      } else {
+        dispatch(
+          updateLastMessage({ conversationId: convId, token, tokenType }),
+        );
+      }
+    } else if (event.type === 'conversation-title') {
+      if (!convId || !event.title) return;
+
+      dispatch(setNewConversationTitle(event.title));
+
+      const effectiveProjId = effectiveProjectIdRef.current;
+      if (effectiveProjId) {
+        dispatch(
+          chatApi.util.invalidateTags([
+            { type: 'ProjectConversations', id: effectiveProjId },
+          ]),
+        );
+      }
+
+      const result = chatApi.util.updateQueryData(
+        'getConversations',
+        undefined,
+        (draft) => {
+          if (draft.pages.length > 0) {
+            let found = false;
+            for (const page of draft.pages) {
+              const conv = page.conversations.find((c) => c.id === convId);
+              if (conv) {
+                conv.title = event.title!;
+                found = true;
+                break;
+              }
+            }
+            if (!found) {
+              draft.pages[0].conversations.unshift({
+                id: convId,
+                title: event.title!,
+                updatedAt: new Date().toISOString(),
+                projectId: effectiveProjId ?? null,
+              });
+            }
+          }
+        },
+      );
+      dispatch(result);
+    } else if (event.type === 'generated-image' && event.presignedUrl) {
+      setImageGenerating((prev) => ({ ...prev, [convId]: false }));
+      dispatch(
+        setLastMessageGeneratedImage({
+          conversationId: convId,
+          imageData: event.presignedUrl,
+        }),
+      );
+    } else if (event.type === 'web-search-status') {
+      setWebSearching((prev) => ({
+        ...prev,
+        [convId]: event.status === 'searching',
+      }));
+    } else if (event.type === 'stream-complete') {
+      void dispatch(
+        chatApi.endpoints.getChatHistory.initiate(
+          { conversationId: convId },
+          { forceRefetch: true },
+        ),
+      ).then((result) => {
+        if (result.data) {
+          dispatch(
+            loadChatHistory({
+              conversationId: convId,
+              messages: result.data.messages,
+            }),
+          );
+        }
+      });
+    } else if (event.type === 'error') {
+      const message = event.message ?? 'An error occurred';
+      console.error(`Error for conversation ${convId}:`, message);
+      setError((prev) => ({ ...prev, [convId]: message }));
+      setStreaming((prev) => ({ ...prev, [convId]: false }));
+      setReasoningStreaming((prev) => ({ ...prev, [convId]: false }));
+      setImageGenerating((prev) => ({ ...prev, [convId]: false }));
+      setWebSearching((prev) => ({ ...prev, [convId]: false }));
+
+      if (
+        pendingCleanupRef.current.has(convId) &&
+        convId !== previousConversationIdRef.current
+      ) {
+        dispatch(removeConversation(convId));
+        pendingCleanupRef.current.delete(convId);
+      }
+    }
+  };
+
+  const runStream = async (
+    currentId: string | undefined,
+    streamKey: string,
+    params: ISendMessageParams,
+    modelId: string,
+    reasoningLevel: string | null,
+    webSearchEnabled: boolean,
+    imageGenerationEnabled: boolean,
+    style: string,
+  ) => {
+    try {
+      const csrfToken = getCsrfTokenFromCookie();
+      const response = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/chats/stream`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(csrfToken ? { 'X-CSRFToken': csrfToken } : {}),
+          },
+          credentials: 'include',
+          body: JSON.stringify({
+            ...(currentId
+              ? { conversationId: currentId }
+              : { projectId: params.project?.id }),
+            ...(params.prompt !== undefined ? { prompt: params.prompt } : {}),
+            ...(params.branchFromMessageId
+              ? { branchFromMessageId: params.branchFromMessageId }
+              : {}),
+            ...(params.regenerateFromMessageId
+              ? { regenerateFromMessageId: params.regenerateFromMessageId }
+              : {}),
+            lastModelId: modelId,
+            reasoningLevel,
+            webSearchEnabled,
+            fileIds: params.attachments
+              ? params.attachments.map((f) => f.id)
+              : [],
+            imageGenerationEnabled,
+            responseStyle: style,
+          }),
+          signal: activeStreamsRef.current[streamKey]?.signal,
+        },
+      );
+
+      if (!response.ok || !response.body) {
+        if (response.status === 429) {
+          const data = (await response.json().catch(() => null)) as {
+            message?: string;
+          } | null;
+          throw new Error(
+            data?.message ?? 'Rate limit exceeded. Try again shortly.',
+          );
+        }
+        throw new Error('Failed to send message. Please try again.');
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() ?? '';
+
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue;
+          const jsonStr = line.slice(6).trim();
+          if (!jsonStr) continue;
+          try {
+            const event = JSON.parse(jsonStr);
+            handleStreamEvent(event, currentId ?? '');
+          } catch {
+            // ignore malformed events
+          }
+        }
+      }
+
+      delete activeStreamsRef.current[streamKey];
+    } catch (err) {
+      if (err instanceof DOMException && err.name === 'AbortError') {
+        return;
+      }
+      console.error('Error in stream:', err);
+      if (currentId) {
+        setError((prev) => ({
+          ...prev,
+          [currentId]:
+            err instanceof Error
+              ? err.message
+              : 'Failed to send message. Please try again.',
+        }));
+        setStreaming((prev) => ({ ...prev, [currentId]: false }));
+        setReasoningStreaming((prev) => ({ ...prev, [currentId]: false }));
+      }
+      delete activeStreamsRef.current[streamKey];
+    }
+  };
+
+  const sendMessage = async (
+    params: ISendMessageParams,
+  ): Promise<string | undefined> => {
+    let currentId = conversationId;
+
+    if (!selectedModel) {
+      setError((prev) => ({
+        ...prev,
+        [currentId || 'global']: 'Please select a model',
+      }));
+      return;
+    }
+
+    const effectiveProjId = params.project?.id;
+    effectiveProjectIdRef.current = effectiveProjId;
+
+    try {
+      if (!currentId) {
+        // New conversation: fire the stream immediately and wait for the
+        // server to create the conversation and return its ID via SSE.
+        const abortController = new AbortController();
+        activeStreamsRef.current['pending'] = abortController;
+
+        const convIdPromise = new Promise<string>((resolve) => {
+          pendingConvResolverRef.current = resolve;
+        });
+
+        void runStream(
+          undefined,
+          'pending',
+          params,
+          selectedModel.id,
+          reasoningLevel,
+          webSearchEnabled,
+          imageGenerationEnabled,
+          responseStyle,
+        );
+
+        // Wait for the conversation-created SSE event to get the real ID.
+        currentId = await convIdPromise;
+
+        // Migrate the abort controller from the 'pending' key to the real ID.
+        activeStreamsRef.current[currentId] = abortController;
+        delete activeStreamsRef.current['pending'];
+
+        dispatch(setNewConversationId(currentId));
+        dispatch(setNewConversationProject(params.project ?? null));
+
+        // Optimistically add to sidebar using the user's message as the
+        // initial title. It will be replaced once the AI title arrives.
+        const prompt = (params.prompt ?? '').trim();
+        const initialTitle =
+          prompt.length > 60 ? `${prompt.slice(0, 60)}…` : prompt;
+        dispatch(
+          chatApi.util.updateQueryData(
+            'getConversations',
+            undefined,
+            (draft) => {
+              if (draft.pages.length > 0) {
+                draft.pages[0].conversations.unshift({
+                  id: currentId!,
+                  title: initialTitle,
+                  updatedAt: new Date().toISOString(),
+                  projectId: effectiveProjId ?? null,
+                });
+              }
+            },
+          ),
+        );
+
+        dispatch(
+          addMessage({
+            conversationId: currentId,
+            message: {
+              mainContent: params.prompt,
+              senderType: 'user',
+              inputType: 'text',
+              attachments: params.attachments,
+            },
+          }),
+        );
+
+        dispatch(
+          addMessage({
+            conversationId: currentId,
+            message: {
+              mainContent: '',
+              reasoningContent: '',
+              senderType: 'assistant',
+              inputType: 'text',
+            },
+          }),
+        );
+
+        setStreaming((prev) => ({ ...prev, [currentId!]: true }));
+        setReasoningStreaming((prev) => ({ ...prev, [currentId!]: true }));
+
+        return currentId;
+      }
+
+      // Existing conversation: optimistic UI updates then fire the stream.
+      if (!params.regenerateFromMessageId) {
+        dispatch(
+          addMessage({
+            conversationId: currentId,
+            message: {
+              mainContent: params.prompt,
+              senderType: 'user',
+              inputType: 'text',
+              attachments: params.attachments,
+            },
+          }),
+        );
+      }
+
+      dispatch(
+        addMessage({
+          conversationId: currentId,
+          message: {
+            mainContent: '',
+            reasoningContent: '',
+            senderType: 'assistant',
+            inputType: 'text',
+          },
+        }),
+      );
+
+      setStreaming((prev) => ({ ...prev, [currentId!]: true }));
+      setReasoningStreaming((prev) => ({ ...prev, [currentId!]: true }));
+
+      const abortController = new AbortController();
+      activeStreamsRef.current[currentId] = abortController;
+
+      void runStream(
+        currentId,
+        currentId,
+        params,
+        selectedModel.id,
+        reasoningLevel,
+        webSearchEnabled,
+        imageGenerationEnabled,
+        responseStyle,
+      );
+
+      return currentId;
+    } catch (err) {
+      console.error('Error in sendMessage:', err);
+      setError((prev) => ({
+        ...prev,
+        [currentId || 'global']: 'Failed to send message. Please try again.',
+      }));
+      if (currentId) {
+        setStreaming((prev) => ({ ...prev, [currentId!]: false }));
+        setReasoningStreaming((prev) => ({ ...prev, [currentId!]: false }));
+        delete activeStreamsRef.current[currentId];
+      }
+      return undefined;
+    }
+  };
+
+  const stopStream = () => {
+    if (conversationId && activeStreamsRef.current[conversationId]) {
+      activeStreamsRef.current[conversationId].abort();
+      delete activeStreamsRef.current[conversationId];
+      setStreaming((prev) => ({ ...prev, [conversationId]: false }));
+      setReasoningStreaming((prev) => ({ ...prev, [conversationId]: false }));
+    }
+  };
+
+  const value = {
+    streaming,
+    reasoningStreaming,
+    imageGenerating,
+    webSearching,
+    error,
+    setError,
+    sendMessage,
+    stopStream,
+    conversationId,
+    projectId,
+  };
+
+  return <ChatContext.Provider value={value}>{children}</ChatContext.Provider>;
+};
