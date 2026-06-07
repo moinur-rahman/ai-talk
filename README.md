@@ -9,7 +9,7 @@ A self-hosted, production-quality multi-model AI chat application. Supports mult
 | Layer | Technology |
 |---|---|
 | Backend | NestJS (TypeScript) |
-| Frontend | Next.js (App Router), Tailwind CSS, shadcn/ui |
+| Frontend | React + Vite SPA, React Router v7, Tailwind CSS v4 |
 | Database | PostgreSQL via Prisma ORM |
 | Vector Search | pgvector (PostgreSQL extension) |
 | State / Data Fetching | Redux Toolkit + RTK Query |
@@ -23,7 +23,7 @@ A self-hosted, production-quality multi-model AI chat application. Supports mult
 
 ```
 ai-talk/
-├── client/          # Next.js frontend
+├── client/          # React + Vite SPA frontend
 ├── server/          # NestJS backend
 ├── nginx/           # Reverse proxy config
 ├── docs/            # Project documentation
@@ -50,6 +50,9 @@ ai-talk/
 | Token usage tracking + per-model cost analytics dashboard | ✅ |
 | Web search tool use (OpenAI) | ✅ |
 | Redis sliding window rate limiting on chat stream | ✅ |
+| Conversation search (full-text across titles and messages) | ✅ |
+| Auto-generated conversation titles via LLM | ✅ |
+| Per-user custom instructions and work description | ✅ |
 
 ---
 
@@ -65,7 +68,7 @@ NestJS module-based structure under `server/src/modules/`:
 - `stream/` — SSE-based token streaming orchestration
 
 **`llm/`** — Provider abstraction layer. `LlmService` dispatches to five provider services via a unified `streamResponse(request, onToken)` interface:
-- **OpenAI** — Responses API with `previous_response_id`, native image generation tool calls, `openaiImageCallId` persistence for multi-turn image context
+- **OpenAI** — Responses API, native image generation tool calls, `openaiImageCallId` persistence for multi-turn image context
 - **Gemini** — `@google/genai` SDK, `thinkingLevel` support, inline base64 image attachments
 - **Ollama** — Local models, `think` flag for reasoning
 - **OpenRouter** — OpenAI-compatible client, reasoning via `{ effort: 'low' }`
@@ -87,7 +90,7 @@ NestJS module-based structure under `server/src/modules/`:
 
 **`user/`** — User profile, custom instructions, work description.
 
-**`providers/`** — Infrastructure singletons: `prisma/`, `redis/`, `seaweedfs/`.
+**`providers/`** — Infrastructure singletons: `prisma/`, `redis/`, `seaweedfs/`, `openai/`, `ollama/`, `openrouter/`, `zai/`.
 
 ---
 
@@ -119,21 +122,25 @@ Key columns:
 
 ## Frontend Architecture
 
-Next.js App Router with route groups under `client/app/`:
+React + Vite SPA with React Router v7 under `client/src/`:
 
 | Route | Description |
 |---|---|
-| `(public)/auth/` | Login / register |
-| `(protected)/(workspace)/(chat)/` | Main chat interface |
-| `(protected)/(workspace)/projects/` | Project list and project detail |
-| `(protected)/(workspace)/image-generation/` | Standalone image generation UI |
-| `(protected)/(workspace)/usage/` | Token usage and cost analytics dashboard |
-| `(protected)/(workspace)/settings/` | User preferences |
-| `(protected)/admin/` | Model management (enable/disable, sync, create) |
+| `/login`, `/register` | Login / register (public, redirects if authenticated) |
+| `/new` | New chat page |
+| `/chat/:conversationId` | Active chat interface |
+| `/projects` | Project list |
+| `/projects/:projectId` | Project detail |
+| `/image-generation` | Standalone image generation UI |
+| `/usage` | Token usage and cost analytics dashboard |
+| `/settings/general`, `/settings/data` | User preferences |
+| `/admin/models` | Model management (enable/disable, sync, create) |
 
-**Data layer:** RTK Query service files (`chatApi`, `projectApi`, `modelApi`) with `providesTags`/`invalidatesTags` cache invalidation and infinite query pagination for conversation lists.
+**Routing:** React Router v7 `BrowserRouter` + `Routes`. Auth enforced via `ProtectedRoute` / `PublicRoute` wrapper components (RTK Query `useGetMeQuery`). Layouts (`WorkspaceLayout`, `ChatLayout`, `AdminLayout`, `SettingsLayout`) nest via `<Outlet />`.
 
-**UI:** shadcn/ui primitives with a custom dark-themed design token system (`surface-dim`, `surface-raised`, `accent`, `muted`, etc.), context menus with portal rendering, sonner toasts.
+**Data layer:** RTK Query service files (`chatApi`, `projectApi`, `modelApi`, etc.) with `providesTags`/`invalidatesTags` cache invalidation and infinite query pagination for conversation lists.
+
+**UI:** Custom dark-themed design token system (`surface-dim`, `surface-raised`, `accent`, `muted`, etc.) via Tailwind v4 CSS variables, context menus with portal rendering, sonner toasts.
 
 ---
 
@@ -157,8 +164,8 @@ Next.js App Router with route groups under `client/app/`:
 
 ```
 Nginx (reverse proxy)
-  ├── /api  →  NestJS   (port 3001)
-  └── /     →  Next.js  (port 3000)
+  ├── /api  →  NestJS        (port 5000)
+  └── /     →  React + Vite  (port 3000)
 
 Docker Compose volumes:
   data/postgres
@@ -198,7 +205,10 @@ See `.env.example` for all required variables. Key ones:
 | `OPENROUTER_API_KEY` | OpenRouter API key |
 | `OLLAMA_HOST` | Ollama host URL |
 | `SEAWEEDFS_*` | SeaweedFS connection config |
-| `REDIS_URL` | Redis connection string |
+| `REDIS_HOST` | Redis host |
+| `REDIS_PORT` | Redis port |
+| `REDIS_PASSWORD` | Redis password |
+| `VITE_BACKEND_URL` | Backend base URL (used by the React client) |
 
 > **Note:** Whenever a new environment variable is added, it must be updated in `.env`, `.env.example`, `docker-compose.dev.yml`, and `server/src/common/config/config.ts`.
 
